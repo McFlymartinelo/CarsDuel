@@ -25,7 +25,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
     <>
       <section className="space-y-3">
         <h1 className="text-xl font-bold">Vendre une carte</h1>
-        <p className="text-sm text-zinc-400">Prix libre. Taxe de 10 % prélevée sur le vendeur à la vente. La carte est verrouillée tant que l&apos;annonce est active.</p>
+        <p className="text-sm text-zinc-400">Prix minimum 1 pièce. Taxe de 10 % prélevée sur le vendeur à la vente. La carte est verrouillée tant que l&apos;annonce est active.</p>
         <ActionForm action={listCard} submitLabel="Mettre en vente">
           <select name="card_id" required defaultValue={sellableCards.find((x) => x.id === sell)?.id ?? ""}>
             <option value="" disabled>Carte…</option>
@@ -35,7 +35,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
               </option>
             ))}
           </select>
-          <input name="price" type="number" min={0} placeholder="Prix (pièces)" className="w-36" />
+          <input name="price" type="number" min={1} placeholder="Prix (min. 1)" className="w-36" />
           <label className="flex items-center gap-1.5 text-sm">
             <input type="checkbox" name="accepts_offers" /> Accepter les offres
           </label>

@@ -27,6 +27,27 @@ export const getDuelHistory = (uid: string, limit = 15) =>
     (await c.query<DuelRow>("select * from duels_history order by created_at desc limit $1", [limit])).rows,
   );
 
+/** Derniers duels où le joueur est le défenseur (RLS : defender_id = moi). */
+export const getSufferedDuels = (uid: string, limit = 10) =>
+  withUser(uid, async (c) =>
+    (await c.query<DuelRow>(
+      "select * from duels_history where defender_id = $1 order by created_at desc limit $2",
+      [uid, limit],
+    )).rows,
+  );
+
+export interface AttackStatus {
+  used: number;
+  cap: number;
+  remaining: number;
+}
+
+/** Quota d'attaques du jour Paris (constante SQL private.attack_cap). */
+export const getAttackStatus = (uid: string) =>
+  withUser(uid, async (c) =>
+    (await c.query<{ r: AttackStatus }>("select public.attack_status($1::uuid) as r", [uid])).rows[0].r,
+  );
+
 export const getUsernames = (uid: string, ids: string[]) =>
   withUser(uid, async (c) => {
     if (ids.length === 0) return new Map<string, string>();
