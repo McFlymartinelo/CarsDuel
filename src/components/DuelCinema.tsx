@@ -71,7 +71,7 @@ function GhostStep({ r }: { r: DuelReport }) {
 }
 
 /** Une étape à la fois : piste, puis la config du fantôme, puis le résultat. */
-export function DuelCinema({ r, onReplay, replaying }: { r: DuelReport; onReplay: () => void; replaying: boolean }) {
+export function DuelCinema({ r, onReplay, onClose }: { r: DuelReport; onReplay: () => void; onClose: () => void }) {
   const [phase, setPhase] = useState<1 | 2 | 3>(1);
 
   return (
@@ -87,7 +87,7 @@ export function DuelCinema({ r, onReplay, replaying }: { r: DuelReport; onReplay
 
       {phase === 1 && <TrackStep r={r} />}
       {phase === 2 && <GhostStep r={r} />}
-      {phase === 3 && <DuelResult r={r} onReplay={onReplay} replaying={replaying} />}
+      {phase === 3 && <DuelResult r={r} onReplay={onReplay} onClose={onClose} />}
 
       {phase < 3 && (
         <button
