@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { RANKS, rankProgress, rankRange } from "@/lib/game";
+import { rankProgress } from "@/lib/game";
 
 const xp = (n: number) => n.toLocaleString("fr-FR");
 
@@ -37,14 +38,13 @@ export function ProfileMenu({
       </summary>
       <div className="absolute right-0 z-40 mt-2 max-h-[min(32rem,calc(100vh-5rem))] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm shadow-xl">
         <p className="font-display text-xs font-semibold uppercase tracking-wider text-zinc-500">Profil</p>
-        <p className="truncate font-display text-lg font-bold">{username}</p>
+        <Link href="/compte" className="block truncate font-display text-lg font-bold hover:text-amber-300">{username}</Link>
 
         <div className={`mt-3 rounded-lg border border-zinc-800 px-3 py-2.5 ${rank.row}`}>
           <div className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${rank.dot}`} />
-            <p className={`font-display text-xs font-semibold uppercase tracking-wider ${rank.text}`}>{rank.tier}</p>
+            <p className={`font-display text-xl font-bold leading-tight ${rank.text}`}>{rank.name}</p>
           </div>
-          <p className="mt-0.5 font-display text-xl font-bold leading-tight">{rank.name}</p>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/40">
             <div className={`h-full rounded-full ${rank.bar}`} style={{ width: `${progress.pct}%` }} />
           </div>
@@ -64,31 +64,13 @@ export function ProfileMenu({
           </div>
         </dl>
 
-        <form action={signOut} className="mt-3">
+        <Link href="/compte" className="mt-3 flex min-h-10 w-full items-center rounded px-2 py-1 text-zinc-300 hover:bg-zinc-800">
+          Modifier le profil
+        </Link>
+
+        <form action={signOut}>
           <button className="min-h-10 w-full rounded px-2 py-1 text-left text-zinc-300 hover:bg-zinc-800">Déconnexion</button>
         </form>
-
-        <p className="mb-1.5 mt-3 font-display text-xs font-semibold uppercase tracking-wider text-zinc-500">Rangs du mois</p>
-        <ul className="space-y-1">
-          {RANKS.map((row) => {
-            const current = row.id === rank.id;
-            return (
-              <li key={row.id} className={`rounded-md px-2 py-1 ${current ? row.row : ""}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${row.dot}`} />
-                    <span className={`font-display text-xs font-semibold uppercase ${row.text}`}>{row.tier}</span>
-                  </span>
-                  <span className="shrink-0 tabular-nums text-xs text-zinc-500">{rankRange(row)} XP</span>
-                </div>
-                <p className={`pl-4 ${current ? "text-white" : "text-zinc-300"}`}>{row.name}</p>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="mt-2 text-xs leading-snug text-zinc-500">
-          Le rang suit l&apos;XP du mois. Il revient à Rookie au changement de mois.
-        </p>
       </div>
     </details>
   );
