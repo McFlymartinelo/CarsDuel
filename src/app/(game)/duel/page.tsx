@@ -16,7 +16,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
   const { bonus: bonusParam, page: pageParam, slot: slotParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const { user } = await requireUser();
-  const { cards: allCards, decks: allDecks, modifiers, history, suffered, attacks, names: nameOf } = await loadDuelPage(user.id, page);
+  const { cards: allCards, decks: allDecks, modifiers, history, suffered, names: nameOf } = await loadDuelPage(user.id, page);
   const cards = allCards.filter((x) => !x.is_destroyed && !x.is_listed);
   const alive = new Set(cards.map((x) => x.id));
   const config = allDecks[0];
@@ -75,10 +75,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
 
       <section className="space-y-3">
         <h2 className="hidden font-display text-3xl font-bold uppercase md:block">Duel contre un fantôme</h2>
-        <p className="hidden text-sm text-zinc-400 md:block">Un fantôme de niveau proche est tiré. Le résultat est calculé côté serveur.</p>
-        <p className="text-sm text-amber-300">
-          Attaques restantes aujourd&apos;hui : {attacks.remaining} / {attacks.cap} (reset à minuit, heure de Paris).
-        </p>
+        <p className="hidden text-sm text-zinc-400 md:block">Un fantôme est tiré au hasard. Le résultat est calculé côté serveur.</p>
         <DuelForm
           action={launchDuel}
           deckId={playable ? config?.id : undefined}

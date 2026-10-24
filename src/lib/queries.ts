@@ -63,17 +63,6 @@ export const getSufferedDuels = (uid: string, limit = SUFFERED_LIMIT) =>
     )).rows,
   );
 
-export interface AttackStatus {
-  used: number;
-  cap: number;
-  remaining: number;
-}
-
-export const getAttackStatus = (uid: string) =>
-  withUser(uid, async (c) =>
-    (await c.query<{ r: AttackStatus }>("select public.attack_status($1::uuid) as r", [uid])).rows[0].r,
-  );
-
 export const getUsernames = (uid: string, ids: string[]) => withUser(uid, (c) => qNames(c, ids));
 
 export const getActiveListings = (uid: string, page = 1) =>
@@ -144,7 +133,7 @@ export const loadGaragePage = (uid: string) =>
     modifiers: await qModifiers(c),
   }));
 
-/** Duel : inventaire, historique paginé, duels subis, quota et pseudos. */
+/** Duel : inventaire, historique paginé, duels subis et pseudos. */
 export const loadDuelPage = (uid: string, page = 1) =>
   withUser(uid, async (c) => {
     const p = pageIndex(page);
@@ -158,13 +147,12 @@ export const loadDuelPage = (uid: string, page = 1) =>
       "select * from duels_history where defender_id = $1 order by created_at desc limit $2",
       [uid, SUFFERED_LIMIT],
     )).rows;
-    const attacks = (await c.query<{ r: AttackStatus }>("select public.attack_status($1::uuid) as r", [uid])).rows[0].r;
     const modifiers = await qModifiers(c);
     const ids = [...new Set([
       ...history.map((x) => (x.attacker_id === uid ? x.defender_id : x.attacker_id)),
       ...suffered.map((x) => x.attacker_id),
     ])];
-    return { cards, decks, modifiers, history, suffered, attacks, names: await qNames(c, ids), page: p };
+    return { cards, decks, modifiers, history, suffered, names: await qNames(c, ids), page: p };
   });
 
 /** Marketplace : annonces (page), offres, inventaire et pseudos des vendeurs. */

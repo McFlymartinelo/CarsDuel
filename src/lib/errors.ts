@@ -8,7 +8,6 @@ const MESSAGES: Record<string, string> = {
   gearbox_destroyed: "Boîte détruite.",
   card_listed: "Une carte du deck est en vente.",
   no_opponent: "Aucun adversaire disponible pour le moment.",
-  daily_attack_limit: "Limite d'attaques du jour atteinte. Réessayez après minuit (heure de Paris).",
   trade_limit: "Trop d'échanges avec ce joueur sur les dernières 24 h.",
   invalid_bonus: "Carte bonus invalide.",
   invalid_option: "Option de tirage invalide.",

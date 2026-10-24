@@ -74,7 +74,7 @@ test("plafond de défense : 5 récompenses, la 6e est à zéro", async () => {
   });
 });
 
-test("20 attaques puis daily_attack_limit, sans consommer le bonus", async () => {
+test("la 21e attaque du jour est acceptée", async () => {
   const fx = await withAdmin(async (c) => {
     await clearArena(c);
     const attacker = await createPlayer(c);
@@ -83,22 +83,10 @@ test("20 attaques puis daily_attack_limit, sans consommer le bonus", async () =>
     await makeDeck(c, defender, "t_eng");
     return { attacker, deckId: deck.deckId };
   });
-  for (let i = 0; i < 20; i++) await duel(fx.attacker, fx.deckId);
-  const bonus = await withAdmin((c) => giveCard(c, fx.attacker, "bonus_revision_express"));
-  const before = await withAdmin(async (c) =>
-    Number((await c.query("select coins from profiles where id = $1", [fx.attacker])).rows[0].coins));
-  await expectError(
-    fx.attacker,
-    (c) => c.query("select public.execute_duel($1::uuid, $2::uuid, $3::uuid)", [fx.attacker, fx.deckId, bonus]),
-    "daily_attack_limit",
-  );
+  for (let i = 0; i < 21; i++) await duel(fx.attacker, fx.deckId);
   await withAdmin(async (c) => {
-    const dead = (await c.query("select is_destroyed from user_cards where id = $1", [bonus])).rows[0];
-    const coins = Number((await c.query("select coins from profiles where id = $1", [fx.attacker])).rows[0].coins);
     const n = Number((await c.query("select count(*)::int as n from duels_history where attacker_id = $1", [fx.attacker])).rows[0].n);
-    assert.equal(dead.is_destroyed, false);
-    assert.equal(coins, before);
-    assert.equal(n, 20);
+    assert.equal(n, 21);
   });
 });
 
@@ -125,7 +113,7 @@ test("no_opponent ne consomme ni bonus, ni pièces, ni quota", async () => {
   });
 });
 
-test("le fantôme dans la bande ±25 % est choisi de préférence au deck éloigné", async () => {
+test("un fantôme éloigné reste éligible quand un proche existe", async () => {
   const fx = await withAdmin(async (c) => {
     await clearArena(c);
     const attacker = await createPlayer(c);
@@ -134,11 +122,15 @@ test("le fantôme dans la bande ±25 % est choisi de préférence au deck éloig
     const deck = await makeDeck(c, attacker, "t_eng");
     await makeDeck(c, close, "t_eng");
     await makeDeck(c, far, "t_eng_far");
-    return { attacker, close, deckId: deck.deckId };
+    return { attacker, close, far, deckId: deck.deckId };
   });
-  const r = await duel(fx.attacker, fx.deckId);
-  await withAdmin(async (c) => {
-    const row = (await c.query("select defender_id from duels_history where id = $1", [r.duel_id])).rows[0];
-    assert.equal(row.defender_id, fx.close);
-  });
+  const seen = new Set();
+  for (let i = 0; i < 16; i++) {
+    const r = await duel(fx.attacker, fx.deckId);
+    const id = await withAdmin(async (c) =>
+      (await c.query("select defender_id from duels_history where id = $1", [r.duel_id])).rows[0].defender_id);
+    seen.add(id);
+  }
+  assert.ok(seen.has(fx.close));
+  assert.ok(seen.has(fx.far));
 });
