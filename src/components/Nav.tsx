@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, House, ShoppingBag, Swords, Tag } from "lucide-react";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 const LINKS = [
   { href: "/garage", label: "Garage" },
@@ -17,45 +18,27 @@ const MOBILE_LINKS = [
   { href: "/duel", label: "Duels", icon: Swords },
   { href: "/marketplace", label: "Marché", icon: Tag },
   { href: "/shop", label: "Boutique", icon: ShoppingBag },
-  { href: "/leaderboard", label: "Rang", icon: BarChart3 },
+  { href: "/leaderboard", label: "Classement", icon: BarChart3 },
 ];
 
 export function Nav({
   username,
   coins,
-  level,
-  xpCurrent,
-  xpNext,
-  dailyAvailable,
+  xpWeek,
+  xpMonth,
+  pullsAvailable,
   signOut,
 }: {
   username: string;
   coins: number;
-  level: number;
-  xpCurrent: number;
-  xpNext: number;
-  dailyAvailable: boolean;
+  xpWeek: number;
+  xpMonth: number;
+  pullsAvailable: boolean;
   signOut: () => Promise<void>;
 }) {
   const pathname = usePathname();
-  const pct = Math.min(100, Math.round((xpCurrent / xpNext) * 100));
 
-  const profileMenu = (
-    <details className="relative">
-      <summary
-        title={username}
-        className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800 font-display text-lg font-bold uppercase md:h-10 md:w-10"
-      >
-        {username.slice(0, 1)}
-      </summary>
-      <div className="absolute right-0 z-20 mt-2 w-44 rounded-lg border border-zinc-700 bg-zinc-900 p-2 text-sm shadow-lg">
-        <p className="px-2 pb-1 text-zinc-400">{username}</p>
-        <form action={signOut}>
-          <button className="min-h-10 w-full rounded px-2 py-1 text-left text-zinc-300 hover:bg-zinc-800">Déconnexion</button>
-        </form>
-      </div>
-    </details>
-  );
+  const profileMenu = <ProfileMenu username={username} xpWeek={xpWeek} xpMonth={xpMonth} signOut={signOut} />;
 
   return (
     <>
@@ -67,18 +50,7 @@ export function Nav({
             <span className="text-zinc-500">Duel</span>
           </Link>
 
-          <div className="flex flex-1 items-center gap-x-8 text-sm">
-            <div className="flex max-w-xl flex-1 items-center gap-3 text-zinc-400">
-              <span className="font-display uppercase">
-                Niv. <b className="text-amber-400">{level}</b>
-              </span>
-              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
-                <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
-              </div>
-              <span className="whitespace-nowrap tabular-nums">
-                {xpCurrent} / {xpNext} XP
-              </span>
-            </div>
+          <div className="flex flex-1 items-center text-sm">
             <div className="font-display uppercase text-zinc-400">
               Pièces : <b className="text-lg text-amber-400 tabular-nums">{coins.toLocaleString("fr-FR")}</b>
             </div>
@@ -89,9 +61,9 @@ export function Nav({
               href="/garage#tirage"
               className="rounded-lg border border-zinc-700 px-3 py-1 text-center font-display uppercase leading-tight hover:bg-zinc-800"
             >
-              <span className="block text-sm font-semibold">Tirage quotidien</span>
-              <span className={`text-xs ${dailyAvailable ? "text-emerald-400" : "text-zinc-500"}`}>
-                {dailyAvailable ? "Dispo ●" : "Déjà fait"}
+              <span className="block text-sm font-semibold">Tirages</span>
+              <span className={`text-xs ${pullsAvailable ? "text-emerald-400" : "text-zinc-500"}`}>
+                {pullsAvailable ? "Dispo ●" : "Déjà fait"}
               </span>
             </Link>
             {profileMenu}
@@ -120,7 +92,7 @@ export function Nav({
 
       {/* ---------- Mobile : barre du haut (logo, tirage, pièces + niveau) ---------- */}
       <header className="sticky top-0 z-30 border-b border-zinc-800 bg-[#0d1015]/95 backdrop-blur md:hidden">
-        <div className="flex items-center gap-2 px-3 pt-2">
+        <div className="flex items-center gap-2 px-3 py-2">
           <Link href="/garage" className="font-display text-xl font-bold uppercase leading-[0.85]">
             Cars<br />
             <span className="text-zinc-500">Duel</span>
@@ -129,24 +101,15 @@ export function Nav({
             href="/garage#tirage"
             className="mx-auto rounded-lg border border-zinc-700 px-3 py-1 text-center font-display uppercase leading-tight"
           >
-            <span className="block text-[11px] font-bold tracking-wide">Tirage quotidien</span>
-            <span className={`text-xs ${dailyAvailable ? "text-emerald-400" : "text-zinc-500"}`}>
-              {dailyAvailable ? "Dispo ●" : "Déjà fait"}
+            <span className="block text-[11px] font-bold tracking-wide">Tirages</span>
+            <span className={`text-xs ${pullsAvailable ? "text-emerald-400" : "text-zinc-500"}`}>
+              {pullsAvailable ? "Dispo ●" : "Déjà fait"}
             </span>
           </Link>
           <span className="font-display text-sm uppercase text-zinc-400">
             Pièces <b className="text-base text-amber-400 tabular-nums">{coins.toLocaleString("fr-FR")}</b>
           </span>
           {profileMenu}
-        </div>
-        <div className="flex items-center gap-2 px-3 pb-2 pt-1.5 text-xs text-zinc-400">
-          <span className="font-display uppercase">
-            Niv. <b className="text-amber-400">{level}</b>
-          </span>
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
-            <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
-          </div>
-          <span className="whitespace-nowrap tabular-nums">{xpCurrent} / {xpNext} XP</span>
         </div>
       </header>
 
@@ -159,7 +122,7 @@ export function Nav({
               <Link
                 key={href}
                 href={href}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 border-t-2 text-[11px] font-semibold ${
+                className={`flex min-h-16 flex-col items-center justify-center gap-1 border-t-2 px-0.5 text-center text-[11px] font-semibold leading-tight ${
                   active ? "border-amber-500 text-amber-400" : "border-transparent text-zinc-400"
                 }`}
               >

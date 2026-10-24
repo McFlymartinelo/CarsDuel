@@ -1,13 +1,43 @@
 import type { CardTemplate, UserCard } from "./types";
 
-// ---------- Niveau (affichage uniquement : dérivé de profiles.xp_total) -------
-export const XP_PER_LEVEL = 200;
+// ---------- Rang de profil (affichage : dérivé de l'XP du mois, reset naturel) --
+// Bronze 0–250, Argent 251–700, Or 701–1500, Platine 1501–3000, Diamant 3001+.
+export const RANKS = [
+  { id: "bronze", tier: "Bronze", name: "Rookie", min: 0, max: 250, dot: "bg-emerald-400", text: "text-emerald-300", bar: "bg-emerald-400", row: "bg-emerald-500/10" },
+  { id: "argent", tier: "Argent", name: "Amateur de Paddock", min: 251, max: 700, dot: "bg-blue-400", text: "text-blue-300", bar: "bg-blue-400", row: "bg-blue-500/10" },
+  { id: "or", tier: "Or", name: "Pro de la Config", min: 701, max: 1500, dot: "bg-fuchsia-400", text: "text-fuchsia-300", bar: "bg-fuchsia-400", row: "bg-fuchsia-500/10" },
+  { id: "platine", tier: "Platine", name: "Pilote d'Élite", min: 1501, max: 3000, dot: "bg-orange-400", text: "text-orange-300", bar: "bg-orange-400", row: "bg-orange-500/10" },
+  { id: "diamant", tier: "Diamant", name: "Légende de la Piste", min: 3001, max: null, dot: "bg-rose-400", text: "text-rose-300", bar: "bg-rose-400", row: "bg-rose-500/10" },
+] as const;
 
-export function levelInfo(xpTotal: number) {
+export type PaddockRank = (typeof RANKS)[number];
+
+export function rankFor(monthlyXp: number): PaddockRank {
+  const xp = Math.max(0, Math.floor(Number(monthlyXp) || 0));
+  let current: PaddockRank = RANKS[0];
+  for (const rank of RANKS) {
+    if (xp >= rank.min) current = rank;
+  }
+  return current;
+}
+
+export function rankRange(rank: PaddockRank): string {
+  if (rank.max == null) return `${rank.min.toLocaleString("fr-FR")}+`;
+  return `${rank.min.toLocaleString("fr-FR")} – ${rank.max.toLocaleString("fr-FR")}`;
+}
+
+/** Progression dans le palier courant, vers le rang suivant. */
+export function rankProgress(monthlyXp: number): { rank: PaddockRank; next: PaddockRank | null; pct: number; remaining: number } {
+  const xp = Math.max(0, Math.floor(Number(monthlyXp) || 0));
+  const rank = rankFor(xp);
+  const next = RANKS[RANKS.findIndex((r) => r.id === rank.id) + 1] ?? null;
+  if (!next) return { rank, next: null, pct: 100, remaining: 0 };
+  const span = next.min - rank.min;
   return {
-    level: Math.floor(xpTotal / XP_PER_LEVEL) + 1,
-    current: xpTotal % XP_PER_LEVEL,
-    next: XP_PER_LEVEL,
+    rank,
+    next,
+    pct: Math.max(0, Math.min(100, Math.round(((xp - rank.min) / span) * 100))),
+    remaining: next.min - xp,
   };
 }
 
