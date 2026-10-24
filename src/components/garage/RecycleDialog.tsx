@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ActionForm } from "@/components/ActionForm";
+import { Modal } from "@/components/Modal";
 import type { ActionState } from "@/lib/types";
 
 const btn =
@@ -44,8 +45,7 @@ export function RecycleDialog({
         Recycler
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center" role="dialog" aria-modal aria-labelledby="recycle-title">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-700 bg-[#12151c] p-5 shadow-2xl">
+        <Modal labelledBy="recycle-title">
             <h3 id="recycle-title" className="font-display text-2xl font-bold uppercase">Recycler</h3>
             <p className="mt-2 text-zinc-200">{name}</p>
             <p className="mt-4 font-display text-4xl font-bold text-amber-400">+{coins.toLocaleString("fr-FR")} {coins > 1 ? "pièces" : "pièce"}</p>
@@ -63,8 +63,7 @@ export function RecycleDialog({
                 <input type="hidden" name="card_id" value={cardId} />
               </ActionForm>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );

@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { DuelCinema } from "@/components/DuelCinema";
+import { Modal } from "@/components/Modal";
 import type { ActionState, DuelReport } from "@/lib/types";
 
 type Option = { id: string; label: string };
@@ -84,8 +85,7 @@ export function DuelForm({
       {state && !state.ok && !show && <p className="text-sm text-red-400">{state.message}</p>}
 
       {show && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-3 sm:items-center sm:p-6" role="dialog" aria-modal aria-labelledby="duel-dialog-title">
-          <div className="max-h-[min(92vh,52rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl border border-zinc-700 bg-[#0e1117] p-4 shadow-2xl sm:p-5">
+        <Modal labelledBy="duel-dialog-title" wide>
             <h3 id="duel-dialog-title" className="sr-only">Duel</h3>
             {ask ? (
               <div className="space-y-4">
@@ -112,8 +112,7 @@ export function DuelForm({
                 </button>
               </div>
             )}
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

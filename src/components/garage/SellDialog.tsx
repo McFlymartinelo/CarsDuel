@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ActionForm } from "@/components/ActionForm";
+import { Modal } from "@/components/Modal";
 import type { ActionState } from "@/lib/types";
 
 const openBtn =
@@ -26,8 +27,7 @@ export function SellDialog({
         Vendre
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center" role="dialog" aria-modal aria-labelledby="sell-title">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-700 bg-[#12151c] p-5 shadow-2xl">
+        <Modal labelledBy="sell-title">
             <h3 id="sell-title" className="font-display text-2xl font-bold uppercase">Vendre</h3>
             <p className="mt-2 text-zinc-200">{name}</p>
             <ActionForm action={action} submitLabel="Mettre en vente" className="mt-4 flex flex-col items-stretch gap-3">
@@ -47,8 +47,7 @@ export function SellDialog({
             <button type="button" onClick={() => setOpen(false)} className={cancelBtn}>
               Annuler
             </button>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );
