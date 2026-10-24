@@ -50,7 +50,7 @@ export function DuelForm({
 
       {state && !state.ok && <p className="text-sm text-red-400">{state.message}</p>}
 
-      {report && <DuelCinema r={report} replaying={pending} onReplay={() => formRef.current?.requestSubmit()} />}
+      {report && <DuelCinema key={report.duelId} r={report} replaying={pending} onReplay={() => formRef.current?.requestSubmit()} />}
     </div>
   );
 }
