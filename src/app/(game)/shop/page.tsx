@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ActionForm } from "@/components/ActionForm";
 import { CardView } from "@/components/CardView";
 import { RARITY_LABEL } from "@/lib/format";
-import { getShopCatalog, getTireModifiers } from "@/lib/queries";
+import { loadShopPage } from "@/lib/queries";
 import type { Category, Rarity } from "@/lib/types";
 import { buyShopItem } from "./actions";
 
@@ -25,7 +25,7 @@ const chip = (active: boolean) =>
 export default async function ShopPage({ searchParams }: { searchParams: Promise<{ tab?: string; rarity?: string }> }) {
   const { tab: tabParam, rarity: rarityParam } = await searchParams;
   const { user } = await requireUser();
-  const [items, tirePerfs] = await Promise.all([getShopCatalog(user.id), getTireModifiers(user.id)]);
+  const { items, modifiers: tirePerfs } = await loadShopPage(user.id);
 
   const tab = TABS.find((t) => t.key === tabParam) ?? TABS[0];
   const inTab = items.filter((it) => it.card_templates.category === tab.category);

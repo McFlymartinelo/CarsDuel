@@ -1,25 +1,31 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { ActionForm } from "@/components/ActionForm";
 import { CardView } from "@/components/CardView";
-import { getActiveListings, getOwnCards, getOwnDecks, getPendingOffers, getTireModifiers, getUsernames } from "@/lib/queries";
+import { LISTING_PAGE_SIZE, loadMarketplacePage } from "@/lib/queries";
 import { buyListing, cancelListing, listCard, makeOffer, respondOffer, withdrawOffer } from "./actions";
 
 export const metadata = { title: "Marketplace — CarsDuel" };
 
-export default async function MarketplacePage({ searchParams }: { searchParams: Promise<{ sell?: string }> }) {
-  const { sell } = await searchParams;
+export default async function MarketplacePage({ searchParams }: { searchParams: Promise<{ sell?: string; page?: string }> }) {
+  const { sell, page: pageParam } = await searchParams;
+  const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const { user } = await requireUser();
-  const [listings, offers, cards, decks, tirePerfs] = await Promise.all([
-    getActiveListings(user.id), getPendingOffers(user.id), getOwnCards(user.id), getOwnDecks(user.id), getTireModifiers(user.id),
-  ]);
+  const { listings, offers, cards, decks, modifiers: tirePerfs, names: nameOf } = await loadMarketplacePage(user.id, page);
   const inDeck = new Set(decks.flatMap((x) => [x.engine_card_id, x.gearbox_card_id, x.tire_card_id]));
   const sellableCards = cards.filter((x) => !x.is_destroyed && !x.is_listed && !inDeck.has(x.id));
-  const nameOf = await getUsernames(user.id, [...new Set(listings.map((x) => x.seller_id))]);
 
   const mine = listings.filter((x) => x.seller_id === user.id);
   const others = listings.filter((x) => x.seller_id !== user.id);
   const myOffers = offers.filter((x) => x.buyer_id === user.id);
   const offersOn = (listingId: string) => offers.filter((x) => x.listing_id === listingId && x.buyer_id !== user.id);
+  const pageHref = (n: number) => {
+    const q = new URLSearchParams();
+    if (sell) q.set("sell", sell);
+    if (n > 1) q.set("page", String(n));
+    const s = q.toString();
+    return s ? `/marketplace?${s}` : "/marketplace";
+  };
 
   return (
     <>
@@ -103,6 +109,10 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
           })}
         </div>
       </section>
+      <div className="flex gap-4 text-sm">
+        {page > 1 && <Link href={pageHref(page - 1)} className="text-amber-400 hover:underline">Page précédente</Link>}
+        {listings.length === LISTING_PAGE_SIZE && <Link href={pageHref(page + 1)} className="text-amber-400 hover:underline">Voir plus</Link>}
+      </div>
     </>
   );
 }

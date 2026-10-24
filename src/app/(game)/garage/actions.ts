@@ -1,10 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { PoolClient } from "pg";
 import { requireUser } from "@/lib/auth";
 import { withUser } from "@/lib/db";
-import { callRpc, optStr, str } from "@/lib/rpc";
+import { callRpc, invalidate, optStr, str } from "@/lib/rpc";
 import { rpcErrorMessage } from "@/lib/errors";
 import type { ActionState } from "@/lib/types";
 
@@ -13,20 +12,21 @@ export async function claimDailyPull(_prev: ActionState, fd: FormData): Promise<
   const res = await callRpc<{ card_ids: string[] }>(
     "select public.claim_daily_pull($1::uuid, $2::int) as r",
     (id) => [id, option],
+    ["/garage"],
   );
   if (res?.ok) return { ok: true, message: `Tirage effectué : ${res.data?.card_ids.length ?? 0} carte(s) ajoutée(s).` };
   return res;
 }
 
 // Les decks sont écrits directement (RLS « propriétaire » + trigger validate_deck) : aucune logique de jeu ici.
-async function deckWrite(fn: (c: PoolClient, userId: string) => Promise<void>, okMessage?: string): Promise<ActionState> {
+async function deckWrite(fn: (c: PoolClient, userId: string) => Promise<void>, okMessage?: string, paths: string[] = ["/garage"]): Promise<ActionState> {
   const { user } = await requireUser();
   try {
     await withUser(user.id, (c) => fn(c, user.id));
   } catch (e) {
     return { ok: false, message: rpcErrorMessage(e) };
   }
-  revalidatePath("/", "layout");
+  invalidate(paths);
   return { ok: true, message: okMessage };
 }
 

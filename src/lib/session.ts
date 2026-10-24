@@ -3,6 +3,10 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { withAdmin } from "@/lib/db";
+import type { Profile } from "@/lib/types";
+
+/** Session + profil : une seule lecture (le Nav et les pages partagent ce cache de requête). */
+export type CurrentUser = Profile & { email: string };
 
 export const SESSION_COOKIE = "gb_session";
 const SESSION_DAYS = 30;
@@ -51,13 +55,16 @@ export async function destroySession() {
   store.delete(SESSION_COOKIE);
 }
 
-/** Utilisateur de la requête courante (mis en cache pour la durée du rendu). */
-export const getCurrentUser = cache(async (): Promise<{ id: string; email: string } | null> => {
+/** Utilisateur de la requête courante, profil inclus (mis en cache pour la durée du rendu). */
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
   const { rows } = await withAdmin((c) =>
-    c.query(
-      `select u.id, u.email from sessions s join users u on u.id = s.user_id
+    c.query<CurrentUser>(
+      `select u.id, u.email, p.username, p.coins, p.xp_total, p.last_daily_pull
+         from sessions s
+         join users u on u.id = s.user_id
+         join profiles p on p.id = u.id
         where s.token_hash = $1 and s.expires_at > now()`,
       [hashToken(token)],
     ),

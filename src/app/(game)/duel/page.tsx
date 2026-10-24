@@ -1,18 +1,17 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { DuelForm } from "@/components/DuelForm";
 import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
-import { getAttackStatus, getDuelHistory, getOwnCards, getOwnDecks, getSufferedDuels, getUsernames } from "@/lib/queries";
+import { DUEL_PAGE_SIZE, loadDuelPage } from "@/lib/queries";
 import { launchDuel } from "./actions";
 
 export const metadata = { title: "Duel — CarsDuel" };
 
-export default async function DuelPage({ searchParams }: { searchParams: Promise<{ deck?: string; bonus?: string }> }) {
-  const { deck: deckParam, bonus: bonusParam } = await searchParams;
+export default async function DuelPage({ searchParams }: { searchParams: Promise<{ deck?: string; bonus?: string; page?: string }> }) {
+  const { deck: deckParam, bonus: bonusParam, page: pageParam } = await searchParams;
+  const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const { user } = await requireUser();
-  const [allCards, allDecks, history, suffered, attacks] = await Promise.all([
-    getOwnCards(user.id), getOwnDecks(user.id), getDuelHistory(user.id),
-    getSufferedDuels(user.id), getAttackStatus(user.id),
-  ]);
+  const { cards: allCards, decks: allDecks, history, suffered, attacks, names: nameOf } = await loadDuelPage(user.id, page);
   const cards = allCards.filter((x) => !x.is_destroyed && !x.is_listed);
   const alive = new Set(cards.map((x) => x.id));
   const decks = allDecks.filter(
@@ -20,11 +19,14 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
   );
   const bonuses = cards.filter((x) => x.card_templates.category === "bonus");
 
-  const otherIds = [...new Set([
-    ...history.map((x) => (x.attacker_id === user.id ? x.defender_id : x.attacker_id)),
-    ...suffered.map((x) => x.attacker_id),
-  ])];
-  const nameOf = await getUsernames(user.id, otherIds);
+  const href = (n: number) => {
+    const q = new URLSearchParams();
+    if (deckParam) q.set("deck", deckParam);
+    if (bonusParam) q.set("bonus", bonusParam);
+    if (n > 1) q.set("page", String(n));
+    const s = q.toString();
+    return s ? `/duel?${s}` : "/duel";
+  };
 
   return (
     <>
@@ -117,6 +119,10 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
           </table>
         </div>
         {history.length === 0 && <p className="text-sm text-zinc-500">Aucun duel pour l&apos;instant.</p>}
+        <div className="flex gap-4 text-sm">
+          {page > 1 && <Link href={href(page - 1)} className="text-amber-400 hover:underline">Page précédente</Link>}
+          {history.length === DUEL_PAGE_SIZE && <Link href={href(page + 1)} className="text-amber-400 hover:underline">Voir plus</Link>}
+        </div>
       </section>
     </>
   );

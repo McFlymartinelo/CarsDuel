@@ -27,6 +27,7 @@ export async function launchDuel(_prev: ActionState<DuelReport>, fd: FormData): 
   const res = await callRpc<DuelOutcome>(
     "select public.execute_duel($1::uuid, $2::uuid, $3::uuid) as r",
     (id) => [id, str(fd, "deck_id"), optStr(fd, "bonus_id")],
+    ["/", "/duel", "/garage", "/leaderboard"],
   );
   if (!res?.ok || !res.data) return { ok: false, message: res?.message };
   const o = res.data;

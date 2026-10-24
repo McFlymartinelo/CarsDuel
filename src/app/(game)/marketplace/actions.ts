@@ -12,19 +12,20 @@ export async function listCard(_p: ActionState, fd: FormData): Promise<ActionSta
     await callRpc(
       "select public.create_listing($1::uuid, $2::uuid, $3::int, $4::boolean) as r",
       (id) => [id, str(fd, "card_id"), int(fd, "price"), offers],
+      ["/marketplace", "/garage"],
     ),
   );
 }
 
 export async function cancelListing(_p: ActionState, fd: FormData): Promise<ActionState> {
   return done("Annonce retirée.")(
-    await callRpc("select public.cancel_listing($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "listing_id")]),
+    await callRpc("select public.cancel_listing($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "listing_id")], ["/marketplace", "/garage"]),
   );
 }
 
 export async function buyListing(_p: ActionState, fd: FormData): Promise<ActionState> {
   return done("Achat effectué !")(
-    await callRpc("select public.buy_marketplace_item($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "listing_id")]),
+    await callRpc("select public.buy_marketplace_item($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "listing_id")], ["/", "/marketplace", "/garage"]),
   );
 }
 
@@ -33,13 +34,14 @@ export async function makeOffer(_p: ActionState, fd: FormData): Promise<ActionSt
     await callRpc(
       "select public.make_offer($1::uuid, $2::uuid, $3::int) as r",
       (id) => [id, str(fd, "listing_id"), int(fd, "amount")],
+      ["/", "/marketplace"],
     ),
   );
 }
 
 export async function withdrawOffer(_p: ActionState, fd: FormData): Promise<ActionState> {
   return done("Offre retirée, pièces remboursées.")(
-    await callRpc("select public.withdraw_offer($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "offer_id")]),
+    await callRpc("select public.withdraw_offer($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "offer_id")], ["/", "/marketplace"]),
   );
 }
 
@@ -49,6 +51,7 @@ export async function respondOffer(_p: ActionState, fd: FormData): Promise<Actio
     await callRpc(
       "select public.respond_offer($1::uuid, $2::uuid, $3::boolean) as r",
       (id) => [id, str(fd, "offer_id"), accept],
+      ["/", "/marketplace", "/garage"],
     ),
   );
 }

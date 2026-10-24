@@ -6,7 +6,7 @@ import { SlotTabs, type SlotKey } from "@/components/garage/SlotTabs";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
 import { Inventory } from "@/components/garage/Inventory";
 import { parisToday } from "@/lib/format";
-import { getOwnCards, getOwnDecks, getProfile, getTireModifiers } from "@/lib/queries";
+import { loadGaragePage } from "@/lib/queries";
 import { claimDailyPull, createDeck, deleteDeck } from "./actions";
 
 export const metadata = { title: "Garage — CarsDuel" };
@@ -20,10 +20,8 @@ export default async function GaragePage({
 }) {
   const { deck: deckParam, tab = "pneus", slot: slotParam } = await searchParams;
   const { user } = await requireUser();
-  const [profile, cards, decks, modifiers] = await Promise.all([
-    getProfile(user.id), getOwnCards(user.id), getOwnDecks(user.id), getTireModifiers(user.id),
-  ]);
-  if (!profile) return null;
+  const { cards, decks, modifiers } = await loadGaragePage(user.id);
+  const claimed = user.last_daily_pull === parisToday();
 
   const active = decks.find((d) => d.id === deckParam) ?? decks[0];
   const slot: SlotKey = SLOTS.includes(slotParam as SlotKey) ? (slotParam as SlotKey) : "moteur";
@@ -44,7 +42,6 @@ export default async function GaragePage({
   const equippedHere = new Set(active ? [active.engine_card_id, active.gearbox_card_id, active.tire_card_id] : []);
   const inAnyDeck = new Set(decks.flatMap((d) => [d.engine_card_id, d.gearbox_card_id, d.tire_card_id]));
   const reserve = cards.filter((c) => !c.is_destroyed && !equippedHere.has(c.id));
-  const claimed = profile.last_daily_pull === parisToday();
 
   const cta = (extra: string) =>
     active ? (
