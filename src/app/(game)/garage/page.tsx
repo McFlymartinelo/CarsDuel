@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { DailyPull } from "@/components/DailyPull";
+import { viewMode } from "@/components/ViewToggle";
 import { WelcomeDraw } from "@/components/WelcomeDraw";
 import { Inventory } from "@/components/garage/Inventory";
 import { parisToday, parisWeekStart } from "@/lib/format";
@@ -15,9 +16,10 @@ const ORDER = { moteur: 0, boite: 1, bonus: 2, pneus: 3 } as const;
 export default async function GaragePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; bienvenue?: string }>;
+  searchParams: Promise<{ tab?: string; bienvenue?: string; vue?: string }>;
 }) {
-  const { tab = "moteurs", bienvenue } = await searchParams;
+  const { tab = "moteurs", bienvenue, vue } = await searchParams;
+  const view = viewMode(vue);
   const { user } = await requireUser();
   const { cards, modifiers } = await loadGaragePage(user.id);
   const dailyClaimed = user.last_daily_pull === parisToday();
@@ -32,7 +34,8 @@ export default async function GaragePage({
           .map((c) => toDrawn(c.id, c.card_templates))
       : [];
 
-  const href = (over: Record<string, string>) => `/garage?${new URLSearchParams({ tab, ...over }).toString()}`;
+  const href = (over: Record<string, string>) =>
+    `/garage?${new URLSearchParams({ tab, ...(view === "liste" ? { vue: "liste" } : {}), ...over }).toString()}`;
 
   return (
     <>
@@ -42,7 +45,14 @@ export default async function GaragePage({
       </div>
 
       <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Inventory cards={owned} tab={tab} hrefForTab={(t) => href({ tab: t })} tirePerfs={modifiers} />
+        <Inventory
+          cards={owned}
+          tab={tab}
+          hrefForTab={(t) => href({ tab: t })}
+          view={view}
+          hrefForView={(mode) => `/garage?${new URLSearchParams({ tab, ...(mode === "liste" ? { vue: "liste" } : {}) }).toString()}`}
+          tirePerfs={modifiers}
+        />
         <DailyPull dailyClaimed={dailyClaimed} weeklyClaimed={weeklyClaimed} dailyAction={claimDailyPull} weeklyAction={claimWeeklyPull} />
       </div>
 

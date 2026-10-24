@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Cog, Disc, Settings2, Zap, type LucideIcon } from "lucide-react";
+import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
+import { ViewToggle, type CardViewMode } from "@/components/ViewToggle";
 import { RecycleDialog } from "@/components/garage/RecycleDialog";
 import { SellDialog } from "@/components/garage/SellDialog";
 import { recycleCard } from "@/app/(game)/garage/actions";
@@ -31,13 +33,18 @@ export function Inventory({
   cards,
   tab,
   hrefForTab,
+  view,
+  hrefForView,
   tirePerfs = [],
 }: {
   cards: UserCard[];
   tab: string;
   hrefForTab: (tabKey: string) => string;
+  view: CardViewMode;
+  hrefForView: (mode: CardViewMode) => string;
   tirePerfs?: TirePerf[];
 }) {
+  const compact = view === "liste";
   const museum = tab === MUSEUM;
   const current = TABS.find((x) => x.key === tab) ?? TABS[0];
   const scrap = cards.filter((c) => c.is_destroyed && PARTS.includes(c.card_templates.category));
@@ -48,7 +55,10 @@ export function Inventory({
 
   return (
     <section className="min-w-0 space-y-3">
-      <h2 className="font-display text-2xl font-bold uppercase">Inventaire</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-2xl font-bold uppercase">Inventaire</h2>
+        <ViewToggle current={view} hrefFor={hrefForView} />
+      </div>
       <nav className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Catégories de l'inventaire">
         {TABS.map((x) => {
           const on = x.key === active;
@@ -79,12 +89,13 @@ export function Inventory({
           {museum ? "Aucune carte détruite." : "Aucune carte dans cette catégorie."}
         </p>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className={compact ? "grid gap-2 xl:grid-cols-2" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
         {rows.map((c) => {
           const t = c.card_templates;
           const quote = recycleQuote(t, c);
+          const Card = compact ? CardRow : CardView;
           return (
-            <CardView key={c.id} template={t} card={c} tirePerfs={tirePerfs}>
+            <Card key={c.id} template={t} card={c} tirePerfs={tirePerfs}>
               {c.is_listed && <p className="text-xs text-sky-400">Carte en vente</p>}
               {!c.is_listed && (
                 <div className="flex w-full items-center gap-2">
@@ -99,7 +110,7 @@ export function Inventory({
                   {!c.is_destroyed && t.category !== "bonus" && <SellDialog action={listCard} cardId={c.id} name={t.name} />}
                 </div>
               )}
-            </CardView>
+            </Card>
           );
         })}
       </div>

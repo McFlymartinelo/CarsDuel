@@ -12,14 +12,14 @@ const TIRE_WEATHERS: { weather: Weather; icon: LucideIcon }[] = [
 ];
 
 // Classes complètes (Tailwind ne détecte pas les noms assemblés dynamiquement).
-interface Theme {
+export interface Theme {
   frame: string; // cadre extérieur + lueur
   inner: string; // liseré intérieur et séparateurs
   accent: string; // texte / icônes d'accent
   glow: string; // halo derrière l'image
 }
 
-const THEME: Record<Rarity | "neutre", Theme> = {
+export const THEME: Record<Rarity | "neutre", Theme> = {
   commune: { frame: "border-zinc-300/70 shadow-[0_0_22px_rgba(212,212,216,0.18)]", inner: "border-zinc-300/30", accent: "text-zinc-200", glow: "from-zinc-300/10" },
   rare: { frame: "border-blue-400/80 shadow-[0_0_22px_rgba(96,165,250,0.30)]", inner: "border-blue-400/30", accent: "text-blue-300", glow: "from-blue-400/15" },
   tres_rare: { frame: "border-cyan-400/80 shadow-[0_0_22px_rgba(34,211,238,0.30)]", inner: "border-cyan-400/30", accent: "text-cyan-300", glow: "from-cyan-400/15" },
