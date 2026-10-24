@@ -1,0 +1,16 @@
+# PostgreSQL local, gratuit. Optionnel : tout serveur PostgreSQL >= 14 convient.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: carsduel
+      POSTGRES_PASSWORD: carsduel
+      POSTGRES_DB: carsduel
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

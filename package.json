@@ -1,0 +1,35 @@
+{
+  "name": "carsduel",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node scripts/db.mjs migrate",
+    "db:seed": "node scripts/db.mjs seed",
+    "db:dev-seed": "node scripts/db.mjs dev-seed",
+    "db:setup": "node scripts/db.mjs migrate && node scripts/db.mjs seed",
+    "images:missing": "node scripts/images-missing.mjs",
+    "images:optimize": "node scripts/images-optimize.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "next": "^15.3.0",
+    "pg": "^8.23.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0"
+  }
+}
