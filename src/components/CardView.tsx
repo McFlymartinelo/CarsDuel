@@ -1,0 +1,221 @@
+import { ArrowUp, CloudDrizzle, CloudRain, CloudSun, Cog, Gauge, Joystick, Shield, Sun, Timer, TrendingDown, TriangleAlert, Weight, Zap, type LucideIcon } from "lucide-react";
+import { BONUS_LABEL, CATEGORY_LABEL, GEARBOX_LABEL, RARITY_LABEL, TIRE_THEME, WEATHER_LABEL } from "@/lib/format";
+import { isNewTire } from "@/lib/game";
+import { cardImageUrl } from "@/lib/card-images";
+import type { CardTemplate, Rarity, UserCard, Weather } from "@/lib/types";
+
+const TIRE_WEATHERS: { weather: Weather; icon: LucideIcon }[] = [
+  { weather: "sunny_hot", icon: Sun },
+  { weather: "sunny_cool", icon: CloudSun },
+  { weather: "rain_hot", icon: CloudRain },
+  { weather: "rain_cool", icon: CloudDrizzle },
+];
+
+// Classes complètes (Tailwind ne détecte pas les noms assemblés dynamiquement).
+interface Theme {
+  frame: string; // cadre extérieur + lueur
+  inner: string; // liseré intérieur et séparateurs
+  accent: string; // texte / icônes d'accent
+  glow: string; // halo derrière l'image
+}
+
+const THEME: Record<Rarity | "neutre", Theme> = {
+  commune: { frame: "border-zinc-300/70 shadow-[0_0_22px_rgba(212,212,216,0.18)]", inner: "border-zinc-300/30", accent: "text-zinc-200", glow: "from-zinc-300/10" },
+  rare: { frame: "border-blue-400/80 shadow-[0_0_22px_rgba(96,165,250,0.30)]", inner: "border-blue-400/30", accent: "text-blue-300", glow: "from-blue-400/15" },
+  tres_rare: { frame: "border-cyan-400/80 shadow-[0_0_22px_rgba(34,211,238,0.30)]", inner: "border-cyan-400/30", accent: "text-cyan-300", glow: "from-cyan-400/15" },
+  epique: { frame: "border-purple-400/80 shadow-[0_0_22px_rgba(192,132,252,0.35)]", inner: "border-purple-400/30", accent: "text-purple-300", glow: "from-purple-400/15" },
+  legendaire: { frame: "border-orange-400/90 shadow-[0_0_26px_rgba(251,146,60,0.45)]", inner: "border-orange-400/35", accent: "text-orange-300", glow: "from-orange-400/20" },
+  neutre: { frame: "border-zinc-500/70", inner: "border-zinc-500/30", accent: "text-zinc-300", glow: "from-zinc-400/10" },
+};
+
+interface Stat {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  valueClass?: string;
+}
+
+export interface TirePerf {
+  tire_type: string;
+  weather: string;
+  perf_bonus_pct: number | string;
+  wear_pct?: number | string | null;
+}
+
+/** 0.2 → "0.2", 830 → "830", 0.1000 → "0.1" (la base renvoie du numeric, parfois sous forme de chaîne). */
+const num = (v: number | string | null | undefined) => (v == null ? "?" : String(Number(v)));
+const pct = (v: number | string | null | undefined) => `${num(v)} %`;
+
+function signedPct(v: number | string | null | undefined): { text: string; valueClass: string } {
+  if (v == null || v === "") return { text: "?", valueClass: "text-white" };
+  const n = Number(v);
+  if (!Number.isFinite(n)) return { text: "?", valueClass: "text-white" };
+  if (n > 0) return { text: `+${num(n)} %`, valueClass: "text-emerald-400" };
+  if (n < 0) return { text: `−${num(Math.abs(n))} %`, valueClass: "text-red-400" };
+  return { text: `${num(n)} %`, valueClass: "text-white" };
+}
+
+function statsOf(t: CardTemplate): Stat[] {
+  switch (t.category) {
+    case "moteur":
+      return [
+        { icon: Gauge, label: "Puissance", value: `${num(t.power_hp)} ch` },
+        { icon: Weight, label: "Poids", value: `${num(t.weight_kg)} kg` },
+        { icon: TriangleAlert, label: "Risque de casse initial", value: pct(t.base_break_risk) },
+        { icon: ArrowUp, label: "Augmentation par duel", value: `+${pct(t.wear_sensitivity)}` },
+      ];
+    case "boite":
+      return [
+        { icon: Joystick, label: "Type", value: GEARBOX_LABEL[t.gearbox_type ?? ""] ?? t.gearbox_type ?? "?" },
+        { icon: Timer, label: "Temps de passage", value: `${num(t.shift_time_ms)} ms` },
+        { icon: Weight, label: "Poids", value: `${num(t.weight_kg)} kg` },
+        { icon: TriangleAlert, label: "Risque de casse initial", value: pct(t.base_break_risk) },
+        { icon: ArrowUp, label: "Augmentation par duel", value: `+${pct(t.wear_sensitivity)}` },
+      ];
+    default:
+      return [{ icon: Zap, label: "Effet", value: BONUS_LABEL[t.bonus_effect ?? ""] ?? t.bonus_effect ?? "?" }];
+  }
+}
+
+/** Usure par duel sur un couple chaud/froid. Une seule valeur si les deux se rejoignent. */
+function wearOn(mods: TirePerf[], hot: Weather, cool: Weather): string {
+  const at = (w: Weather) => mods.find((m) => m.weather === w)?.wear_pct;
+  const h = at(hot);
+  const c = at(cool);
+  if (h == null && c == null) return "?";
+  if (h == null) return pct(c);
+  if (c == null || Number(h) === Number(c)) return pct(h);
+  return `${pct(h)} chaud · ${pct(c)} froid`;
+}
+
+function StatList({ stats, accent }: { stats: Stat[]; accent: string }) {
+  return (
+    <ul className="space-y-2.5">
+      {stats.map((s) => (
+        <li key={s.label} className="flex items-start gap-3">
+          <s.icon size={22} strokeWidth={1.5} className={`mt-1 shrink-0 ${accent}`} />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-zinc-400">{s.label}</p>
+            <p className={`font-display text-lg font-semibold leading-tight ${s.valueClass ?? "text-white"}`}>{s.value}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function TireBlocks({ template, tirePerfs, accent }: { template: CardTemplate; tirePerfs: TirePerf[]; accent: string }) {
+  const mods = tirePerfs.filter((m) => m.tire_type === template.tire_type);
+  const wear: Stat[] = [
+    { icon: Sun, label: "Piste sèche", value: wearOn(mods, "sunny_hot", "sunny_cool") },
+    { icon: CloudRain, label: "Piste humide", value: wearOn(mods, "rain_hot", "rain_cool") },
+  ];
+  const performance: Stat[] = TIRE_WEATHERS.map(({ weather, icon }) => {
+    const bonus = signedPct(mods.find((m) => m.weather === weather)?.perf_bonus_pct);
+    return { icon, label: WEATHER_LABEL[weather], value: bonus.text, valueClass: bonus.valueClass };
+  });
+
+  return (
+    <div className="relative mt-5 space-y-4">
+      <section>
+        <p className={`mb-2 flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-wider ${accent}`}>
+          <TrendingDown size={16} strokeWidth={1.75} /> Usure
+        </p>
+        <StatList stats={wear} accent={accent} />
+      </section>
+      <section>
+        <p className={`mb-2 flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-wider ${accent}`}>
+          <Gauge size={16} strokeWidth={1.75} /> Performance
+        </p>
+        <StatList stats={performance} accent={accent} />
+      </section>
+    </div>
+  );
+}
+
+/** "m_9c" → "#9c", "b_5" → "#5" ; codes sans numéro (pneus, bonus) → null. */
+const cardNumber = (code: string | null) => {
+  const m = code?.match(/^[mb]_(.+)$/);
+  return m ? `#${m[1]}` : null;
+};
+
+/**
+ * Carte de collection : n° + catégorie, nom, rareté, stats avec jauges, visuel en filigrane.
+ * L'instance (`card`) ajoute l'usure ; `children` (actions) s'affiche en pied de carte.
+ */
+export function CardView({
+  template,
+  card,
+  tirePerfs = [],
+  children,
+}: {
+  template: CardTemplate;
+  card?: Pick<UserCard, "runs_count" | "tire_wear" | "is_listed" | "is_destroyed">;
+  tirePerfs?: TirePerf[];
+  children?: React.ReactNode;
+}) {
+  const rarity = template.rarity;
+  const tireTheme = template.category === "pneus" ? TIRE_THEME[template.tire_type ?? ""] : undefined;
+  const theme = rarity ? THEME[rarity] : tireTheme ?? THEME.neutre;
+  const img = cardImageUrl(template);
+  const number = cardNumber(template.code);
+  const stats = statsOf(template);
+  const badge = rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (card && !isNewTire(card) ? "Usagé" : null) : "Consommable";
+
+  const currentRisk =
+    card && (template.category === "moteur" || template.category === "boite")
+      ? Number(template.base_break_risk ?? 0) + card.runs_count * Number(template.wear_sensitivity ?? 0)
+      : null;
+
+  return (
+    <div className={`h-full rounded-2xl border-2 bg-[#0b0d12] p-1.5 ${theme.frame} ${card?.is_destroyed ? "opacity-60 grayscale" : ""}`}>
+      <div className={`relative flex h-full min-h-[26rem] flex-col overflow-hidden rounded-xl border bg-gradient-to-b from-[#12151c] to-[#0a0c10] p-4 ${theme.inner}`}>
+        {img ? (
+          <>
+            <div className={`pointer-events-none absolute -bottom-6 -right-8 h-3/5 w-4/5 rounded-full bg-gradient-to-t ${theme.glow} to-transparent blur-2xl`} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={img} alt="" className="pointer-events-none absolute -bottom-4 -right-10 h-3/5 w-4/5 object-contain opacity-60 mix-blend-lighten" />
+          </>
+        ) : (
+          <Cog aria-hidden strokeWidth={1} className={`pointer-events-none absolute -bottom-6 -right-6 h-44 w-44 opacity-10 ${theme.accent}`} />
+        )}
+
+        <div className="relative flex items-center justify-between gap-2 font-display text-sm font-semibold uppercase tracking-wider">
+          <span className={`rounded-md border px-2.5 py-1 text-zinc-300 ${theme.inner}`}>{number ?? "—"}</span>
+          <span className={`flex-1 rounded-md border px-2.5 py-1 text-center ${theme.inner} ${theme.accent}`}>{CATEGORY_LABEL[template.category]}</span>
+        </div>
+
+        <h3 className="relative mt-4 line-clamp-3 min-h-[4.95rem] font-display text-2xl font-bold uppercase leading-[1.1] tracking-wide text-white">{template.name}</h3>
+
+        {badge && (
+          <div className={`relative mt-3 flex items-center gap-2 font-display text-lg font-semibold uppercase tracking-wider ${theme.accent}`}>
+            <Shield size={26} strokeWidth={1.75} />
+            {badge}
+          </div>
+        )}
+
+        {template.category === "pneus" ? (
+          <TireBlocks template={template} tirePerfs={tirePerfs} accent={theme.accent} />
+        ) : (
+          <div className="relative mt-5">
+            <StatList stats={stats} accent={theme.accent} />
+          </div>
+        )}
+
+        {template.category === "bonus" && template.description && <p className="relative mt-2 text-sm text-zinc-300">{template.description}</p>}
+
+        {card && (
+          <p className="relative mt-4 text-xs text-zinc-400">
+            {card.runs_count} duel{card.runs_count > 1 ? "s" : ""}
+            {currentRisk !== null && ` · risque actuel ${num(Math.round(currentRisk * 100) / 100)} %`}
+            {card.tire_wear != null && ` · gomme ${card.tire_wear} %`}
+          </p>
+        )}
+        {card?.is_listed && <p className="relative mt-1 text-xs text-sky-400">En vente</p>}
+        {card?.is_destroyed && <p className="relative mt-1 text-xs text-red-400">Détruite</p>}
+
+        {children && <div className="relative mt-auto pt-4">{children}</div>}
+      </div>
+    </div>
+  );
+}
