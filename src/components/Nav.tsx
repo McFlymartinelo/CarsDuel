@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, House, ShoppingBag, Swords, Tag } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import type { NotificationFeed } from "@/lib/types";
 
 const LINKS = [
   { href: "/garage", label: "Garage" },
@@ -27,6 +29,7 @@ export function Nav({
   xpWeek,
   xpMonth,
   pullsAvailable,
+  notifications,
   signOut,
 }: {
   username: string;
@@ -34,9 +37,11 @@ export function Nav({
   xpWeek: number;
   xpMonth: number;
   pullsAvailable: boolean;
+  notifications: NotificationFeed;
   signOut: () => Promise<void>;
 }) {
   const pathname = usePathname();
+  const bell = <NotificationBell feed={notifications} />;
 
   const profileMenu = <ProfileMenu username={username} xpWeek={xpWeek} xpMonth={xpMonth} signOut={signOut} />;
 
@@ -66,6 +71,7 @@ export function Nav({
                 {pullsAvailable ? "Dispo ●" : "Déjà fait"}
               </span>
             </Link>
+            {bell}
             {profileMenu}
           </div>
         </div>
@@ -106,6 +112,7 @@ export function Nav({
               {pullsAvailable ? "Dispo ●" : "Déjà fait"}
             </span>
           </Link>
+          {bell}
           {profileMenu}
         </div>
         <div className="mx-3 mb-2 mt-2 flex items-center justify-between rounded-lg border border-zinc-800 bg-black/40 px-3 py-2">

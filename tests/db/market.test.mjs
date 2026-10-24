@@ -164,3 +164,37 @@ test("prix 0 refusé et 4e vente entre les mêmes comptes refusée", async () =>
     assert.equal(buyer, 70);
   });
 });
+
+test("historique, prix de référence et notifications après une vente", async () => {
+  const fx = await withAdmin(async (c) => {
+    const seller = await createPlayer(c, 0);
+    const buyer = await createPlayer(c, 100);
+    const stranger = await createPlayer(c, 0);
+    const card = await giveCard(c, seller, "t_eng");
+    return { seller, buyer, stranger, card };
+  });
+  const id = await listing(fx.seller, fx.card, 20, false);
+  await asUser(fx.buyer, (c) => c.query("select public.buy_marketplace_item($1::uuid, $2::uuid)", [fx.buyer, id]));
+
+  const hist = await asUser(fx.seller, (c) => c.query("select * from public.my_market_history($1::uuid)", [fx.seller]));
+  assert.equal(hist.rows.length, 1);
+  assert.equal(hist.rows[0].role, "sale");
+  assert.equal(Number(hist.rows[0].net), 18);
+  const bought = await asUser(fx.buyer, (c) => c.query("select * from public.my_market_history($1::uuid)", [fx.buyer]));
+  assert.equal(bought.rows[0].role, "purchase");
+  assert.equal((await asUser(fx.stranger, (c) => c.query("select * from public.my_market_history($1::uuid)", [fx.stranger]))).rows.length, 0);
+
+  // Un joueur ne lit jamais l'historique d'un autre.
+  await expectError(fx.stranger, (c) => c.query("select * from public.my_market_history($1::uuid)", [fx.seller]), "forbidden");
+
+  const ref = await asUser(fx.buyer, (c) => c.query(
+    "select r.avg_price, r.sales from market_price_ref r join card_templates t on t.id = r.template_id where t.code = 't_eng'"));
+  assert.ok(ref.rows[0].sales >= 1);
+
+  const feed = (await asUser(fx.seller, (c) => c.query("select public.my_notifications($1::uuid) as r", [fx.seller]))).rows[0].r;
+  assert.equal(feed.unread, 1);
+  assert.equal(feed.items[0].kind, "sale");
+  await asUser(fx.seller, (c) => c.query("select public.mark_notifications_seen($1::uuid)", [fx.seller]));
+  const after = (await asUser(fx.seller, (c) => c.query("select public.my_notifications($1::uuid) as r", [fx.seller]))).rows[0].r;
+  assert.equal(after.unread, 0);
+});

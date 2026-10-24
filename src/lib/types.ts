@@ -154,3 +154,42 @@ export interface DrawnCard {
   tireType: string | null;
   image: string | null;
 }
+
+/** Prix de référence d'un modèle : moyenne des dernières ventes (vue market_price_ref). */
+export interface PriceRef {
+  avg_price: number;
+  sales: number;
+}
+
+/** Une vente ou un achat clos (fonction my_market_history). `net` = gain après taxe, côté vendeur. */
+export interface MarketHistoryRow {
+  id: string;
+  role: "sale" | "purchase";
+  card_name: string;
+  category: Category;
+  price: number;
+  net: number;
+  closed_at: string;
+}
+
+export type NotificationKind =
+  | "offer_received"
+  | "sale"
+  | "offer_accepted"
+  | "offer_rejected"
+  | "duel_won"
+  | "duel_lost"
+  | "payout";
+
+export interface NotificationItem {
+  kind: NotificationKind;
+  at: string;
+  label: string;
+  amount: number;
+  unread: boolean;
+}
+
+export interface NotificationFeed {
+  unread: number;
+  items: NotificationItem[];
+}

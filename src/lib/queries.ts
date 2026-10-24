@@ -2,7 +2,7 @@ import "server-only";
 import type { PoolClient } from "pg";
 import { withUser } from "@/lib/db";
 import { LISTING_ORDER_SQL, type CardSort } from "@/lib/catalog-sort";
-import type { DuelRow, Listing, Offer, Profile, UserCard, UserDeck, CardTemplate } from "@/lib/types";
+import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, PriceRef, Profile, UserCard, UserDeck, CardTemplate } from "@/lib/types";
 
 // Toutes les lectures passent par withUser : la RLS s'applique (rôle app_user).
 // Les chargeurs de page enchaînent leurs requêtes sur le MÊME client (une transaction).
@@ -177,8 +177,24 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: { category: 
     const decks = await qDecks(c, uid);
     const modifiers = await qModifiers(c);
     const names = await qNames(c, [...new Set(listings.map((x) => x.seller_id))]);
-    return { listings, offers, cards, decks, modifiers, names, page: p };
+    const templateIds = [...new Set(listings.map((x) => x.user_cards.template_id))];
+    const priceRef = new Map<string, PriceRef>();
+    if (templateIds.length > 0) {
+      const { rows } = await c.query<PriceRef & { template_id: string }>(
+        "select template_id, avg_price, sales from market_price_ref where template_id = any($1::uuid[])", [templateIds]);
+      for (const r of rows) priceRef.set(r.template_id, { avg_price: r.avg_price, sales: r.sales });
+    }
+    const history = p === 1
+      ? (await c.query<MarketHistoryRow>("select * from public.my_market_history($1::uuid, 15)", [uid])).rows
+      : [];
+    return { listings, offers, cards, decks, modifiers, names, priceRef, history, page: p };
   });
+
+/** Notifications du Nav : une seule lecture, calculée en base (cf. migration 018). */
+export const getNotifications = (uid: string) =>
+  withUser(uid, async (c) =>
+    (await c.query<{ r: NotificationFeed }>("select public.my_notifications($1::uuid) as r", [uid])).rows[0].r,
+  );
 
 /** Boutique : catalogue et modificateurs pneus. */
 export const loadShopPage = (uid: string) =>
