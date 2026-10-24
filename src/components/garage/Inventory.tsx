@@ -14,6 +14,9 @@ export const TABS: { key: string; label: string; category: Category }[] = [
   { key: "bonus", label: "Consommables", category: "bonus" },
 ];
 
+const MUSEUM = "casse";
+const PARTS: Category[] = ["moteur", "boite", "pneus"];
+
 const linkBtn = "flex min-h-11 flex-1 items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium sm:min-h-10";
 
 export function Inventory({
@@ -27,8 +30,13 @@ export function Inventory({
   hrefForTab: (tabKey: string) => string;
   tirePerfs?: TirePerf[];
 }) {
+  const museum = tab === MUSEUM;
   const current = TABS.find((x) => x.key === tab) ?? TABS[0];
-  const rows = cards.filter((c) => c.card_templates.category === current.category);
+  const scrap = cards.filter((c) => c.is_destroyed && PARTS.includes(c.card_templates.category));
+  const rows = museum
+    ? scrap
+    : cards.filter((c) => c.card_templates.category === current.category && !c.is_destroyed);
+  const active = museum ? MUSEUM : current.key;
 
   return (
     <section className="min-w-0 space-y-3">
@@ -40,15 +48,34 @@ export function Inventory({
             href={hrefForTab(x.key)}
             scroll={false}
             className={`shrink-0 whitespace-nowrap rounded-lg border px-4 py-2 text-sm ${
-              x.key === current.key ? "border-zinc-500 bg-zinc-800 text-white" : "border-zinc-800 text-zinc-300 hover:text-white"
+              x.key === active ? "border-zinc-500 bg-zinc-800 text-white" : "border-zinc-800 text-zinc-300 hover:text-white"
             }`}
           >
             {x.label}
           </Link>
         ))}
+        <Link
+          href={hrefForTab(MUSEUM)}
+          scroll={false}
+          className={`shrink-0 whitespace-nowrap rounded-lg border px-4 py-2 text-sm ${
+            museum ? "border-red-700 bg-red-950/50 text-red-300" : "border-zinc-800 text-zinc-300 hover:text-white"
+          }`}
+        >
+          Musée de la casse{scrap.length > 0 ? ` (${scrap.length})` : ""}
+        </Link>
       </nav>
 
-      {rows.length === 0 && <p className="rounded-xl border border-zinc-800 bg-[#0e1117] p-3 text-sm text-zinc-500">Aucune carte dans cette catégorie.</p>}
+      {museum && (
+        <p className="text-sm text-zinc-400">
+          Les moteurs, boîtes et pneus détruits arrivent ici. Chacun se recycle pour 1 pièce.
+        </p>
+      )}
+
+      {rows.length === 0 && (
+        <p className="rounded-xl border border-zinc-800 bg-[#0e1117] p-3 text-sm text-zinc-500">
+          {museum ? "Aucune carte détruite." : "Aucune carte dans cette catégorie."}
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {rows.map((c) => {
           const t = c.card_templates;

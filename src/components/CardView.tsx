@@ -177,7 +177,7 @@ export function CardView({
   const riskTone = currentRisk !== null ? riskStyle(currentRisk) : null;
 
   return (
-    <div className={`h-full rounded-2xl border-2 bg-[#0b0d12] p-1.5 ${theme.frame} ${card?.is_destroyed ? "opacity-60 grayscale" : ""}`}>
+    <div className={`relative h-full rounded-2xl border-2 bg-[#0b0d12] p-1.5 ${theme.frame}`}>
       <div className={`relative flex h-full min-h-[26rem] flex-col overflow-hidden rounded-xl border bg-gradient-to-b from-[#12151c] to-[#0a0c10] p-4 ${theme.inner}`}>
         {img ? (
           <>
@@ -235,15 +235,15 @@ export function CardView({
             Gomme restante <span className="text-lg text-white">{num(card.tire_wear)} %</span>
           </p>
         )}
-        {card?.is_destroyed && template.category !== "bonus" && (
-          <p className="relative mt-1 text-xs text-amber-300">
-            {template.category === "moteur" ? "Moteur cassé" : template.category === "boite" ? "Boîte cassée" : "Pneu mort"}. Recyclage possible pour 1 pièce.
-          </p>
-        )}
-        {card?.is_destroyed && template.category === "bonus" && <p className="relative mt-1 text-xs text-red-400">Détruite</p>}
-
-        {children && <div className="relative mt-auto pt-4">{children}</div>}
+        {children && <div className="relative z-20 mt-auto pt-4">{children}</div>}
       </div>
+      {card?.is_destroyed && (
+        <div className="pointer-events-none absolute inset-4 z-10 flex items-center justify-center">
+          <span className="-rotate-12 whitespace-nowrap border-4 border-red-600 px-2 py-0.5 font-display text-[clamp(1.5rem,3.6vw,2.35rem)] font-bold uppercase tracking-[0.08em] text-red-600">
+            Détruite
+          </span>
+        </div>
+      )}
     </div>
   );
 }
