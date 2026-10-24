@@ -12,6 +12,48 @@ const RARITY_FRAME: Record<string, string> = {
   legendaire: "border-orange-400/90",
 };
 
+// Mise en scène par rareté : couleur de l'aura, attente avant le retournement, durée d'affichage, étincelles.
+interface Fx {
+  color: string;
+  flipAt: number;
+  dwell: number;
+  sparks: number;
+  shake: boolean;
+}
+const FX: Record<string, Fx> = {
+  commune: { color: "#d4d4d8", flipAt: 280, dwell: 1300, sparks: 0, shake: false },
+  rare: { color: "#60a5fa", flipAt: 650, dwell: 1500, sparks: 0, shake: false },
+  tres_rare: { color: "#22d3ee", flipAt: 800, dwell: 1700, sparks: 8, shake: false },
+  epique: { color: "#c084fc", flipAt: 950, dwell: 2000, sparks: 12, shake: false },
+  legendaire: { color: "#fb923c", flipAt: 1200, dwell: 2600, sparks: 18, shake: true },
+};
+const FX_NONE: Fx = { color: "#a1a1aa", flipAt: 280, dwell: 1300, sparks: 0, shake: false };
+const fxOf = (c: DrawnCard | undefined): Fx => (c?.rarity ? FX[c.rarity] : undefined) ?? FX_NONE;
+
+function Sparks({ fx }: { fx: Fx }) {
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      <span className="draw-burst absolute h-48 w-48 rounded-full border-2" style={{ borderColor: fx.color }} />
+      {Array.from({ length: fx.sparks }, (_, i) => {
+        const angle = (i / fx.sparks) * Math.PI * 2;
+        const dist = 150 + (i % 3) * 30;
+        return (
+          <span
+            key={i}
+            className="draw-spark absolute h-2 w-2 rounded-full"
+            style={{
+              background: fx.color,
+              boxShadow: `0 0 8px ${fx.color}`,
+              ["--dx" as string]: `${Math.cos(angle) * dist}px`,
+              ["--dy" as string]: `${Math.sin(angle) * dist}px`,
+            }}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
 function Face({ card }: { card: DrawnCard }) {
   const tire = card.category === "pneus" ? TIRE_THEME[card.tireType ?? ""] : undefined;
   const frame = tire?.frame ?? RARITY_FRAME[card.rarity ?? ""] ?? "border-zinc-500/70";
@@ -31,9 +73,13 @@ function Face({ card }: { card: DrawnCard }) {
   );
 }
 
-function Back() {
+function Back({ fx }: { fx: Fx }) {
+  const hint = fx !== FX.commune && fx !== FX_NONE;
   return (
-    <div className="flex h-full flex-col items-center justify-center rounded-2xl border-2 border-amber-500/80 bg-gradient-to-b from-[#1a1408] to-[#0b0d12]">
+    <div
+      className={`flex h-full flex-col items-center justify-center rounded-2xl border-2 border-amber-500/80 bg-gradient-to-b from-[#1a1408] to-[#0b0d12] ${hint ? "draw-aura" : ""} ${fx.shake ? "draw-shake" : ""}`}
+      style={{ ["--aura" as string]: fx.color }}
+    >
       <p className="font-display text-4xl font-bold uppercase leading-none tracking-wide text-amber-400">
         Cars<br />
         <span className="text-zinc-400">Duel</span>
@@ -57,6 +103,7 @@ export function CardDraw({
   const [faceUp, setFaceUp] = useState(false);
   const done = index >= cards.length;
   const card = cards[index];
+  const fx = fxOf(card);
 
   useEffect(() => {
     setReduce(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -65,13 +112,13 @@ export function CardDraw({
   useEffect(() => {
     if (reduce || done) return;
     setFaceUp(false);
-    const flip = window.setTimeout(() => setFaceUp(true), 280);
-    const next = window.setTimeout(() => setIndex((n) => n + 1), 1600);
+    const flip = window.setTimeout(() => setFaceUp(true), fx.flipAt);
+    const next = window.setTimeout(() => setIndex((n) => n + 1), fx.flipAt + fx.dwell);
     return () => {
       window.clearTimeout(flip);
       window.clearTimeout(next);
     };
-  }, [index, reduce, done]);
+  }, [index, reduce, done, fx]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal aria-label={title}>
@@ -95,12 +142,13 @@ export function CardDraw({
             <span className="sr-only">{card.name}</span>
             <span className={`card-flip absolute inset-0 ${faceUp ? "is-flipped" : ""}`}>
               <span className="card-face absolute inset-0">
-                <Back />
+                <Back fx={fx} />
               </span>
               <span className="card-face card-face-front absolute inset-0">
                 <Face card={card} />
               </span>
             </span>
+            {faceUp && fx.sparks > 0 && <Sparks key={index} fx={fx} />}
           </button>
         )}
         <div className="flex items-center gap-3">
