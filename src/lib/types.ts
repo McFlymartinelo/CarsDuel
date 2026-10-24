@@ -130,6 +130,19 @@ export interface DuelReport {
   gumAfter: number | null;
   engineRun: boolean;
   gearboxRun: boolean;
+  engineName: string;
+  gearboxName: string;
+  tireName: string;
+  yourPower: number;
+  yourEngineWeight: number;
+  yourGearWeight: number;
+  yourShift: number;
+  ghostPower: number;
+  ghostEngineWeight: number;
+  ghostGearWeight: number;
+  ghostShift: number;
+  ghostGum: number;
+  ghostTireType: string;
 }
 
 /** Carte révélée par un tirage (quotidien ou kit de départ). */

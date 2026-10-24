@@ -68,7 +68,7 @@ export function DuelResult({ r, onReplay, replaying }: { r: DuelReport; onReplay
         </div>
       </div>
 
-      <div className={`rounded-xl border-2 p-4 text-center ${r.win ? "border-emerald-500 bg-emerald-950/30" : "border-red-600 bg-red-950/30"}`}>
+      <div className={`duel-verdict rounded-xl border-2 p-4 text-center ${r.win ? "border-emerald-500 bg-emerald-950/30" : "border-red-600 bg-red-950/30"}`}>
         <p className={`font-display text-5xl font-bold uppercase ${r.win ? "text-emerald-400" : "text-red-400"}`}>{r.win ? "Victoire" : "Défaite"}</p>
         <p className="mt-1 font-display text-lg font-semibold">
           <span className="text-amber-400">+{r.coins} pièces</span> · <span className="text-sky-400">+{r.xp} XP</span>
