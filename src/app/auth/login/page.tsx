@@ -10,7 +10,7 @@ export default async function LoginPage() {
   if (await getCurrentUser()) redirect("/garage");
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-4 py-10">
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-4 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
       <h1 className="text-center text-3xl font-bold text-amber-400">CarsDuel</h1>
       <div className="grid gap-6 sm:grid-cols-2">
         <section className="rounded-lg border border-zinc-800 p-5">

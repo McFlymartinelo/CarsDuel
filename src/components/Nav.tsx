@@ -91,7 +91,7 @@ export function Nav({
       </header>
 
       {/* ---------- Mobile : barre du haut (logo, tirage, pièces + niveau) ---------- */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800 bg-[#0d1015]/95 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 border-b border-zinc-800 bg-[#0d1015]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
         <div className="flex items-center gap-2 px-3 py-2">
           <Link href="/garage" className="font-display text-xl font-bold uppercase leading-[0.85]">
             Cars<br />

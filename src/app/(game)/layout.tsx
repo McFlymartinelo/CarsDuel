@@ -20,7 +20,7 @@ export default async function GameLayout({ children }: { children: React.ReactNo
         pullsAvailable={user.last_daily_pull !== parisToday() || user.last_weekly_pull !== parisWeekStart()}
         signOut={signOut}
       />
-      <main className="mx-auto max-w-[1800px] space-y-6 px-3 pb-24 pt-4 sm:px-4 md:space-y-8 md:px-6 md:pb-8 md:pt-6 2xl:px-10">{children}</main>
+      <main className="mx-auto max-w-[1800px] space-y-6 px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 md:space-y-8 md:px-6 md:pb-8 md:pt-6 2xl:px-10">{children}</main>
     </>
   );
 }
