@@ -24,7 +24,7 @@ async function deckWrite(fn: (c: PoolClient, userId: string) => Promise<void>, o
   try {
     await withUser(user.id, (c) => fn(c, user.id));
   } catch (e) {
-    return { ok: false, message: rpcErrorMessage(e as { message: string }) };
+    return { ok: false, message: rpcErrorMessage(e) };
   }
   revalidatePath("/", "layout");
   return { ok: true, message: okMessage };

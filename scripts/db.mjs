@@ -37,23 +37,29 @@ async function runFile(file) {
 
 try {
   if (cmd === "migrate") {
-    await client.query("create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())");
-    const dir = path.join(root, "db", "migrations");
-    const done = new Set((await client.query("select name from schema_migrations")).rows.map((r) => r.name));
-    for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
-      if (done.has(f)) continue;
-      await client.query("begin");
-      try {
-        await client.query(fs.readFileSync(path.join(dir, f), "utf8"));
-        await client.query("insert into schema_migrations (name) values ($1)", [f]);
-        await client.query("commit");
-      } catch (e) {
-        await client.query("rollback");
-        throw new Error(`${f}: ${e.message}`);
+    // Verrou de session : deux migrate concurrents s'exécutent l'un après l'autre.
+    await client.query("select pg_advisory_lock(hashtext('carsduel_migrate')::bigint)");
+    try {
+      await client.query("create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())");
+      const dir = path.join(root, "db", "migrations");
+      const done = new Set((await client.query("select name from schema_migrations")).rows.map((r) => r.name));
+      for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
+        if (done.has(f)) continue;
+        await client.query("begin");
+        try {
+          await client.query(fs.readFileSync(path.join(dir, f), "utf8"));
+          await client.query("insert into schema_migrations (name) values ($1)", [f]);
+          await client.query("commit");
+        } catch (e) {
+          await client.query("rollback");
+          throw new Error(`${f}: ${e.message}`);
+        }
+        console.log("appliquée :", f);
       }
-      console.log("appliquée :", f);
+      console.log("Migrations à jour.");
+    } finally {
+      await client.query("select pg_advisory_unlock(hashtext('carsduel_migrate')::bigint)").catch(() => {});
     }
-    console.log("Migrations à jour.");
   } else if (cmd === "seed" || cmd === "dev-seed") {
     await runFile(path.join(root, "db", cmd === "seed" ? "seed.sql" : "dev_seed.sql"));
     if (cmd === "seed") {

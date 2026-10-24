@@ -34,7 +34,14 @@ const MESSAGES: Record<string, string> = {
   invalid_deck_card: "Carte invalide pour cet emplacement (propriété, catégorie ou mise en vente).",
 };
 
-export function rpcErrorMessage(err: { message: string }): string {
-  const code = err.message.trim();
-  return MESSAGES[code] ?? "Une erreur est survenue. Réessayez.";
+type PgErr = { message?: string; code?: string; stack?: string };
+
+/** Traduit un code métier connu. Tout le reste est journalisé (message, code pg, stack) et masqué. */
+export function rpcErrorMessage(err: unknown): string {
+  const e = (err ?? {}) as PgErr;
+  const code = (e.message ?? "").trim();
+  const known = MESSAGES[code];
+  if (known) return known;
+  console.error("[rpc]", e.message ?? "", e.code ?? "", e.stack ?? "");
+  return "Une erreur est survenue. Réessayez.";
 }

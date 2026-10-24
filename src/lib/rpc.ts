@@ -20,7 +20,7 @@ export async function callRpc<T = unknown>(
     revalidatePath("/", "layout");
     return { ok: true, data: rows[0]?.r as T };
   } catch (e) {
-    return { ok: false, message: rpcErrorMessage(e as { message: string }) };
+    return { ok: false, message: rpcErrorMessage(e) };
   }
 }
 

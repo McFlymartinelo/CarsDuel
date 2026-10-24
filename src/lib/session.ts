@@ -30,9 +30,11 @@ const hashToken = (t: string) => createHash("sha256").update(t).digest("hex");
 export async function createSession(userId: string) {
   const token = randomBytes(32).toString("base64url");
   const expires = new Date(Date.now() + SESSION_DAYS * 864e5);
-  await withAdmin((c) =>
-    c.query("insert into sessions (token_hash, user_id, expires_at) values ($1, $2, $3)", [hashToken(token), userId, expires]),
-  );
+  await withAdmin(async (c) => {
+    // Purge opportuniste : une session créée sur vingt nettoie les jetons expirés.
+    if (Math.random() < 1 / 20) await c.query("delete from sessions where expires_at < now()");
+    await c.query("insert into sessions (token_hash, user_id, expires_at) values ($1, $2, $3)", [hashToken(token), userId, expires]);
+  });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 // Garde-fou léger (Edge, pas d'accès base) : présence du cookie de session.
-// La validité réelle de la session est vérifiée côté serveur par requireUser().
+// Ce n'est pas une authentification. requireUser() (session relue en base) fait foi.
 export function middleware(request: NextRequest) {
   const hasSession = request.cookies.has("gb_session");
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
