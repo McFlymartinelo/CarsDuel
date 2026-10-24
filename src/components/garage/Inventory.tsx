@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Cog, Disc, Settings2, Zap, type LucideIcon } from "lucide-react";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { RecycleDialog } from "@/components/garage/RecycleDialog";
 import { SellDialog } from "@/components/garage/SellDialog";
@@ -7,15 +8,22 @@ import { listCard } from "@/app/(game)/marketplace/actions";
 import { recycleQuote } from "@/lib/game";
 import type { Category, UserCard } from "@/lib/types";
 
-export const TABS: { key: string; label: string; category: Category }[] = [
-  { key: "moteurs", label: "Moteurs", category: "moteur" },
-  { key: "boites", label: "Boîtes", category: "boite" },
-  { key: "pneus", label: "Pneus", category: "pneus" },
-  { key: "bonus", label: "Consommables", category: "bonus" },
+export const TABS: { key: string; label: string; category: Category; icon: LucideIcon }[] = [
+  { key: "moteurs", label: "Moteurs", category: "moteur", icon: Cog },
+  { key: "boites", label: "Boîtes", category: "boite", icon: Settings2 },
+  { key: "pneus", label: "Pneus", category: "pneus", icon: Disc },
+  { key: "bonus", label: "Consommables", category: "bonus", icon: Zap },
 ];
 
 const MUSEUM = "casse";
 const PARTS: Category[] = ["moteur", "boite", "pneus"];
+
+const seg = (active: boolean) =>
+  `inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+    active ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+  }`;
+
+const countClass = (active: boolean) => (active ? "tabular-nums text-black/60" : "tabular-nums text-zinc-500");
 
 const linkBtn = "flex min-h-11 flex-1 items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium sm:min-h-10";
 
@@ -41,27 +49,22 @@ export function Inventory({
   return (
     <section className="min-w-0 space-y-3">
       <h2 className="font-display text-2xl font-bold uppercase">Inventaire</h2>
-      <nav className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
-        {TABS.map((x) => (
-          <Link
-            key={x.key}
-            href={hrefForTab(x.key)}
-            scroll={false}
-            className={`shrink-0 whitespace-nowrap rounded-lg border px-4 py-2 text-sm ${
-              x.key === active ? "border-zinc-500 bg-zinc-800 text-white" : "border-zinc-800 text-zinc-300 hover:text-white"
-            }`}
-          >
-            {x.label}
-          </Link>
-        ))}
-        <Link
-          href={hrefForTab(MUSEUM)}
-          scroll={false}
-          className={`shrink-0 whitespace-nowrap rounded-lg border px-4 py-2 text-sm ${
-            museum ? "border-red-700 bg-red-950/50 text-red-300" : "border-zinc-800 text-zinc-300 hover:text-white"
-          }`}
-        >
-          Musée de la casse{scrap.length > 0 ? ` (${scrap.length})` : ""}
+      <nav className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Catégories de l'inventaire">
+        {TABS.map((x) => {
+          const on = x.key === active;
+          const n = cards.filter((c) => !c.is_destroyed && c.card_templates.category === x.category).length;
+          return (
+            <Link key={x.key} href={hrefForTab(x.key)} scroll={false} aria-current={on ? "true" : undefined} className={seg(on)}>
+              <x.icon size={15} strokeWidth={2} />
+              {x.label}
+              <span className={countClass(on)}>{n}</span>
+            </Link>
+          );
+        })}
+        <Link href={hrefForTab(MUSEUM)} scroll={false} aria-current={museum ? "true" : undefined} className={seg(museum)}>
+          <span className={`h-2 w-2 shrink-0 rounded-full ${museum ? "bg-black/40" : "bg-red-500"}`} />
+          Musée de la casse
+          <span className={countClass(museum)}>{scrap.length}</span>
         </Link>
       </nav>
 
