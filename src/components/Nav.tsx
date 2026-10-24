@@ -90,26 +90,27 @@ export function Nav({
         </nav>
       </header>
 
-      {/* ---------- Mobile : barre du haut (logo, tirage, pièces + niveau) ---------- */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800 bg-[#0d1015]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
-        <div className="flex items-center gap-2 px-3 py-2">
-          <Link href="/garage" className="font-display text-xl font-bold uppercase leading-[0.85]">
+      {/* ---------- Mobile : logo et actions, puis le solde sur toute la largeur ---------- */}
+      <header className="sticky top-0 z-40 border-b border-zinc-800 bg-[#0d1015]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
+        <div className="flex items-center gap-2 px-3 pt-2">
+          <Link href="/garage" className="shrink-0 font-display text-xl font-bold uppercase leading-[0.85]">
             Cars<br />
             <span className="text-zinc-500">Duel</span>
           </Link>
           <Link
             href="/garage#tirage"
-            className="mx-auto rounded-lg border border-zinc-700 px-3 py-1 text-center font-display uppercase leading-tight"
+            className="ml-auto flex min-h-11 min-w-16 flex-col items-center justify-center rounded-lg border border-zinc-700 px-3 font-display uppercase leading-tight"
           >
-            <span className="block text-[11px] font-bold tracking-wide">Tirages</span>
+            <span className="text-[11px] font-bold tracking-wide">Tirages</span>
             <span className={`text-xs ${pullsAvailable ? "text-emerald-400" : "text-zinc-500"}`}>
               {pullsAvailable ? "Dispo ●" : "Déjà fait"}
             </span>
           </Link>
-          <span className="font-display text-sm uppercase text-zinc-400">
-            Pièces <b className="text-base text-amber-400 tabular-nums">{coins.toLocaleString("fr-FR")}</b>
-          </span>
           {profileMenu}
+        </div>
+        <div className="mx-3 mb-2 mt-2 flex items-center justify-between rounded-lg border border-zinc-800 bg-black/40 px-3 py-2">
+          <span className="font-display text-xs font-semibold uppercase tracking-wider text-zinc-500">Pièces</span>
+          <span className="font-display text-lg font-bold leading-none text-amber-400 tabular-nums">{coins.toLocaleString("fr-FR")}</span>
         </div>
       </header>
 

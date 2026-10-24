@@ -32,7 +32,7 @@ export function ProfileMenu({
       <summary
         aria-label={`Profil de ${username}`}
         title={username}
-        className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800 font-display text-lg font-bold uppercase md:h-10 md:w-10 [&::-webkit-details-marker]:hidden"
+        className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800 font-display text-lg font-bold uppercase md:h-10 md:w-10 [&::-webkit-details-marker]:hidden"
       >
         {username.slice(0, 1)}
       </summary>
