@@ -1,6 +1,7 @@
 import "server-only";
 import type { PoolClient } from "pg";
 import { withUser } from "@/lib/db";
+import { LISTING_ORDER_SQL, type CardSort } from "@/lib/catalog-sort";
 import type { DuelRow, Listing, Offer, Profile, UserCard, UserDeck, CardTemplate } from "@/lib/types";
 
 // Toutes les lectures passent par withUser : la RLS s'applique (rôle app_user).
@@ -156,12 +157,17 @@ export const loadDuelPage = (uid: string, page = 1) =>
   });
 
 /** Marketplace : annonces (page), offres, inventaire et pseudos des vendeurs. */
-export const loadMarketplacePage = (uid: string, page = 1) =>
+export const loadMarketplacePage = (uid: string, page = 1, filter?: { category: "moteur" | "boite"; sort: CardSort } | null) =>
   withUser(uid, async (c) => {
     const p = pageIndex(page);
+    const order = filter ? LISTING_ORDER_SQL[filter.sort] : "l.created_at desc";
     const listings = (await c.query<Listing>(
-      `${LISTING_SELECT} where l.status = 'active' order by l.created_at desc limit $1 offset $2`,
-      [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE],
+      filter
+        ? `${LISTING_SELECT} where l.status = 'active' and t.category = $3 order by ${order} limit $1 offset $2`
+        : `${LISTING_SELECT} where l.status = 'active' order by ${order} limit $1 offset $2`,
+      filter
+        ? [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE, filter.category]
+        : [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE],
     )).rows;
     const offers = (await c.query<Offer>(
       "select * from marketplace_offers where status = 'pending' order by created_at desc limit $1",
