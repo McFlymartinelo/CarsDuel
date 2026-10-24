@@ -22,7 +22,7 @@ export default async function GaragePage({
   const { cards, modifiers } = await loadGaragePage(user.id);
   const dailyClaimed = user.last_daily_pull === parisToday();
   const weeklyClaimed = user.last_weekly_pull === parisWeekStart();
-  const owned = cards.filter((c) => !c.is_destroyed);
+  const owned = cards.filter((c) => !c.is_destroyed || c.card_templates.category !== "bonus");
 
   const welcome =
     bienvenue === "1"

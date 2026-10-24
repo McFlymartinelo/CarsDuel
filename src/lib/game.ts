@@ -80,15 +80,20 @@ export function currentBreakRisk(
 // ---------- Recyclage (affichage ; le paiement est dans public.recycle_card) --
 // Pièces = base × pourcentage restant / 100, arrondi à l'entier.
 //   moteur 50, boîte 30, pneus 10. Bonus : 1 pièce fixe.
+//   moteur cassé, boîte cassée, pneu mort : 1 pièce fixe.
 // Pneu : gomme restante. Moteur / boîte : 100 − risque de casse actuel.
 
 export const RECYCLE_BASE = { moteur: 50, boite: 30, pneus: 10 } as const;
 
 export function recycleQuote(
   t: CardTemplate,
-  c: Pick<UserCard, "runs_count" | "tire_wear">,
-): { base: number; pct: number; coins: number; flat: boolean } | null {
-  if (t.category === "bonus") return { base: 1, pct: 100, coins: 1, flat: true };
+  c: Pick<UserCard, "runs_count" | "tire_wear" | "is_destroyed">,
+): { base: number; pct: number; coins: number; flat: boolean; scrap: boolean } | null {
+  if (c.is_destroyed && (t.category === "moteur" || t.category === "boite" || t.category === "pneus")) {
+    return { base: 1, pct: 0, coins: 1, flat: true, scrap: true };
+  }
+  if (c.is_destroyed) return null;
+  if (t.category === "bonus") return { base: 1, pct: 100, coins: 1, flat: true, scrap: false };
   let pct: number;
   if (t.category === "pneus") {
     if (c.tire_wear == null) return null;
@@ -101,5 +106,5 @@ export function recycleQuote(
     return null;
   }
   const base = RECYCLE_BASE[t.category];
-  return { base, pct, coins: Math.round((base * pct) / 100), flat: false };
+  return { base, pct, coins: Math.round((base * pct) / 100), flat: false, scrap: false };
 }

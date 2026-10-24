@@ -23,11 +23,11 @@ export function DuelResult({ r, onReplay, replaying }: { r: DuelReport; onReplay
   const gearboxBroke = r.brokenPart === "boite";
   const mechLine =
     r.brokenPart !== null
-      ? `Casse ${CATEGORY_LABEL[r.brokenPart].toLowerCase()} — ${r.partSaved ? "pièce conservée (Assistance plateau)" : "pièce détruite"}`
+      ? `Casse ${CATEGORY_LABEL[r.brokenPart].toLowerCase()} — ${r.partSaved ? "pièce conservée (Assistance plateau)" : "pièce détruite. Recyclage possible pour 1 pièce."}`
       : r.gumAfter !== null
         ? `Gomme ${f(r.gumBefore, 0)} % → ${f(r.gumAfter, 0)} % · ${
             r.engineRun && r.gearboxRun ? "runs +1 sur moteur et boîte" : r.engineRun ? "runs +1 sur le moteur" : r.gearboxRun ? "runs +1 sur la boîte" : "aucune usure mécanique (bonus)"
-          }`
+          }${r.gumAfter === 0 ? " Pneu mort. Recyclage possible pour 1 pièce." : ""}`
         : "";
 
   return (

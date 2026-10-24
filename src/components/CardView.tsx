@@ -236,7 +236,12 @@ export function CardView({
           </p>
         )}
         {card?.is_listed && <p className="relative mt-1 text-xs text-sky-400">En vente</p>}
-        {card?.is_destroyed && <p className="relative mt-1 text-xs text-red-400">Détruite</p>}
+        {card?.is_destroyed && template.category !== "bonus" && (
+          <p className="relative mt-1 text-xs text-amber-300">
+            {template.category === "moteur" ? "Moteur cassé" : template.category === "boite" ? "Boîte cassée" : "Pneu mort"}. Recyclage possible pour 1 pièce.
+          </p>
+        )}
+        {card?.is_destroyed && template.category === "bonus" && <p className="relative mt-1 text-xs text-red-400">Détruite</p>}
 
         {children && <div className="relative mt-auto pt-4">{children}</div>}
       </div>

@@ -108,6 +108,28 @@ test("bonus : recyclage à 1 pièce, vente refusée", async () => {
   });
 });
 
+test("pièce détruite : recyclage à 1 pièce", async () => {
+  const fx = await withAdmin(async (c) => {
+    const user = await createPlayer(c, 0);
+    const engine = await giveCard(c, user, "t_eng");
+    const tire = await giveCard(c, user, "tire_slick");
+    await c.query("update user_cards set is_destroyed = true where id = any($1::uuid[])", [[engine, tire]]);
+    return { user, engine, tire };
+  });
+  const engine = (await asUser(fx.user, (c) =>
+    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.engine]))).rows[0].r;
+  const tire = (await asUser(fx.user, (c) =>
+    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.tire]))).rows[0].r;
+  assert.equal(Number(engine.coins), 1);
+  assert.equal(Number(tire.coins), 1);
+  await withAdmin(async (c) => {
+    const left = await c.query("select id from user_cards where id = any($1::uuid[])", [[fx.engine, fx.tire]]);
+    assert.equal(left.rows.length, 0);
+    const coins = await c.query("select coins from profiles where id = $1", [fx.user]);
+    assert.equal(coins.rows[0].coins, 2);
+  });
+});
+
 test("claim_daily_pull : 3 bonus, un seul tirage par jour Paris", async () => {
   const user = await withAdmin((c) => createPlayer(c));
   const { rows } = await asUser(user, (c) => c.query("select public.claim_daily_pull($1::uuid) as r", [user]));

@@ -61,9 +61,9 @@ export function Inventory({
                     </Link>
                   )}
                   {quote && (
-                    <RecycleDialog action={recycleCard} cardId={c.id} name={t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} />
+                    <RecycleDialog action={recycleCard} cardId={c.id} name={t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} scrap={quote.scrap} />
                   )}
-                  {t.category !== "bonus" && (
+                  {!c.is_destroyed && t.category !== "bonus" && (
                     <Link href={`/marketplace?sell=${c.id}`} className={`${linkBtn} border-red-500/70 text-red-400 hover:bg-red-500/10`}>
                       Vendre
                     </Link>

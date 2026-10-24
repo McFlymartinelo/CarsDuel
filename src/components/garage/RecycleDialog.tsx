@@ -16,6 +16,7 @@ export function RecycleDialog({
   coins,
   kind,
   flat = false,
+  scrap = false,
 }: {
   action: (prev: ActionState, fd: FormData) => Promise<ActionState>;
   cardId: string;
@@ -25,14 +26,17 @@ export function RecycleDialog({
   coins: number;
   kind: "pneus" | "moteur" | "boite" | "bonus";
   flat?: boolean;
+  scrap?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const pctText = pct.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
-  const detail = flat
-    ? "Une carte bonus se recycle contre 1 pièce. Elle ne se vend pas."
-    : kind === "pneus"
-      ? "Le pourcentage est la gomme restante."
-      : "Le pourcentage est l'état restant : 100 % moins le risque de casse actuel.";
+  const detail = scrap
+    ? "Un moteur cassé, une boîte cassée ou un pneu mort se recycle contre 1 pièce."
+    : flat
+      ? "Une carte bonus se recycle contre 1 pièce. Elle ne se vend pas."
+      : kind === "pneus"
+        ? "Le pourcentage est la gomme restante."
+        : "Le pourcentage est l'état restant : 100 % moins le risque de casse actuel.";
 
   return (
     <>
