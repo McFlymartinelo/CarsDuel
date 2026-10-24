@@ -26,7 +26,7 @@ export function SlotCard({
   const change = (
     <details className="[&_summary::-webkit-details-marker]:hidden">
       <summary className="cursor-pointer list-none rounded border border-white/30 bg-black/40 py-1.5 text-center text-sm font-medium text-zinc-100 hover:bg-white/10">
-        {slot === "pneus" ? "Changer / Réparer" : "Changer"}
+        Changer
       </summary>
       <div className="mt-2 max-h-56 space-y-2 overflow-y-auto">
         {alternatives.length === 0 && <p className="text-xs text-zinc-500">Aucune autre carte disponible.</p>}

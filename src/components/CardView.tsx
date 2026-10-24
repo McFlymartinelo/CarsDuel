@@ -1,6 +1,6 @@
-import { ArrowUp, CloudDrizzle, CloudRain, CloudSun, Cog, Gauge, Joystick, Shield, Sun, Timer, TrendingDown, TriangleAlert, Weight, Zap, type LucideIcon } from "lucide-react";
+import { ArrowUp, CloudDrizzle, CloudRain, CloudSun, Cog, Gauge, Joystick, Shield, Sun, Swords, Timer, TrendingDown, TriangleAlert, Weight, Zap, type LucideIcon } from "lucide-react";
 import { BONUS_LABEL, CATEGORY_LABEL, GEARBOX_LABEL, RARITY_LABEL, TIRE_THEME, WEATHER_LABEL } from "@/lib/format";
-import { isNewTire } from "@/lib/game";
+import { currentBreakRisk, isNewTire } from "@/lib/game";
 import { cardImageUrl } from "@/lib/card-images";
 import type { CardTemplate, Rarity, UserCard, Weather } from "@/lib/types";
 
@@ -45,6 +45,17 @@ export interface TirePerf {
 /** 0.2 → "0.2", 830 → "830", 0.1000 → "0.1" (la base renvoie du numeric, parfois sous forme de chaîne). */
 const num = (v: number | string | null | undefined) => (v == null ? "?" : String(Number(v)));
 const pct = (v: number | string | null | undefined) => `${num(v)} %`;
+
+function formatRisk(v: number): string {
+  return `${Math.round(v * 100) / 100} %`;
+}
+
+function riskStyle(risk: number): { text: string; box: string } {
+  if (risk >= 70) return { text: "text-red-400", box: "border-red-500/40 bg-red-500/10" };
+  if (risk >= 40) return { text: "text-orange-300", box: "border-orange-500/40 bg-orange-500/10" };
+  if (risk >= 15) return { text: "text-amber-300", box: "border-amber-500/40 bg-amber-500/10" };
+  return { text: "text-emerald-400", box: "border-emerald-500/40 bg-emerald-500/10" };
+}
 
 function signedPct(v: number | string | null | undefined): { text: string; valueClass: string } {
   if (v == null || v === "") return { text: "?", valueClass: "text-white" };
@@ -125,7 +136,7 @@ function TireBlocks({ template, tirePerfs, accent }: { template: CardTemplate; t
       </section>
       <section>
         <p className={`mb-2 flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-wider ${accent}`}>
-          <Gauge size={16} strokeWidth={1.75} /> Performance
+          <Gauge size={16} strokeWidth={1.75} /> Gain de performance
         </p>
         <StatList stats={performance} accent={accent} />
       </section>
@@ -162,10 +173,8 @@ export function CardView({
   const stats = statsOf(template);
   const badge = rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (card && !isNewTire(card) ? "Usagé" : null) : "Consommable";
 
-  const currentRisk =
-    card && (template.category === "moteur" || template.category === "boite")
-      ? Number(template.base_break_risk ?? 0) + card.runs_count * Number(template.wear_sensitivity ?? 0)
-      : null;
+  const currentRisk = card ? currentBreakRisk(template, card.runs_count) : null;
+  const riskTone = currentRisk !== null ? riskStyle(currentRisk) : null;
 
   return (
     <div className={`h-full rounded-2xl border-2 bg-[#0b0d12] p-1.5 ${theme.frame} ${card?.is_destroyed ? "opacity-60 grayscale" : ""}`}>
@@ -180,9 +189,19 @@ export function CardView({
           <Cog aria-hidden strokeWidth={1} className={`pointer-events-none absolute -bottom-6 -right-6 h-44 w-44 opacity-10 ${theme.accent}`} />
         )}
 
-        <div className="relative flex items-center justify-between gap-2 font-display text-sm font-semibold uppercase tracking-wider">
+        <div className="relative flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider">
           <span className={`rounded-md border px-2.5 py-1 text-zinc-300 ${theme.inner}`}>{number ?? "—"}</span>
-          <span className={`flex-1 rounded-md border px-2.5 py-1 text-center ${theme.inner} ${theme.accent}`}>{CATEGORY_LABEL[template.category]}</span>
+          <span className={`min-w-0 flex-1 truncate rounded-md border px-2.5 py-1 text-center ${theme.inner} ${theme.accent}`}>{CATEGORY_LABEL[template.category]}</span>
+          {card && currentRisk !== null && (
+            <span
+              title={card.runs_count === 1 ? "1 duel réalisé" : `${card.runs_count} duels réalisés`}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs normal-case tracking-normal text-zinc-200 ${theme.inner}`}
+            >
+              <Swords size={13} className={theme.accent} />
+              <span className="tabular-nums">{card.runs_count}</span>
+              <span className="text-zinc-400">{card.runs_count === 1 ? "duel" : "duels"}</span>
+            </span>
+          )}
         </div>
 
         <h3 className="relative mt-4 line-clamp-3 min-h-[4.95rem] font-display text-2xl font-bold uppercase leading-[1.1] tracking-wide text-white">{template.name}</h3>
@@ -191,6 +210,13 @@ export function CardView({
           <div className={`relative mt-3 flex items-center gap-2 font-display text-lg font-semibold uppercase tracking-wider ${theme.accent}`}>
             <Shield size={26} strokeWidth={1.75} />
             {badge}
+          </div>
+        )}
+
+        {riskTone && currentRisk !== null && (
+          <div className={`relative mt-4 rounded-lg border px-3 py-2.5 ${riskTone.box}`}>
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Risque de casse actuel</p>
+            <p className={`font-display text-3xl font-bold leading-none ${riskTone.text}`}>{formatRisk(currentRisk)}</p>
           </div>
         )}
 
@@ -204,11 +230,9 @@ export function CardView({
 
         {template.category === "bonus" && template.description && <p className="relative mt-2 text-sm text-zinc-300">{template.description}</p>}
 
-        {card && (
-          <p className="relative mt-4 text-xs text-zinc-400">
-            {card.runs_count} duel{card.runs_count > 1 ? "s" : ""}
-            {currentRisk !== null && ` · risque actuel ${num(Math.round(currentRisk * 100) / 100)} %`}
-            {card.tire_wear != null && ` · gomme ${card.tire_wear} %`}
+        {card?.tire_wear != null && (
+          <p className="relative mt-4 font-display text-sm uppercase tracking-wide text-zinc-400">
+            Gomme restante <span className="text-lg text-white">{num(card.tire_wear)} %</span>
           </p>
         )}
         {card?.is_listed && <p className="relative mt-1 text-xs text-sky-400">En vente</p>}

@@ -19,7 +19,8 @@ Jeu de cartes automobile asynchrone. Next.js 15 (App Router) + PostgreSQL **pur*
 ## Fonctionnement
 - **Auth maison** : e-mail + mot de passe (scrypt), session par cookie `httpOnly` (jeton aléatoire, hash SHA-256 stocké dans `sessions`).
 - **Sécurité des données** : chaque requête joueur s'exécute dans une transaction `SET LOCAL ROLE app_user` + `app.user_id` ⇒ la RLS PostgreSQL s'applique. Les écritures de jeu passent par des fonctions `SECURITY DEFINER` qui revérifient l'identité.
-- **Kit de départ** (`STARTER_KIT=1`) : 1 Pneu Route + 1 moteur et 1 boîte communs à l'inscription, seulement si l'e-mail est unique. Mettre `0` pour désactiver.
+- **Kit de départ** : à l'inscription, le garage n'a pas de configuration. Le joueur reçoit 1 moteur commun, 1 boîte commune, 5 cartes bonus et 1 pneu de chaque type (si l'e-mail est unique).
+- **Tirages gratuits** : 3 bonus par jour calendaire (Europe/Paris), et 1 moteur ou 1 boîte par semaine ISO (reset le lundi, même fuseau).
 - Migrations : `db/migrations/*.sql` (appliquées une fois, suivies dans `schema_migrations`, verrou `pg_advisory_lock` pour éviter deux migrate en parallèle).
 
 ## Limites

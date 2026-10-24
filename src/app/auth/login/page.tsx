@@ -21,7 +21,10 @@ export default async function LoginPage() {
           </ActionForm>
         </section>
         <section className="rounded-lg border border-zinc-800 p-5">
-          <h2 className="mb-3 font-semibold">Créer un compte</h2>
+          <h2 className="mb-1 font-semibold">Créer un compte</h2>
+          <p className="mb-3 text-sm text-zinc-400">
+            Le garage démarre vide. Vous tirez ensuite un moteur commun, une boîte commune, 5 cartes bonus, et vous recevez un jeu de chaque pneu.
+          </p>
           <ActionForm action={signUp} submitLabel="S'inscrire" variant="ghost" className="flex flex-col gap-3">
             <input name="username" type="text" placeholder="Pseudo" required minLength={3} maxLength={24} />
             <input name="email" type="email" placeholder="Email" required autoComplete="email" />

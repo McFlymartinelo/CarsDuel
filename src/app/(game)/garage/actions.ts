@@ -5,16 +5,51 @@ import { requireUser } from "@/lib/auth";
 import { withUser } from "@/lib/db";
 import { callRpc, invalidate, optStr, str } from "@/lib/rpc";
 import { rpcErrorMessage } from "@/lib/errors";
-import type { ActionState } from "@/lib/types";
+import { toDrawn } from "@/lib/reveal";
+import type { ActionState, CardTemplate, DrawnCard } from "@/lib/types";
 
-export async function claimDailyPull(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const option = Number(str(fd, "option"));
-  const res = await callRpc<{ card_ids: string[] }>(
-    "select public.claim_daily_pull($1::uuid, $2::int) as r",
-    (id) => [id, option],
-    ["/garage"],
+async function drawnFromIds(ids: string[]): Promise<DrawnCard[]> {
+  if (ids.length === 0) return [];
+  const { user } = await requireUser();
+  const { rows } = await withUser(user.id, (c) =>
+    c.query<{ id: string; card_templates: CardTemplate }>(
+      `select uc.id, to_jsonb(t) as card_templates
+         from user_cards uc join card_templates t on t.id = uc.template_id
+        where uc.owner_id = $1 and uc.id = any($2::uuid[])
+        order by array_position($2::uuid[], uc.id)`,
+      [user.id, ids],
+    ),
   );
-  if (res?.ok) return { ok: true, message: `Tirage effectué : ${res.data?.card_ids.length ?? 0} carte(s) ajoutée(s).` };
+  return rows.map((r) => toDrawn(r.id, r.card_templates));
+}
+
+export async function claimDailyPull(_prev: ActionState<{ cards: DrawnCard[] }>, _fd: FormData): Promise<ActionState<{ cards: DrawnCard[] }>> {
+  const res = await callRpc<{ card_ids: string[] }>(
+    "select public.claim_daily_pull($1::uuid) as r",
+    (id) => [id],
+    ["/", "/garage"],
+  );
+  if (!res?.ok) return { ok: false, message: res?.message };
+  return { ok: true, data: { cards: await drawnFromIds(res.data?.card_ids ?? []) } };
+}
+
+export async function claimWeeklyPull(_prev: ActionState<{ cards: DrawnCard[] }>, _fd: FormData): Promise<ActionState<{ cards: DrawnCard[] }>> {
+  const res = await callRpc<{ card_ids: string[] }>(
+    "select public.claim_weekly_pull($1::uuid) as r",
+    (id) => [id],
+    ["/", "/garage"],
+  );
+  if (!res?.ok) return { ok: false, message: res?.message };
+  return { ok: true, data: { cards: await drawnFromIds(res.data?.card_ids ?? []) } };
+}
+
+export async function recycleCard(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const res = await callRpc<{ coins: number }>(
+    "select public.recycle_card($1::uuid, $2::uuid) as r",
+    (id) => [id, str(fd, "card_id")],
+    ["/", "/garage", "/duel", "/marketplace"],
+  );
+  if (res?.ok) return { ok: true, message: `Recyclage : +${res.data?.coins ?? 0} pièces.` };
   return res;
 }
 
@@ -89,5 +124,5 @@ export async function equipCard(_prev: ActionState, fd: FormData): Promise<Actio
       "insert into user_decks (owner_id, name, engine_card_id, gearbox_card_id, tire_card_id) values ($1, 'Deck principal', $2, $3, $4)",
       [uid, pick.moteur, pick.boite, pick.pneus],
     );
-  }, "Carte équipée.");
+  }, "Carte équipée.", ["/garage", "/duel"]);
 }

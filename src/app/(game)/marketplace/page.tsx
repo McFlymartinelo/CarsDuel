@@ -11,9 +11,8 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
   const { sell, page: pageParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const { user } = await requireUser();
-  const { listings, offers, cards, decks, modifiers: tirePerfs, names: nameOf } = await loadMarketplacePage(user.id, page);
-  const inDeck = new Set(decks.flatMap((x) => [x.engine_card_id, x.gearbox_card_id, x.tire_card_id]));
-  const sellableCards = cards.filter((x) => !x.is_destroyed && !x.is_listed && !inDeck.has(x.id));
+  const { listings, offers, cards, modifiers: tirePerfs, names: nameOf } = await loadMarketplacePage(user.id, page);
+  const sellableCards = cards.filter((x) => !x.is_destroyed && !x.is_listed && x.card_templates.category !== "bonus");
 
   const mine = listings.filter((x) => x.seller_id === user.id);
   const others = listings.filter((x) => x.seller_id !== user.id);
@@ -31,7 +30,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
     <>
       <section className="space-y-3">
         <h1 className="text-xl font-bold">Vendre une carte</h1>
-        <p className="text-sm text-zinc-400">Prix minimum 1 pièce. Taxe de 10 % prélevée sur le vendeur à la vente. La carte est verrouillée tant que l&apos;annonce est active.</p>
+        <p className="text-sm text-zinc-400">Prix minimum 1 pièce. Taxe de 10 % prélevée sur le vendeur à la vente. La carte est verrouillée tant que l&apos;annonce est active. Les cartes bonus ne se vendent pas.</p>
         <ActionForm action={listCard} submitLabel="Mettre en vente">
           <select name="card_id" required defaultValue={sellableCards.find((x) => x.id === sell)?.id ?? ""}>
             <option value="" disabled>Carte…</option>

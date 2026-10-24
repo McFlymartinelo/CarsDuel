@@ -6,7 +6,7 @@ import { withAdmin } from "@/lib/db";
 import type { Profile } from "@/lib/types";
 
 /** Session + profil : une seule lecture (le Nav et les pages partagent ce cache de requête). */
-export type CurrentUser = Profile & { email: string };
+export type CurrentUser = Profile & { email: string; xp_week: number; xp_month: number };
 
 export const SESSION_COOKIE = "gb_session";
 const SESSION_DAYS = 30;
@@ -61,10 +61,28 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!token) return null;
   const { rows } = await withAdmin((c) =>
     c.query<CurrentUser>(
-      `select u.id, u.email, p.username, p.coins, p.xp_total, p.last_daily_pull
+      `select u.id, u.email, p.username, p.coins, p.xp_total, p.last_daily_pull, p.last_weekly_pull,
+              coalesce(x.xp_week, 0)::integer as xp_week,
+              coalesce(x.xp_month, 0)::integer as xp_month
          from sessions s
          join users u on u.id = s.user_id
          join profiles p on p.id = u.id
+         left join lateral (
+           select
+             sum(e.amount) filter (where e.created_at >= b.week_start and e.created_at < b.week_end) as xp_week,
+             sum(e.amount) filter (where e.created_at >= b.month_start and e.created_at < b.month_end) as xp_month
+           from (
+             select
+               date_trunc('week', now() at time zone 'Europe/Paris') at time zone 'Europe/Paris' as week_start,
+               (date_trunc('week', now() at time zone 'Europe/Paris') + interval '1 week') at time zone 'Europe/Paris' as week_end,
+               date_trunc('month', now() at time zone 'Europe/Paris') at time zone 'Europe/Paris' as month_start,
+               (date_trunc('month', now() at time zone 'Europe/Paris') + interval '1 month') at time zone 'Europe/Paris' as month_end
+           ) b
+           left join public.xp_events e
+             on e.user_id = p.id
+            and e.created_at >= least(b.week_start, b.month_start)
+            and e.created_at < greatest(b.week_end, b.month_end)
+         ) x on true
         where s.token_hash = $1 and s.expires_at > now()`,
       [hashToken(token)],
     ),

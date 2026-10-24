@@ -1,3 +1,4 @@
+import { currentBreakRisk } from "./game";
 import type { Category, CardTemplate, Rarity, UserCard, Weather } from "./types";
 
 export const RARITY_LABEL: Record<Rarity, string> = {
@@ -57,12 +58,19 @@ export const WEATHER_LABEL: Record<Weather, string> = {
   rain_cool: "Piste humide et froide",
 };
 
+const duelLabel = (n: number) => `${n} duel${n > 1 ? "s" : ""}`;
+
 export function cardSummary(t: CardTemplate, c?: Pick<UserCard, "runs_count" | "tire_wear">): string {
   switch (t.category) {
     case "moteur":
-      return `${t.architecture} · ${t.power_hp} ch · ${t.weight_kg} kg · R0 ${t.base_break_risk}% (+${t.wear_sensitivity}%/run)${c ? ` · ${c.runs_count} runs` : ""}`;
-    case "boite":
-      return `${GEARBOX_LABEL[t.gearbox_type ?? ""] ?? t.gearbox_type} · ${t.shift_time_ms} ms · ${t.weight_kg} kg · R0 ${t.base_break_risk}% (+${t.wear_sensitivity}%/run)${c ? ` · ${c.runs_count} runs` : ""}`;
+    case "boite": {
+      const head = t.category === "moteur"
+        ? `${t.architecture} · ${t.power_hp} ch · ${t.weight_kg} kg`
+        : `${GEARBOX_LABEL[t.gearbox_type ?? ""] ?? t.gearbox_type} · ${t.shift_time_ms} ms · ${t.weight_kg} kg`;
+      const risk = c ? currentBreakRisk(t, c.runs_count) : null;
+      if (c && risk != null) return `${head} · ${duelLabel(c.runs_count)} · risque actuel ${Math.round(risk * 100) / 100} %`;
+      return `${head} · risque initial ${t.base_break_risk} %`;
+    }
     case "pneus":
       return `${t.tire_type} · usure nominale ${t.tire_base_wear}%/run${c?.tire_wear != null ? ` · gomme ${c.tire_wear}%` : ""}`;
     default:
@@ -76,6 +84,21 @@ export const formatDateTime = (iso: string) =>
 /** Jour calendaire courant à Paris (YYYY-MM-DD), pour comparer à profiles.last_daily_pull. */
 export const parisToday = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(new Date());
+
+/** Lundi de la semaine ISO en cours à Paris (YYYY-MM-DD), pour profiles.last_weekly_pull. */
+export function parisWeekStart(now = new Date()): string {
+  const [y, m, d] = parisTodayParts(now);
+  const utc = new Date(Date.UTC(y, m - 1, d));
+  const dow = utc.getUTCDay();
+  utc.setUTCDate(utc.getUTCDate() - (dow === 0 ? 6 : dow - 1));
+  return utc.toISOString().slice(0, 10);
+}
+
+function parisTodayParts(now: Date): [number, number, number] {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  const [y, m, d] = parts.split("-").map(Number);
+  return [y, m, d];
+}
 
 export const TIRE_LABEL: Record<string, string> = {
   route: "Route",

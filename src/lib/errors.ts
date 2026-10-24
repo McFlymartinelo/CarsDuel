@@ -13,6 +13,7 @@ const MESSAGES: Record<string, string> = {
   invalid_bonus: "Carte bonus invalide.",
   invalid_option: "Option de tirage invalide.",
   already_claimed: "Tirage du jour déjà effectué (reset à minuit, heure de Paris).",
+  weekly_already_claimed: "Tirage de la semaine déjà effectué (reset le lundi, heure de Paris).",
   catalog_empty: "Le catalogue ne contient pas encore de cartes pour ce tirage.",
   insufficient_funds: "Pièces insuffisantes.",
   price_or_offers_required: "Indiquez un prix ou activez les offres.",
@@ -34,6 +35,8 @@ const MESSAGES: Record<string, string> = {
   out_of_stock: "Rupture de stock.",
   incomplete_collection: "Il vous faut au moins un moteur, une boîte et des pneus disponibles pour créer un deck.",
   invalid_deck_card: "Carte invalide pour cet emplacement (propriété, catégorie ou mise en vente).",
+  not_recyclable: "Cette carte ne se recycle pas.",
+  bonus_not_sellable: "Les cartes bonus ne se vendent pas. Vous pouvez les recycler contre 1 pièce.",
 };
 
 type PgErr = { message?: string; code?: string; stack?: string };

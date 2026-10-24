@@ -44,3 +44,67 @@ input[type="number"] {
 html {
   scroll-behavior: smooth;
 }
+
+.card-scene {
+  perspective: 1200px;
+}
+
+.card-flip {
+  transform-style: preserve-3d;
+  transition: transform 0.7s ease;
+}
+
+.card-flip.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-face-front {
+  transform: rotateY(180deg);
+}
+
+.duel-rise {
+  animation: duel-rise 0.55s ease-out;
+}
+
+.duel-from-left {
+  animation: duel-from-left 0.55s ease-out;
+}
+
+.duel-from-right {
+  animation: duel-from-right 0.55s ease-out;
+}
+
+.duel-verdict {
+  animation: duel-verdict 0.45s ease-out;
+}
+
+@keyframes duel-rise {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes duel-from-left {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes duel-from-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes duel-verdict {
+  0% { opacity: 0; transform: scale(0.7); }
+  70% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-flip { transition: none; }
+  .duel-rise, .duel-from-left, .duel-from-right, .duel-verdict { animation: none; }
+}

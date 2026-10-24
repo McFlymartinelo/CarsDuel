@@ -24,7 +24,7 @@ function pageIndex(page: number) {
 }
 
 async function qProfile(c: PoolClient, uid: string) {
-  return (await c.query<Profile>("select id, username, coins, xp_total, last_daily_pull from profiles where id = $1", [uid])).rows[0] ?? null;
+  return (await c.query<Profile>("select id, username, coins, xp_total, last_daily_pull, last_weekly_pull from profiles where id = $1", [uid])).rows[0] ?? null;
 }
 
 async function qCards(c: PoolClient, uid: string) {
@@ -125,6 +125,8 @@ export interface LeaderboardRow {
   rank: number;
   period_start: string;
   period_end: string;
+  player_count: number;
+  prize: number;
 }
 
 export const getLeaderboard = (uid: string, period: "weekly" | "monthly") =>
@@ -157,11 +159,12 @@ export const loadDuelPage = (uid: string, page = 1) =>
       [uid, SUFFERED_LIMIT],
     )).rows;
     const attacks = (await c.query<{ r: AttackStatus }>("select public.attack_status($1::uuid) as r", [uid])).rows[0].r;
+    const modifiers = await qModifiers(c);
     const ids = [...new Set([
       ...history.map((x) => (x.attacker_id === uid ? x.defender_id : x.attacker_id)),
       ...suffered.map((x) => x.attacker_id),
     ])];
-    return { cards, decks, history, suffered, attacks, names: await qNames(c, ids), page: p };
+    return { cards, decks, modifiers, history, suffered, attacks, names: await qNames(c, ids), page: p };
   });
 
 /** Marketplace : annonces (page), offres, inventaire et pseudos des vendeurs. */

@@ -8,6 +8,7 @@ export interface Profile {
   coins: number;
   xp_total: number;
   last_daily_pull: string | null;
+  last_weekly_pull: string | null;
 }
 
 export interface CardTemplate {
@@ -129,4 +130,14 @@ export interface DuelReport {
   gumAfter: number | null;
   engineRun: boolean;
   gearboxRun: boolean;
+}
+
+/** Carte révélée par un tirage (quotidien ou kit de départ). */
+export interface DrawnCard {
+  id: string;
+  name: string;
+  category: Category;
+  rarity: Rarity | null;
+  tireType: string | null;
+  image: string | null;
 }

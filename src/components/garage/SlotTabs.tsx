@@ -24,7 +24,7 @@ export function SlotTabs({
   hrefFor: (slot: SlotKey) => string;
 }) {
   return (
-    <nav className="grid grid-cols-3 gap-2 md:hidden" aria-label="Emplacements du deck">
+    <nav className="grid grid-cols-3 gap-2 md:hidden" aria-label="Emplacements de la config">
       {(Object.keys(META) as SlotKey[]).map((slot) => {
         const m = META[slot];
         const name = cards[slot]?.card_templates.name.replace(/^Pneu /, "") ?? "Vide";

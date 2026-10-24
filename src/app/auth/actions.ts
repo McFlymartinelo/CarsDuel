@@ -93,7 +93,7 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
       const { rows } = await c.query<{ id: string }>(
         "insert into users (email, password_hash) values ($1, $2) returning id", [email, hash]);
       await c.query("insert into profiles (id, username) values ($1, $2)", [rows[0].id, username]);
-      if (process.env.STARTER_KIT === "1") await c.query("select private.grant_starter_kit($1)", [rows[0].id]);
+      await c.query("select private.grant_starter_kit($1)", [rows[0].id]);
       return rows[0].id;
     });
   } catch (e) {
@@ -106,7 +106,7 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
   }
 
   await createSession(userId);
-  redirect("/garage");
+  redirect("/garage?bienvenue=1");
 }
 
 export async function signOut() {
