@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { RecycleDialog } from "@/components/garage/RecycleDialog";
+import { SellDialog } from "@/components/garage/SellDialog";
 import { recycleCard } from "@/app/(game)/garage/actions";
+import { listCard } from "@/app/(game)/marketplace/actions";
 import { recycleQuote } from "@/lib/game";
 import type { Category, UserCard } from "@/lib/types";
 
@@ -53,6 +55,7 @@ export function Inventory({
           const quote = recycleQuote(t, c);
           return (
             <CardView key={c.id} template={t} card={c} tirePerfs={tirePerfs}>
+              {c.is_listed && <p className="text-xs text-sky-400">Carte en vente</p>}
               {!c.is_listed && (
                 <div className="flex w-full items-center gap-2">
                   {t.category === "bonus" && (
@@ -63,11 +66,7 @@ export function Inventory({
                   {quote && (
                     <RecycleDialog action={recycleCard} cardId={c.id} name={t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} scrap={quote.scrap} />
                   )}
-                  {!c.is_destroyed && t.category !== "bonus" && (
-                    <Link href={`/marketplace?sell=${c.id}`} className={`${linkBtn} border-red-500/70 text-red-400 hover:bg-red-500/10`}>
-                      Vendre
-                    </Link>
-                  )}
+                  {!c.is_destroyed && t.category !== "bonus" && <SellDialog action={listCard} cardId={c.id} name={t.name} />}
                 </div>
               )}
             </CardView>

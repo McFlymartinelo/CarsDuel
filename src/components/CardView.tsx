@@ -235,7 +235,6 @@ export function CardView({
             Gomme restante <span className="text-lg text-white">{num(card.tire_wear)} %</span>
           </p>
         )}
-        {card?.is_listed && <p className="relative mt-1 text-xs text-sky-400">En vente</p>}
         {card?.is_destroyed && template.category !== "bonus" && (
           <p className="relative mt-1 text-xs text-amber-300">
             {template.category === "moteur" ? "Moteur cassé" : template.category === "boite" ? "Boîte cassée" : "Pneu mort"}. Recyclage possible pour 1 pièce.
