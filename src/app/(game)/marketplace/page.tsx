@@ -112,7 +112,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
                     action={makeOffer}
                     submitLabel="Faire une offre"
                     variant="ghost"
-                    confirmText={(form) => `Envoyer une offre de ${new FormData(form).get("amount")} pièces ?`}
+                    confirmText="Envoyer une offre de {amount} pièces ?"
                     className="mt-2 flex items-end gap-2"
                   >
                     <input type="hidden" name="listing_id" value={x.id} />

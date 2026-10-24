@@ -30,7 +30,8 @@ export function ActionForm({
   children?: React.ReactNode;
   className?: string;
   variant?: keyof typeof VARIANTS;
-  confirmText?: string | ((form: HTMLFormElement) => string);
+  /** Texte de confirmation ; `{champ}` est remplacé par la valeur saisie (une fonction ne peut pas venir d'un Server Component). */
+  confirmText?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -56,7 +57,8 @@ export function ActionForm({
           return;
         }
         e.preventDefault();
-        setText(typeof confirmText === "function" ? confirmText(e.currentTarget) : confirmText);
+        const data = new FormData(e.currentTarget);
+        setText(confirmText.replace(/\{(\w+)\}/g, (_, name: string) => String(data.get(name) ?? "")));
         setOpen(true);
       }}
     >
