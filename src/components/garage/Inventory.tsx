@@ -103,7 +103,7 @@ export function Inventory({
               {!c.is_listed && (
                 <div className="flex w-full items-center gap-2">
                   {quote && (
-                    <RecycleDialog action={recycleCard} cardId={c.id} name={t.category === "bonus" ? (t.description?.trim() || t.name) : t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} scrap={quote.scrap} />
+                    <RecycleDialog action={recycleCard} cardId={c.id} name={t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} scrap={quote.scrap} />
                   )}
                   {!c.is_destroyed && t.category !== "bonus" && <SellDialog action={listCard} cardId={c.id} name={t.name} />}
                 </div>

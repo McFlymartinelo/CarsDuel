@@ -31,13 +31,13 @@ on conflict (vendor_id, template_id) do update set
   is_active = true;
 
 insert into public.card_templates (code, category, name, description, bonus_effect) values
-  ('bonus_revision_express',  'bonus', 'Révision express',             'Pas d''usure du run sur le moteur.',               'revision_express'),
-  ('bonus_vidange_boite',     'bonus', 'Vidange de boîte',             'Pas d''usure du run sur la boîte.',                'vidange_boite'),
-  ('bonus_revision_complete', 'bonus', 'Révision complète',            'Pas d''usure du run sur le moteur et la boîte.',   'revision_complete'),
-  ('bonus_huile_moteur',      'bonus', 'Huile moteur de compétition',  'Risque de casse moteur divisé par 2 sur ce run.',  'huile_moteur_competition'),
-  ('bonus_huile_boite',       'bonus', 'Huile de boîte compétition',   'Risque de casse boîte divisé par 2 sur ce run.',   'huile_boite_competition'),
-  ('bonus_assistance',        'bonus', 'Assistance plateau',           'En cas de casse, la pièce n''est pas détruite.',   'assistance_plateau')
-on conflict (code) do nothing;
+  ('bonus_revision_express',  'bonus', 'Révision express',            'Gèle l''usure du moteur pour la course (le compteur de runs ne s''incrémente pas).', 'revision_express'),
+  ('bonus_vidange_boite',     'bonus', 'Vidange de boîte',            'Gèle l''usure de la boîte pour la course (le compteur de runs ne s''incrémente pas).', 'vidange_boite'),
+  ('bonus_revision_complete', 'bonus', 'Révision complète',           'Gèle simultanément l''usure du moteur et de la boîte de vitesses.', 'revision_complete'),
+  ('bonus_huile_moteur',      'bonus', 'Huile moteur de compétition', 'Multiplie par 0,5 le risque de casse calculé du moteur sur ce run (risque divisé par deux).', 'huile_moteur_competition'),
+  ('bonus_huile_boite',       'bonus', 'Huile de boîte compétition',  'Multiplie par 0,5 le risque de casse calculé de la boîte sur ce run (risque divisé par deux).', 'huile_boite_competition'),
+  ('bonus_assistance',        'bonus', 'Assistance plateau',          'En cas d''échec au test de casse mécanique, le duel est perdu mais le composant cassé réintègre directement l''inventaire au lieu d''être envoyé au Musée de la casse.', 'assistance_plateau')
+on conflict (code) do update set description = excluded.description, name = excluded.name;
 
 update public.weather_conditions set label = case weather
   when 'sunny_hot'  then 'Piste sèche et chaude'

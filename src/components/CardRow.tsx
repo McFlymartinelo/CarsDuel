@@ -25,9 +25,7 @@ export function CardRow({
   const tire = template.category === "pneus" ? TIRE_THEME[template.tire_type ?? ""] : undefined;
   const theme = rarity ? THEME[rarity] : tire ?? THEME.neutre;
   const img = image === undefined ? cardImageUrl(template) : image;
-  const bonus = template.category === "bonus";
-  const title = bonus ? (template.description?.trim() || template.name) : template.name;
-  const tag = bonus ? null : rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (TIRE_LABEL[template.tire_type ?? ""] ?? "Pneus") : null;
+  const tag = rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (TIRE_LABEL[template.tire_type ?? ""] ?? "Pneus") : null;
 
   return (
     <div className={`relative flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border-2 bg-[#0b0d12] p-2 ${theme.frame}`}>
@@ -41,7 +39,7 @@ export function CardRow({
       </div>
 
       <div className="min-w-0 flex-1 basis-40">
-        <p className={`truncate font-display text-lg font-bold leading-tight text-white ${bonus ? "normal-case" : "uppercase"}`}>{title}</p>
+        <p className="truncate font-display text-lg font-bold uppercase leading-tight text-white">{template.name}</p>
         <p className={`font-display text-xs font-semibold uppercase tracking-wider ${theme.accent}`}>
           {CATEGORY_LABEL[template.category]}{tag ? ` · ${tag}` : ""}
           {card?.is_destroyed && <span className="text-red-500"> · Détruite</span>}
@@ -51,7 +49,7 @@ export function CardRow({
             </span>
           )}
         </p>
-        {!bonus && <p className="truncate text-xs text-zinc-400">{cardSummary(template, card)}</p>}
+        <p className="line-clamp-2 text-xs text-zinc-400">{cardSummary(template, card)}</p>
         {note}
       </div>
 

@@ -151,7 +151,7 @@ export const loadPullHistory = (uid: string) =>
   withUser(uid, async (c) =>
     (await c.query<PullRow>(
       `select uc.source, uc.acquired_at,
-              case when t.category = 'bonus' then coalesce(nullif(t.description, ''), t.name) else t.name end as label
+              t.name as label
          from user_cards uc
          join card_templates t on t.id = uc.template_id
         where uc.owner_id = $1 and uc.source in ('daily_pull', 'weekly_pull')
