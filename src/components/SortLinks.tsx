@@ -20,12 +20,10 @@ export function SortLinks({
   current?: string;
   hrefFor: (key: string | null) => string;
 }) {
-  const active = options.find((o) => o.key === current);
-
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2">
       <span className="font-display text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">{label}</span>
-      <nav className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label={label}>
+      <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label={label}>
         {options.map((o) => {
           const on = o.key === current;
           const meta = META[o.key];
@@ -49,7 +47,6 @@ export function SortLinks({
           );
         })}
       </nav>
-      {active && <span className="text-xs text-amber-300/90">{active.title}</span>}
     </div>
   );
 }

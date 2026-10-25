@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Cog, Disc, Settings2, Zap, type LucideIcon } from "lucide-react";
+import { Cog, Coins, Disc, Settings2, TriangleAlert, Zap, type LucideIcon } from "lucide-react";
 import { SortLinks } from "@/components/SortLinks";
 import { FILTER_TABS, sortsFor, type CatalogQuery } from "@/lib/catalog-filters";
 import { RARITY_LABEL } from "@/lib/format";
@@ -20,19 +20,26 @@ const seg = (active: boolean) =>
     active ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
   }`;
 
-/** Type, puis rareté, puis tri. Prix mini / maxi et risque de casse en plus. */
+const row = "grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2";
+const label = "font-display text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500";
+const field = "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-medium text-zinc-400";
+const input = "!w-20 !py-1 text-white";
+
+/** Type, puis rareté, puis tri, puis bornes de prix (et de risque de casse si `showRisk`). */
 export function CatalogFilters({
   path,
   query,
   counts,
   rarityCounts,
   extra,
+  showRisk = true,
 }: {
   path: string;
   query: CatalogQuery;
   counts: Record<string, number>;
   rarityCounts: Partial<Record<Rarity, number>>;
   extra?: Record<string, string | undefined>;
+  showRisk?: boolean;
 }) {
   const mechanical = query.tab.category === "moteur" || query.tab.category === "boite";
   const href = (over: {
@@ -64,9 +71,9 @@ export function CatalogFilters({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-display text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Type</span>
-        <nav className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Type de carte">
+      <div className={row}>
+        <span className={label}>Type</span>
+        <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Type de carte">
           {FILTER_TABS.map((t) => {
             const on = t.key === query.tab.key;
             const Icon = ICONS[t.key];
@@ -82,9 +89,9 @@ export function CatalogFilters({
       </div>
 
       {mechanical && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="font-display text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Niveau</span>
-          <nav className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer par rareté">
+        <div className={row}>
+          <span className={label}>Niveau</span>
+          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer par rareté">
             <Link href={href({ rarity: null })} scroll={false} aria-current={!query.rarity ? "true" : undefined} className={seg(!query.rarity)}>
               Tous
             </Link>
@@ -104,31 +111,37 @@ export function CatalogFilters({
 
       <SortLinks label="Trier" options={sortsFor(query.tab.category)} current={query.sort} hrefFor={(key) => href({ sort: key })} />
 
-      <form action={path} className="flex flex-wrap items-end gap-2">
+      <form action={path} className={row}>
         <input type="hidden" name="tab" value={query.tab.key} />
         {query.rarity && <input type="hidden" name="rarity" value={query.rarity} />}
         {query.sort && <input type="hidden" name="sort" value={query.sort} />}
         {Object.entries(extra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
-        <label className="text-xs text-zinc-400">
-          Prix mini
-          <input name="min" type="number" min={0} step={1} defaultValue={query.min ?? ""} className="mt-1 block w-28" />
-        </label>
-        <label className="text-xs text-zinc-400">
-          Prix maxi
-          <input name="max" type="number" min={0} step={1} defaultValue={query.max ?? ""} className="mt-1 block w-28" />
-        </label>
-        {mechanical && (
-          <label className="text-xs text-zinc-400">
-            Risque de casse maxi
-            <input name="risk" type="number" min={0} step={0.1} defaultValue={query.risk ?? ""} className="mt-1 block w-36" />
+        <span className={label}>{showRisk && mechanical ? "Limites" : "Prix"}</span>
+        <div className="inline-flex max-w-full flex-wrap items-center justify-self-start gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1">
+          <label className={field}>
+            <Coins size={15} strokeWidth={2} />
+            Prix mini
+            <input name="min" type="number" min={0} step={1} defaultValue={query.min ?? ""} className={input} />
           </label>
-        )}
-        <button type="submit" className="min-h-10 rounded-lg border border-zinc-600 px-3 text-sm hover:bg-zinc-800">Filtrer</button>
-        {bounds && (
-          <Link href={href({ min: null, max: null, risk: null })} scroll={false} className="pb-2 text-sm text-zinc-400 hover:text-white">
-            Effacer
-          </Link>
-        )}
+          <label className={field}>
+            <Coins size={15} strokeWidth={2} />
+            Prix maxi
+            <input name="max" type="number" min={0} step={1} defaultValue={query.max ?? ""} className={input} />
+          </label>
+          {showRisk && mechanical && (
+            <label className={field}>
+              <TriangleAlert size={15} strokeWidth={2} />
+              Casse maxi
+              <input name="risk" type="number" min={0} step={0.1} defaultValue={query.risk ?? ""} className={input} />
+            </label>
+          )}
+          <button type="submit" className={`${seg(true)} cursor-pointer`}>Filtrer</button>
+          {bounds && (
+            <Link href={href({ min: null, max: null, risk: null })} scroll={false} className={seg(false)}>
+              Effacer
+            </Link>
+          )}
+        </div>
       </form>
     </div>
   );
