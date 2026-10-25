@@ -2,34 +2,37 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { DuelCinema } from "@/components/DuelCinema";
+import { ChangeCardDialog } from "@/components/garage/ChangeCardDialog";
 import { Modal } from "@/components/Modal";
-import type { ActionState, DuelReport } from "@/lib/types";
+import type { TirePerf } from "@/components/CardView";
+import type { ActionState, DuelReport, UserCard } from "@/lib/types";
 
-type Option = { id: string; label: string };
-
+/** Affronter un adversaire au hasard : résumé, choix du bonus, puis la course. */
 export function DuelForm({
   action,
   deckId,
   bonuses,
-  defaultBonus,
+  tirePerfs,
+  children,
 }: {
   action: (prev: ActionState<DuelReport>, fd: FormData) => Promise<ActionState<DuelReport>>;
   deckId?: string;
-  bonuses: Option[];
-  defaultBonus?: string;
+  bonuses: (UserCard & { image: string | null })[];
+  tirePerfs?: TirePerf[];
+  children?: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const formRef = useRef<HTMLFormElement>(null);
   const armed = useRef(false);
-  const [bonus, setBonus] = useState(defaultBonus ?? "");
-  const [ask, setAsk] = useState(false);
-  const [show, setShow] = useState(false);
+  const [bonus, setBonus] = useState<UserCard | null>(null);
+  const [open, setOpen] = useState(false);
+  const [showRace, setShowRace] = useState(false);
   const [launching, setLaunching] = useState(false);
   const report = state?.ok ? state.data : undefined;
   const waiting = pending || launching;
 
   useEffect(() => {
-    if (state?.ok) setBonus("");
+    if (state?.ok) setBonus(null);
   }, [state]);
 
   useEffect(() => {
@@ -37,83 +40,83 @@ export function DuelForm({
   }, [pending]);
 
   function launch() {
-    setAsk(false);
-    setShow(true);
+    setShowRace(true);
     setLaunching(true);
     armed.current = true;
     formRef.current?.requestSubmit();
   }
 
   function close() {
-    setShow(false);
-    setAsk(false);
+    setOpen(false);
+    setShowRace(false);
   }
 
+  const effect = bonus?.card_templates.description?.trim() || bonus?.card_templates.name;
+
   return (
-    <div className="space-y-4">
+    <>
+      <button
+        type="button"
+        disabled={!deckId}
+        onClick={() => { setShowRace(false); setOpen(true); }}
+        className="min-h-12 rounded-xl bg-amber-500 px-5 font-display text-lg font-bold uppercase text-black hover:bg-amber-400 disabled:opacity-50"
+      >
+        Affronter au hasard
+      </button>
+
       <form
         ref={formRef}
         action={formAction}
-        className="flex flex-wrap items-end gap-3"
+        className="hidden"
         onSubmit={(e) => {
           if (armed.current) {
             armed.current = false;
             return;
           }
           e.preventDefault();
-          if (!deckId) return;
-          setAsk(true);
-          setShow(true);
         }}
       >
         <input type="hidden" name="deck_id" value={deckId ?? ""} />
-        <label className="flex flex-col gap-1 text-sm">
-          Bonus (optionnel, consommé au lancement)
-          <select name="bonus_id" value={bonus} onChange={(e) => setBonus(e.target.value)}>
-            <option value="">Aucun</option>
-            {bonuses.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
-          </select>
-        </label>
-        <button
-          disabled={pending || !deckId}
-          className="min-h-11 rounded-lg bg-amber-500 px-5 py-1.5 font-display text-lg font-bold uppercase text-black hover:bg-amber-400 disabled:opacity-50"
-        >
-          {pending ? "Course en cours…" : "Lancer le duel"}
-        </button>
+        <input type="hidden" name="bonus_id" value={bonus?.id ?? ""} />
       </form>
 
-      {state && !state.ok && !show && <p className="text-sm text-red-400">{state.message}</p>}
-
-      {show && (
+      {open && (
         <Modal labelledBy="duel-dialog-title" wide>
-            <h3 id="duel-dialog-title" className="sr-only">Duel</h3>
-            {ask ? (
-              <div className="space-y-4">
-                <p className="font-display text-3xl font-bold uppercase">Lancer le duel ?</p>
-                <p className="text-sm text-zinc-300">Un fantôme est tiré au hasard. Le résultat est calculé côté serveur.</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button type="button" onClick={close} className="min-h-14 rounded-xl border border-zinc-600 font-display text-xl font-bold uppercase hover:bg-zinc-800">
-                    Non
-                  </button>
-                  <button type="button" onClick={launch} className="min-h-14 rounded-xl bg-amber-500 font-display text-xl font-bold uppercase text-black hover:bg-amber-400">
-                    Oui
-                  </button>
-                </div>
-              </div>
-            ) : waiting ? (
+          <h3 id="duel-dialog-title" className="sr-only">Affronter au hasard</h3>
+          {showRace ? (
+            waiting ? (
               <p className="py-10 text-center font-display text-2xl font-bold uppercase text-amber-400">Course en cours…</p>
             ) : report ? (
               <DuelCinema key={report.duelId} r={report} onReplay={launch} onClose={close} />
             ) : (
               <div className="space-y-4">
                 <p className="text-red-400">{state?.message ?? "Le duel n'a pas pu être lancé."}</p>
-                <button type="button" onClick={close} className="min-h-14 w-full rounded-xl border border-zinc-600 font-display text-xl font-bold uppercase hover:bg-zinc-800">
-                  Fermer
+                <button type="button" onClick={() => setShowRace(false)} className="min-h-12 w-full rounded-xl border border-zinc-600 font-display text-lg font-bold uppercase hover:bg-zinc-800">
+                  Retour
                 </button>
               </div>
-            )}
+            )
+          ) : (
+            <div className="space-y-4">
+              <p className="font-display text-2xl font-bold uppercase">Affronter au hasard</p>
+              {children}
+              <div className="rounded-2xl border-2 border-dashed border-amber-500/40 bg-[#10131a] p-3">
+                <p className="font-display text-sm uppercase tracking-wide text-zinc-300">Bonus</p>
+                <p className="my-2 min-h-10 text-sm text-zinc-200">{effect ?? "Aucun bonus"}</p>
+                <ChangeCardDialog slot="bonus" alternatives={bonuses} tirePerfs={tirePerfs} onPick={setBonus} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button type="button" onClick={close} className="min-h-14 rounded-xl border border-zinc-600 font-display text-xl font-bold uppercase hover:bg-zinc-800">
+                  Annuler
+                </button>
+                <button type="button" onClick={launch} disabled={!deckId} className="min-h-14 rounded-xl bg-amber-500 font-display text-xl font-bold uppercase text-black hover:bg-amber-400 disabled:opacity-50">
+                  Lancer le duel
+                </button>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
-    </div>
+    </>
   );
 }

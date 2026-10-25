@@ -8,10 +8,12 @@ export function Modal({
   labelledBy,
   children,
   wide = false,
+  size,
 }: {
   labelledBy: string;
   children: React.ReactNode;
   wide?: boolean;
+  size?: "md" | "lg" | "xl";
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -33,7 +35,7 @@ export function Modal({
       aria-modal
       aria-labelledby={labelledBy}
     >
-      <div className={`max-h-[min(88dvh,52rem)] w-full overflow-y-auto overscroll-contain rounded-2xl border border-zinc-700 bg-[#12151c] p-5 shadow-2xl ${wide ? "max-w-3xl" : "max-w-md"}`}>
+      <div className={`max-h-[min(88dvh,52rem)] w-full overflow-y-auto overscroll-contain rounded-2xl border border-zinc-700 bg-[#12151c] p-5 shadow-2xl ${size === "xl" ? "max-w-6xl" : size === "lg" || wide ? "max-w-3xl" : "max-w-md"}`}>
         {children}
       </div>
     </div>,

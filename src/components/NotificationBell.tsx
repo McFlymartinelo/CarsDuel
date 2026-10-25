@@ -3,7 +3,7 @@
 import { useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Check, Coins, ShieldCheck, Swords, Tag, Trophy, X, type LucideIcon } from "lucide-react";
+import { Bell, Check, Coins, ShieldCheck, Swords, Tag, Trophy, UserRound, X, type LucideIcon } from "lucide-react";
 import { markNotificationsSeen } from "@/app/(game)/notifications";
 import { formatDateTime } from "@/lib/format";
 import type { NotificationFeed, NotificationItem, NotificationKind } from "@/lib/types";
@@ -17,6 +17,7 @@ const KINDS: Record<NotificationKind, { icon: LucideIcon; tone: string; href: st
   offer_rejected: { icon: X, tone: "text-red-400", href: "/marketplace", text: (i) => `Offre refusée sur ${i.label} : ${coins(i.amount)} remboursées` },
   duel_won: { icon: ShieldCheck, tone: "text-emerald-400", href: "/duel", text: (i) => `Vous avez repoussé ${i.label}${i.amount > 0 ? ` : +${coins(i.amount)}` : ""}` },
   duel_lost: { icon: Swords, tone: "text-red-400", href: "/duel", text: (i) => `${i.label} a battu votre configuration` },
+  duel_request: { icon: UserRound, tone: "text-amber-300", href: "/duel/organises", text: (i) => `Demande de duel par ${i.label}` },
   payout: { icon: Trophy, tone: "text-amber-300", href: "/leaderboard", text: (i) => `${i.label} : +${coins(i.amount)}` },
 };
 

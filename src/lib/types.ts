@@ -39,6 +39,8 @@ export interface UserCard {
   tire_wear: number | null; // gomme restante (100 → 0)
   is_destroyed: boolean;
   is_listed: boolean;
+  source?: string;
+  acquired_at?: string;
   card_templates: CardTemplate;
 }
 
@@ -109,13 +111,13 @@ export type ActionState<T = unknown> = { ok: boolean; message?: string; data?: T
 export interface DuelReport {
   duelId: string;
   weather: Weather;
-  weatherNote: string;
+  weatherLines: string[];
   win: boolean;
   brokenPart: Category | null;
   partSaved: boolean;
   bonus: string | null;
   attackerSp: number | null;
-  defenderSp: number;
+  defenderSp: number | null;
   defenderName: string;
   scoreMeca: number;
   tireType: string;
@@ -143,6 +145,10 @@ export interface DuelReport {
   ghostShift: number;
   ghostGum: number;
   ghostTireType: string;
+  ghostScoreMeca: number;
+  ghostTireBonusPct: number;
+  ghostTireMalus: number;
+  ghostTireMod: number;
 }
 
 /** Carte révélée par un tirage (quotidien ou kit de départ). */
@@ -179,6 +185,7 @@ export type NotificationKind =
   | "offer_rejected"
   | "duel_won"
   | "duel_lost"
+  | "duel_request"
   | "payout";
 
 export interface NotificationItem {

@@ -166,16 +166,75 @@ export const BONUS_LABEL: Record<string, string> = {
   assistance_plateau: "Assistance plateau",
 };
 
-const sgn = (n: number) => `${n > 0 ? "+" : "−"}${Math.abs(n).toLocaleString("fr-FR", { minimumFractionDigits: 1 })} %`;
+function riskAmount(mod: number): string {
+  const abs = Math.abs(Number(mod));
+  if (!Number.isFinite(abs)) return "?";
+  if (Number.isInteger(abs)) return String(abs);
+  return abs.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+}
 
-/** Effets de la météo en une ligne (règles de la spec §3.C). */
-export function weatherNote(w: Weather, engineMod: number, gearboxMod: number): string {
-  const parts: string[] = [];
-  if (engineMod !== 0) parts.push(`Casse moteur ${sgn(engineMod)}`);
-  if (gearboxMod !== 0) parts.push(`casse boîte ${sgn(gearboxMod)}`);
-  if (w === "sunny_hot") parts.push("pneus Pluie usure ×2");
-  if (w === "sunny_cool") parts.push("pneus Pluie usure ×1,5");
-  if (w === "rain_hot" || w === "rain_cool") parts.push("pneus non-pluie usure ×0,5");
-  const text = parts.join(" · ");
-  return text.charAt(0).toUpperCase() + text.slice(1);
+function breakRiskLine(part: "moteur" | "boîte", mod: number): string {
+  const n = Number(mod);
+  if (n < 0) return `Risque de casse ${part} diminué de ${riskAmount(n)} %`;
+  if (n > 0) return `Risque de casse ${part} augmenté de ${riskAmount(n)} %`;
+  return `Risque de casse ${part} inchangé`;
+}
+
+/** Phrase d'usure selon les pneus équipés. Absente si la météo ne change pas leur usure. */
+export function tireWearLine(weather: Weather, tireType: string | null | undefined): string | null {
+  if (!tireType) return null;
+  const rainTire = tireType === "pluie";
+  if (weather === "sunny_hot" && rainTire) return "Usure de vos pneus actuels multipliée par 2";
+  if (weather === "sunny_cool" && rainTire) return "Usure de vos pneus actuels multipliée par 1,5";
+  if ((weather === "rain_hot" || weather === "rain_cool") && !rainTire) return "Usure de vos pneus actuels divisée par 2";
+  return null;
+}
+
+/** Effets de la météo, une idée par ligne. */
+export function weatherEffects(w: Weather, engineMod: number, gearboxMod: number, tireType?: string | null): string[] {
+  const lines = [breakRiskLine("moteur", engineMod), breakRiskLine("boîte", gearboxMod)];
+  const wear = tireWearLine(w, tireType);
+  if (wear) lines.push(wear);
+  return lines;
+}
+
+/** Jour calendaire à Paris, décalé (1 = demain). */
+function shiftParisDay(days: number, now = new Date()): Date {
+  const [y, m, d] = parisTodayParts(now);
+  const civil = new Date(Date.UTC(y, m - 1, d + days));
+  return zonedToUtc(civil.getUTCFullYear(), civil.getUTCMonth() + 1, civil.getUTCDate(), 0, 0, 0);
+}
+
+function parisOffsetMs(instant: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Paris",
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(instant);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return asUtc - instant.getTime();
+}
+
+function zonedToUtc(y: number, m: number, d: number, h: number, min: number, s: number): Date {
+  const guess = new Date(Date.UTC(y, m - 1, d, h, min, s));
+  const corrected = new Date(guess.getTime() - parisOffsetMs(guess));
+  return new Date(guess.getTime() - parisOffsetMs(corrected));
+}
+
+/** Prochain minuit à Paris. */
+export const nextParisMidnight = (now = new Date()) => shiftParisDay(1, now).toISOString();
+
+/** Prochain lundi 00:00 à Paris. */
+export function nextParisMonday(now = new Date()): string {
+  const [y, m, d] = parisTodayParts(now);
+  const utc = new Date(Date.UTC(y, m - 1, d));
+  const dow = utc.getUTCDay();
+  const add = dow === 0 ? 1 : dow === 1 ? 7 : 8 - dow;
+  return shiftParisDay(add, now).toISOString();
 }

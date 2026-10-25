@@ -36,6 +36,14 @@ const MESSAGES: Record<string, string> = {
   invalid_deck_card: "Carte invalide pour cet emplacement (propriété, catégorie ou mise en vente).",
   not_recyclable: "Cette carte ne se recycle pas.",
   bonus_not_sellable: "Les cartes bonus ne se vendent pas. Vous pouvez les recycler contre 1 pièce.",
+  user_not_found: "Ce pseudo est introuvable.",
+  cannot_challenge_self: "Vous ne pouvez pas vous défier vous-même.",
+  challenge_pending: "Une demande est déjà en attente entre vous et ce joueur.",
+  challenge_not_found: "Cette demande n'est plus disponible.",
+  config_incomplete: "Votre configuration est incomplète. Équipez un moteur, une boîte et des pneus disponibles.",
+  quest_unknown: "Ce défi n'est pas au programme aujourd'hui.",
+  quest_not_done: "Ce défi n'est pas encore terminé.",
+  quest_already_claimed: "Ces pièces ont déjà été récupérées.",
 };
 
 type PgErr = { message?: string; code?: string; stack?: string };

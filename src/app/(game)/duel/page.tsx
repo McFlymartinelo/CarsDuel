@@ -1,99 +1,78 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { DailyQuests } from "@/components/DailyQuests";
 import { DuelForm } from "@/components/DuelForm";
-import { SlotCard } from "@/components/garage/SlotCard";
-import { SlotTabs, type SlotKey } from "@/components/garage/SlotTabs";
+import { ConfigBoard } from "@/components/garage/ConfigBoard";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
+import { type SlotKey } from "@/components/garage/SlotTabs";
 import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
-import { DUEL_PAGE_SIZE, loadDuelPage } from "@/lib/queries";
+import { cardImageUrl } from "@/lib/card-images";
+import { DUEL_PAGE_SIZE, getDailyQuests, loadDuelPage } from "@/lib/queries";
 import { launchDuel } from "./actions";
 
-export const metadata = { title: "Duel — CarsDuel" };
+export const metadata = { title: "Jouer — CarsDuel" };
 
 const SLOTS: SlotKey[] = ["moteur", "boite", "pneus"];
 
-export default async function DuelPage({ searchParams }: { searchParams: Promise<{ bonus?: string; page?: string; slot?: string }> }) {
-  const { bonus: bonusParam, page: pageParam, slot: slotParam } = await searchParams;
+export default async function DuelPage({ searchParams }: { searchParams: Promise<{ page?: string; slot?: string }> }) {
+  const { page: pageParam, slot: slotParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const { user } = await requireUser();
-  const { cards: allCards, decks: allDecks, modifiers, history, suffered, names: nameOf } = await loadDuelPage(user.id, page);
+  const [{ cards: allCards, decks: allDecks, modifiers, history, suffered, names: nameOf }, quests] = await Promise.all([
+    loadDuelPage(user.id, page),
+    getDailyQuests(user.id).catch((e) => {
+      console.error("défis indisponibles :", e);
+      return null;
+    }),
+  ]);
   const cards = allCards.filter((x) => !x.is_destroyed && !x.is_listed);
   const alive = new Set(cards.map((x) => x.id));
   const config = allDecks[0];
-  const bonuses = cards.filter((x) => x.card_templates.category === "bonus");
+  const bonuses = cards
+    .filter((x) => x.card_templates.category === "bonus")
+    .map((x) => ({ ...x, image: cardImageUrl(x.card_templates) }));
   const slot: SlotKey = SLOTS.includes(slotParam as SlotKey) ? (slotParam as SlotKey) : "moteur";
   const byId = new Map(allCards.map((c) => [c.id, c]));
   const engine = config ? byId.get(config.engine_card_id) : undefined;
   const gearbox = config ? byId.get(config.gearbox_card_id) : undefined;
   const tire = config ? byId.get(config.tire_card_id) : undefined;
-  const playable = Boolean(
-    config && engine && gearbox && tire
-      && alive.has(engine.id) && alive.has(gearbox.id) && alive.has(tire.id),
-  );
+  const playable = Boolean(config && engine && gearbox && tire && alive.has(engine.id) && alive.has(gearbox.id) && alive.has(tire.id));
 
   const href = (over: Record<string, string>) => {
     const q = new URLSearchParams({ slot, ...over });
-    if (bonusParam) q.set("bonus", bonusParam);
     if (page > 1) q.set("page", String(page));
     return `/duel?${q.toString()}`;
   };
   const pageHref = (n: number) => {
     const q = new URLSearchParams({ slot });
-    if (bonusParam) q.set("bonus", bonusParam);
     if (n > 1) q.set("page", String(n));
     return `/duel?${q.toString()}`;
   };
-
-  const alternatives = (cat: string, current?: string) =>
-    cards.filter((c) => c.card_templates.category === cat && c.id !== current);
-  const slotWrap = (key: SlotKey) => (key === slot ? "" : "hidden md:block");
+  const alternatives = (cat: string, current?: string) => cards.filter((c) => c.card_templates.category === cat && c.id !== current);
 
   return (
     <>
-      <section className="space-y-3">
-        <h1 className="font-display text-3xl font-bold uppercase">Ma config</h1>
-        <p className="text-sm text-zinc-400">Choisissez le moteur, la boîte et les pneus de la course. Le garage ne garde que l&apos;inventaire.</p>
-        <SlotTabs current={slot} cards={{ moteur: engine, boite: gearbox, pneus: tire }} hrefFor={(s) => href({ slot: s })} />
-        <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 xl:grid-cols-[1fr_1fr_1fr_1.1fr]">
-          <div className={slotWrap("moteur")}>
-            <SlotCard slot="moteur" card={engine} alternatives={alternatives("moteur", engine?.id)} deckId={config?.id} tirePerfs={modifiers} />
-          </div>
-          <div className={slotWrap("boite")}>
-            <SlotCard slot="boite" card={gearbox} alternatives={alternatives("boite", gearbox?.id)} deckId={config?.id} tirePerfs={modifiers} />
-          </div>
-          <div className={slotWrap("pneus")}>
-            <SlotCard slot="pneus" card={tire} alternatives={alternatives("pneus", tire?.id)} deckId={config?.id} tirePerfs={modifiers} />
-          </div>
-          <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
-        </div>
-        {engine?.is_destroyed && (
-          <p className="rounded-lg border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">
-            Moteur cassé. Recyclage possible pour 1 pièce, dans le garage.
-          </p>
-        )}
-        {gearbox?.is_destroyed && (
-          <p className="rounded-lg border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">
-            Boîte cassée. Recyclage possible pour 1 pièce, dans le garage.
-          </p>
-        )}
-        {tire?.is_destroyed && (
-          <p className="rounded-lg border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">
-            Pneu mort : changez-le avant de rouler. Recyclage possible pour 1 pièce, dans le garage.
-          </p>
-        )}
-      </section>
+      <ConfigBoard
+        slot={slot}
+        hrefFor={(s) => href({ slot: s })}
+        engine={engine}
+        gearbox={gearbox}
+        tire={tire}
+        alternatives={alternatives}
+        deckId={config?.id}
+        modifiers={modifiers}
+      />
 
-      <section className="space-y-3">
-        <h2 className="hidden font-display text-3xl font-bold uppercase md:block">Duel contre un fantôme</h2>
-        <p className="hidden text-sm text-zinc-400 md:block">Un fantôme est tiré au hasard. Le résultat est calculé côté serveur.</p>
-        <DuelForm
-          action={launchDuel}
-          deckId={playable ? config?.id : undefined}
-          bonuses={bonuses.map((x) => ({ id: x.id, label: x.card_templates.name }))}
-          defaultBonus={bonuses.find((x) => x.id === bonusParam)?.id}
-        />
-        {!playable && <p className="text-sm text-zinc-500">Complétez Ma config avec un moteur, une boîte et des pneus disponibles.</p>}
-      </section>
+      <div className="flex flex-wrap gap-3">
+        <DuelForm action={launchDuel} deckId={playable ? config?.id : undefined} bonuses={bonuses} tirePerfs={modifiers}>
+          <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
+        </DuelForm>
+        <Link href="/duel/organises" className="inline-flex min-h-12 items-center rounded-xl border border-zinc-600 px-5 font-display text-lg font-bold uppercase hover:bg-zinc-800">
+          Duels organisés
+        </Link>
+        <DailyQuests state={quests} />
+      </div>
+      {!playable && <p className="text-sm text-zinc-500">Complétez Ma config avec un moteur, une boîte et des pneus disponibles.</p>}
 
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Duels subis récemment</h2>
@@ -105,13 +84,9 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
               <li key={x.id} className="rounded-lg border border-zinc-800 bg-[#10131a] p-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-zinc-300">Attaquant : {nameOf.get(x.attacker_id) ?? "?"}</span>
-                  <span className={`font-display font-bold uppercase ${won ? "text-emerald-400" : "text-red-400"}`}>
-                    {won ? "Victoire" : "Défaite"}
-                  </span>
+                  <span className={`font-display font-bold uppercase ${won ? "text-emerald-400" : "text-red-400"}`}>{won ? "Victoire" : "Défaite"}</span>
                 </div>
-                <p className="text-amber-300">
-                  {x.defender_rewarded ? `+${x.defender_coins} 🪙 · +${x.defender_xp} XP` : "Plafond de défenses atteint"}
-                </p>
+                <p className="text-amber-300">{x.defender_rewarded ? `+${x.defender_coins} 🪙 · +${x.defender_xp} XP` : "Plafond de défenses atteint"}</p>
               </li>
             );
           })}
@@ -129,14 +104,10 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
             return (
               <div key={x.id} className="rounded-lg border border-zinc-800 bg-[#10131a] p-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className={`font-display text-base font-bold uppercase ${won ? "text-emerald-400" : "text-red-400"}`}>
-                    {won ? "Victoire" : "Défaite"}
-                  </span>
+                  <span className={`font-display text-base font-bold uppercase ${won ? "text-emerald-400" : "text-red-400"}`}>{won ? "Victoire" : "Défaite"}</span>
                   <span className="text-xs text-zinc-500">{formatDateTime(x.created_at)}</span>
                 </div>
-                <p className="text-zinc-300">
-                  {attacker ? "Attaque" : "Défense"} vs {nameOf.get(attacker ? x.defender_id : x.attacker_id) ?? "?"} · {WEATHER_LABEL[x.weather]}
-                </p>
+                <p className="text-zinc-300">{attacker ? "Attaque" : "Défense"} vs {nameOf.get(attacker ? x.defender_id : x.attacker_id) ?? "?"} · {WEATHER_LABEL[x.weather]}</p>
                 <p className="text-amber-300">{attacker || x.defender_rewarded ? `+${coins} 🪙 · +${xp} XP` : "Plafond de défenses atteint"}</p>
               </div>
             );
