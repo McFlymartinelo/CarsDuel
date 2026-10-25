@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Swords } from "lucide-react";
+import { tileClass, TileBody } from "@/components/ActionTile";
 import { requireUser } from "@/lib/auth";
 import { DailyQuests } from "@/components/DailyQuests";
 import { DuelForm } from "@/components/DuelForm";
@@ -63,12 +65,12 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
         modifiers={modifiers}
       />
 
-      <div className="flex flex-wrap gap-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <DuelForm action={launchDuel} deckId={playable ? config?.id : undefined} bonuses={bonuses} tirePerfs={modifiers}>
           <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
         </DuelForm>
-        <Link href="/duel/organises" className="inline-flex min-h-12 items-center rounded-xl border border-zinc-600 px-5 font-display text-lg font-bold uppercase hover:bg-zinc-800">
-          Duels organisés
+        <Link href="/duel/organises" className={tileClass()}>
+          <TileBody icon={Swords} title="Duels organisés" text="Défi direct entre deux pilotes" />
         </Link>
         <DailyQuests state={quests} />
       </div>

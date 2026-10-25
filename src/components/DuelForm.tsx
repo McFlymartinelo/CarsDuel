@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { Shuffle } from "lucide-react";
+import { tileClass, TileBody } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
 import { ChangeCardDialog } from "@/components/garage/ChangeCardDialog";
 import { Modal } from "@/components/Modal";
@@ -51,7 +53,7 @@ export function DuelForm({
     setShowRace(false);
   }
 
-  const effect = bonus?.card_templates.description?.trim() || bonus?.card_templates.name;
+  const effect = bonus?.card_templates.name;
 
   return (
     <>
@@ -59,9 +61,9 @@ export function DuelForm({
         type="button"
         disabled={!deckId}
         onClick={() => { setShowRace(false); setOpen(true); }}
-        className="min-h-12 rounded-xl bg-amber-500 px-5 font-display text-lg font-bold uppercase text-black hover:bg-amber-400 disabled:opacity-50"
+        className={tileClass(true)}
       >
-        Affronter au hasard
+        <TileBody primary icon={Shuffle} title="Affronter au hasard" text="Défiez le fantôme d'un pilote" />
       </button>
 
       <form
