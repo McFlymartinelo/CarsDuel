@@ -3,10 +3,13 @@ import { requireUser } from "@/lib/auth";
 import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView } from "@/components/CardView";
-import { SortLinks } from "@/components/SortLinks";
 import { ViewToggle, viewMode, type CardViewMode } from "@/components/ViewToggle";
-import { ENGINE_SORTS, GEARBOX_SORTS, marketFilter } from "@/lib/catalog-sort";
+import { QuestPing } from "@/components/QuestPing";
+import { CatalogFilters } from "@/components/CatalogFilters";
+import { readCatalogQuery } from "@/lib/catalog-filters";
+import type { Rarity } from "@/lib/types";
 import { CATEGORY_LABEL, formatDateTime } from "@/lib/format";
+import { cardImageUrl } from "@/lib/card-images";
 import { LISTING_PAGE_SIZE, loadMarketplacePage } from "@/lib/queries";
 import type { Listing, PriceRef } from "@/lib/types";
 import { buyListing, cancelListing, makeOffer, respondOffer, withdrawOffer } from "./actions";
@@ -34,33 +37,33 @@ function PriceHint({ price, reference }: { price: number | null; reference: Pric
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; cat?: string; sort?: string; vue?: string }>;
+  searchParams: Promise<{ page?: string; tab?: string; rarity?: string; sort?: string; min?: string; max?: string; risk?: string; vue?: string }>;
 }) {
-  const { page: pageParam, cat, sort, vue } = await searchParams;
-  const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
-  const filter = marketFilter(cat, sort);
-  const view = viewMode(vue);
+  const sp = await searchParams;
+  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const query = readCatalogQuery(sp);
+  const view = viewMode(sp.vue);
   const { user } = await requireUser();
-  const { listings, offers, modifiers: tirePerfs, names: nameOf, priceRef, history } = await loadMarketplacePage(user.id, page, filter);
+  const { listings, offers, modifiers: tirePerfs, names: nameOf, priceRef, history, counts, rarityCounts } = await loadMarketplacePage(user.id, page, query);
 
   const mine = listings.filter((x) => x.seller_id === user.id);
   const others = listings.filter((x) => x.seller_id !== user.id);
   const myOffers = offers.filter((x) => x.buyer_id === user.id);
   const offersOn = (listingId: string) => offers.filter((x) => x.listing_id === listingId && x.buyer_id !== user.id);
 
-  const href = (o: { cat?: string; sort?: string; page?: number; view?: CardViewMode }) => {
+  const href = (o: { page?: number; view?: CardViewMode }) => {
     const q = new URLSearchParams();
-    if (o.cat && o.sort) {
-      q.set("cat", o.cat);
-      q.set("sort", o.sort);
-    }
+    q.set("tab", query.tab.key);
+    if (query.rarity) q.set("rarity", query.rarity);
+    if (query.sort) q.set("sort", query.sort);
+    if (query.min != null) q.set("min", String(query.min));
+    if (query.max != null) q.set("max", String(query.max));
+    if (query.risk != null) q.set("risk", String(query.risk));
     if (o.page && o.page > 1) q.set("page", String(o.page));
     if ((o.view ?? view) === "liste") q.set("vue", "liste");
-    const s = q.toString();
-    return s ? `/marketplace?${s}` : "/marketplace";
+    return `/marketplace?${q.toString()}`;
   };
-  const pageHref = (n: number) => href({ cat: filter?.category, sort: filter?.sort, page: n });
-  const sortHref = (category: "moteur" | "boite", key: string | null) => (key ? href({ cat: category, sort: key }) : href({}));
+  const pageHref = (n: number) => href({ page: n });
 
   const grid = view === "liste" ? "grid gap-2 xl:grid-cols-2" : "grid gap-3 md:grid-cols-2";
   const card = (x: Listing, children: React.ReactNode, note?: React.ReactNode) =>
@@ -69,7 +72,7 @@ export default async function MarketplacePage({
         {children}
       </CardRow>
     ) : (
-      <CardView key={x.id} template={x.user_cards.card_templates} card={x.user_cards} tirePerfs={tirePerfs}>
+      <CardView key={x.id} template={x.user_cards.card_templates} card={x.user_cards} image={cardImageUrl(x.user_cards.card_templates)} tirePerfs={tirePerfs}>
         {note}
         {children}
       </CardView>
@@ -77,30 +80,20 @@ export default async function MarketplacePage({
 
   return (
     <>
+      <QuestPing quest="marketplace" />
       <section className="space-y-3">
-        <h2 className="text-xl font-bold">Trier les annonces</h2>
-        <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:gap-x-8">
-          <SortLinks
-            label="Moteurs"
-            options={ENGINE_SORTS}
-            current={filter?.category === "moteur" ? filter.sort : undefined}
-            hrefFor={(key) => sortHref("moteur", key)}
-          />
-          <SortLinks
-            label="Boîtes"
-            options={GEARBOX_SORTS}
-            current={filter?.category === "boite" ? filter.sort : undefined}
-            hrefFor={(key) => sortHref("boite", key)}
-          />
-          <ViewToggle current={view} hrefFor={(mode) => href({ cat: filter?.category, sort: filter?.sort, page, view: mode })} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-bold">Filtrer les annonces</h2>
+          <ViewToggle current={view} hrefFor={(mode) => href({ view: mode })} />
         </div>
+        <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} extra={view === "liste" ? { vue: "liste" } : undefined} />
       </section>
 
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Mes annonces</h2>
         {mine.length === 0 && (
           <p className="text-sm text-zinc-500">
-            {filter ? "Aucune de vos annonces dans cette sélection." : "Aucune annonce en cours. La mise en vente se fait depuis le garage."}
+            Aucune de vos annonces dans cette sélection.
           </p>
         )}
         <div className={view === "liste" ? grid : "grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"}>

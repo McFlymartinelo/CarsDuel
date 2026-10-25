@@ -57,7 +57,7 @@ function Sparks({ fx }: { fx: Fx }) {
 function Face({ card }: { card: DrawnCard }) {
   const tire = card.category === "pneus" ? TIRE_THEME[card.tireType ?? ""] : undefined;
   const frame = tire?.frame ?? RARITY_FRAME[card.rarity ?? ""] ?? "border-zinc-500/70";
-  const badge = card.rarity ? RARITY_LABEL[card.rarity] : card.tireType ? (TIRE_LABEL[card.tireType] ?? card.tireType) : "Consommable";
+  const badge = card.rarity ? RARITY_LABEL[card.rarity] : card.tireType ? (TIRE_LABEL[card.tireType] ?? card.tireType) : null;
   return (
     <div className={`flex h-full flex-col overflow-hidden rounded-2xl border-2 bg-[#0b0d12] p-4 ${frame}`}>
       <p className="font-display text-xs font-semibold uppercase tracking-wider text-zinc-400">{CATEGORY_LABEL[card.category]}</p>
@@ -68,7 +68,7 @@ function Face({ card }: { card: DrawnCard }) {
         <div className="my-4 h-40" />
       )}
       <h3 className="font-display text-2xl font-bold uppercase leading-tight text-white">{card.name}</h3>
-      <p className={`mt-auto pt-4 font-display text-lg font-semibold uppercase ${tire?.accent ?? "text-amber-300"}`}>{badge}</p>
+      {badge && <p className={`mt-auto pt-4 font-display text-lg font-semibold uppercase ${tire?.accent ?? "text-amber-300"}`}>{badge}</p>}
     </div>
   );
 }

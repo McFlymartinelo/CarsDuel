@@ -1,7 +1,9 @@
 import "server-only";
 import type { PoolClient } from "pg";
 import { withUser } from "@/lib/db";
-import { LISTING_ORDER_SQL, type CardSort } from "@/lib/catalog-sort";
+import type { CatalogQuery } from "@/lib/catalog-filters";
+import { LISTING_ORDER_SQL } from "@/lib/catalog-sort";
+import type { DailyQuestState } from "@/lib/quests";
 import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, PriceRef, Profile, UserCard, UserDeck, CardTemplate } from "@/lib/types";
 
 // Toutes les lectures passent par withUser : la RLS s'applique (rôle app_user).
@@ -126,13 +128,74 @@ export const getLeaderboard = (uid: string, period: "weekly" | "monthly") =>
         order by rank, username limit 100`)).rows,
   );
 
-/** Garage : cartes, decks et modificateurs pneus, une seule transaction. */
+/** Garage : cartes, decks, annonces en cours et modificateurs pneus. */
 export const loadGaragePage = (uid: string) =>
   withUser(uid, async (c) => ({
     cards: await qCards(c, uid),
     decks: await qDecks(c, uid),
     modifiers: await qModifiers(c),
+    listings: (await c.query<{ id: string; card_id: string }>(
+      "select id, card_id from marketplace_listings where seller_id = $1 and status = 'active'",
+      [uid],
+    )).rows,
   }));
+
+export interface PullRow {
+  source: string;
+  acquired_at: string;
+  label: string;
+}
+
+/** Tirages gratuits déjà obtenus, du plus récent au plus ancien. */
+export const loadPullHistory = (uid: string) =>
+  withUser(uid, async (c) =>
+    (await c.query<PullRow>(
+      `select uc.source, uc.acquired_at,
+              case when t.category = 'bonus' then coalesce(nullif(t.description, ''), t.name) else t.name end as label
+         from user_cards uc
+         join card_templates t on t.id = uc.template_id
+        where uc.owner_id = $1 and uc.source in ('daily_pull', 'weekly_pull')
+        order by uc.acquired_at desc
+        limit 300`,
+      [uid],
+    )).rows,
+  );
+
+export interface DuelChallengeRow {
+  id: string;
+  challenger_id: string;
+  target_id: string;
+  created_at: string;
+  status: string;
+}
+
+export const loadOrganizedPage = (uid: string) =>
+  withUser(uid, async (c) => {
+    const cards = await qCards(c, uid);
+    const decks = await qDecks(c, uid);
+    const modifiers = await qModifiers(c);
+    const challenges = (await c.query<DuelChallengeRow>(
+      `select id, challenger_id, target_id, created_at, status
+         from duel_challenges
+        where status = 'pending' and (challenger_id = $1 or target_id = $1)
+        order by created_at desc`,
+      [uid],
+    )).rows;
+    const names = await qNames(c, [...new Set(challenges.flatMap((x) => [x.challenger_id, x.target_id]))]);
+    return { cards, decks, modifiers, challenges, names };
+  });
+
+export const touchQuest = (uid: string, key: string) =>
+  withUser(uid, (c) => c.query("select public.touch_quest($1::uuid, $2::text)", [uid, key]));
+
+export const getDailyQuests = (uid: string) =>
+  withUser(uid, async (c) => {
+    const row = (await c.query<{ r: DailyQuestState }>("select public.my_daily_quests($1::uuid) as r", [uid])).rows[0]?.r;
+    if (!row) return null;
+    const progress: Record<string, number> = {};
+    for (const [k, v] of Object.entries(row.progress ?? {})) progress[k] = Number(v);
+    return { second: row.second, third: row.third, progress, claimed: row.claimed ?? [] };
+  });
 
 /** Duel : inventaire, historique paginé, duels subis et pseudos. */
 export const loadDuelPage = (uid: string, page = 1) =>
@@ -156,18 +219,36 @@ export const loadDuelPage = (uid: string, page = 1) =>
     return { cards, decks, modifiers, history, suffered, names: await qNames(c, ids), page: p };
   });
 
-/** Marketplace : annonces (page), offres, inventaire et pseudos des vendeurs. */
-export const loadMarketplacePage = (uid: string, page = 1, filter?: { category: "moteur" | "boite"; sort: CardSort } | null) =>
+/** Marketplace : annonces filtrées (page), offres, inventaire et pseudos des vendeurs. */
+export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery | null) =>
   withUser(uid, async (c) => {
     const p = pageIndex(page);
-    const order = filter ? LISTING_ORDER_SQL[filter.sort] : "l.created_at desc";
+    const where = ["l.status = 'active'"];
+    const params: unknown[] = [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE];
+    if (filter) {
+      params.push(filter.tab.category);
+      where.push(`t.category = $${params.length}`);
+      if (filter.rarity) {
+        params.push(filter.rarity);
+        where.push(`t.rarity = $${params.length}`);
+      }
+      if (filter.min != null) {
+        params.push(filter.min);
+        where.push(`l.price >= $${params.length}`);
+      }
+      if (filter.max != null) {
+        params.push(filter.max);
+        where.push(`l.price <= $${params.length}`);
+      }
+      if (filter.risk != null) {
+        params.push(filter.risk);
+        where.push(`(coalesce(t.base_break_risk, 0) + uc.runs_count * coalesce(t.wear_sensitivity, 0)) <= $${params.length}`);
+      }
+    }
+    const order = filter?.sort ? LISTING_ORDER_SQL[filter.sort] : "l.created_at desc";
     const listings = (await c.query<Listing>(
-      filter
-        ? `${LISTING_SELECT} where l.status = 'active' and t.category = $3 order by ${order} limit $1 offset $2`
-        : `${LISTING_SELECT} where l.status = 'active' order by ${order} limit $1 offset $2`,
-      filter
-        ? [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE, filter.category]
-        : [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE],
+      `${LISTING_SELECT} where ${where.join(" and ")} order by ${order} limit $1 offset $2`,
+      params,
     )).rows;
     const offers = (await c.query<Offer>(
       "select * from marketplace_offers where status = 'pending' order by created_at desc limit $1",
@@ -187,7 +268,28 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: { category: 
     const history = p === 1
       ? (await c.query<MarketHistoryRow>("select * from public.my_market_history($1::uuid, 15)", [uid])).rows
       : [];
-    return { listings, offers, cards, decks, modifiers, names, priceRef, history, page: p };
+    const counts: Record<string, number> = {};
+    for (const row of (await c.query<{ category: string; n: string | number }>(
+      `select t.category, count(*)::int as n
+         from marketplace_listings l
+         join user_cards uc on uc.id = l.card_id
+         join card_templates t on t.id = uc.template_id
+        where l.status = 'active'
+        group by t.category`,
+    )).rows) counts[row.category] = Number(row.n);
+    const rarityCounts: Record<string, number> = {};
+    if (filter && (filter.tab.category === "moteur" || filter.tab.category === "boite")) {
+      for (const row of (await c.query<{ rarity: string; n: string | number }>(
+        `select t.rarity::text as rarity, count(*)::int as n
+           from marketplace_listings l
+           join user_cards uc on uc.id = l.card_id
+           join card_templates t on t.id = uc.template_id
+          where l.status = 'active' and t.category = $1 and t.rarity is not null
+          group by t.rarity`,
+        [filter.tab.category],
+      )).rows) rarityCounts[row.rarity] = Number(row.n);
+    }
+    return { listings, offers, cards, decks, modifiers, names, priceRef, history, page: p, counts, rarityCounts };
   });
 
 /** Notifications du Nav : une seule lecture, calculée en base (cf. migration 018). */

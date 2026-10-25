@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Gauge, Hash, Timer, Weight, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, Coins, Gauge, Hash, Timer, Weight, type LucideIcon } from "lucide-react";
 
 const META: Record<string, { icon: LucideIcon; down: boolean }> = {
   power: { icon: Gauge, down: true },
   weight: { icon: Weight, down: false },
   shift: { icon: Timer, down: false },
   ref: { icon: Hash, down: false },
+  price: { icon: Coins, down: false },
 };
 
 export function SortLinks({

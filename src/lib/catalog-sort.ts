@@ -12,7 +12,9 @@ export const GEARBOX_SORTS = [
   { key: "ref", label: "Référence", title: "Numéro croissant" },
 ] as const;
 
-export type CardSort = "power" | "weight" | "ref" | "shift";
+export const PRICE_SORT = { key: "price", label: "Prix", title: "Prix croissant" } as const;
+
+export type CardSort = "power" | "weight" | "ref" | "shift" | "price";
 
 /** Fragments ORDER BY figés. Jamais construits à partir du texte utilisateur. */
 export const LISTING_ORDER_SQL: Record<CardSort, string> = {
@@ -20,6 +22,7 @@ export const LISTING_ORDER_SQL: Record<CardSort, string> = {
   weight: "t.weight_kg asc nulls last, t.name",
   shift: "t.shift_time_ms asc nulls last, t.name",
   ref: "nullif(substring(t.code from '^[mb]_([0-9]+)'), '')::int asc nulls last, t.code asc, t.name",
+  price: "l.price asc nulls last, t.name",
 };
 
 const has = (options: readonly { key: string }[], sort: string | undefined) => options.some((s) => s.key === sort);
@@ -55,6 +58,7 @@ export function compareTemplates(a: CardTemplate, b: CardTemplate, sort: CardSor
   if (sort === "power") return (b.power_hp ?? -1) - (a.power_hp ?? -1) || name;
   if (sort === "weight") return (a.weight_kg ?? Number.MAX_SAFE_INTEGER) - (b.weight_kg ?? Number.MAX_SAFE_INTEGER) || name;
   if (sort === "shift") return (a.shift_time_ms ?? Number.MAX_SAFE_INTEGER) - (b.shift_time_ms ?? Number.MAX_SAFE_INTEGER) || name;
+  if (sort === "price") return name;
   const [an, asuf] = refParts(a.code);
   const [bn, bsuf] = refParts(b.code);
   return an - bn || asuf.localeCompare(bsuf) || name;

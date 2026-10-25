@@ -1,7 +1,6 @@
 import { ArrowUp, CloudDrizzle, CloudRain, CloudSun, Cog, Gauge, Joystick, Shield, Sun, Swords, Timer, TrendingDown, TriangleAlert, Weight, Zap, type LucideIcon } from "lucide-react";
 import { BONUS_LABEL, CATEGORY_LABEL, GEARBOX_LABEL, RARITY_LABEL, TIRE_THEME, WEATHER_LABEL } from "@/lib/format";
 import { currentBreakRisk, isNewTire } from "@/lib/game";
-import { cardImageUrl } from "@/lib/card-images";
 import type { CardTemplate, Rarity, UserCard, Weather } from "@/lib/types";
 
 const TIRE_WEATHERS: { weather: Weather; icon: LucideIcon }[] = [
@@ -157,21 +156,26 @@ const cardNumber = (code: string | null) => {
 export function CardView({
   template,
   card,
+  image = null,
   tirePerfs = [],
   children,
 }: {
   template: CardTemplate;
   card?: Pick<UserCard, "runs_count" | "tire_wear" | "is_listed" | "is_destroyed">;
+  /** URL déjà résolue côté serveur (les fichiers du disque ne sont pas lisibles dans le navigateur). */
+  image?: string | null;
   tirePerfs?: TirePerf[];
   children?: React.ReactNode;
 }) {
   const rarity = template.rarity;
   const tireTheme = template.category === "pneus" ? TIRE_THEME[template.tire_type ?? ""] : undefined;
   const theme = rarity ? THEME[rarity] : tireTheme ?? THEME.neutre;
-  const img = cardImageUrl(template);
+  const img = image;
   const number = cardNumber(template.code);
   const stats = statsOf(template);
-  const badge = rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (card && !isNewTire(card) ? "Usagé" : null) : "Consommable";
+  const bonus = template.category === "bonus";
+  const headline = bonus ? (template.description?.trim() || BONUS_LABEL[template.bonus_effect ?? ""] || template.name) : template.name;
+  const badge = bonus ? null : rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (card && !isNewTire(card) ? "Usagé" : null) : null;
 
   const currentRisk = card ? currentBreakRisk(template, card.runs_count) : null;
   const riskTone = currentRisk !== null ? riskStyle(currentRisk) : null;
@@ -190,7 +194,7 @@ export function CardView({
         )}
 
         <div className="relative flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider">
-          <span className={`rounded-md border px-2.5 py-1 text-zinc-300 ${theme.inner}`}>{number ?? "—"}</span>
+          {!bonus && <span className={`rounded-md border px-2.5 py-1 text-zinc-300 ${theme.inner}`}>{number ?? "—"}</span>}
           <span className={`min-w-0 flex-1 truncate rounded-md border px-2.5 py-1 text-center ${theme.inner} ${theme.accent}`}>{CATEGORY_LABEL[template.category]}</span>
           {card && currentRisk !== null && (
             <span
@@ -204,7 +208,7 @@ export function CardView({
           )}
         </div>
 
-        <h3 className="relative mt-4 line-clamp-3 min-h-[4.95rem] font-display text-2xl font-bold uppercase leading-[1.1] tracking-wide text-white">{template.name}</h3>
+        <h3 className={`relative mt-4 line-clamp-4 min-h-[4.95rem] font-display font-bold leading-[1.1] tracking-wide text-white ${bonus ? "text-xl" : "text-2xl uppercase"}`}>{headline}</h3>
 
         {badge && (
           <div className={`relative mt-3 flex items-center gap-2 font-display text-lg font-semibold uppercase tracking-wider ${theme.accent}`}>
@@ -222,13 +226,11 @@ export function CardView({
 
         {template.category === "pneus" ? (
           <TireBlocks template={template} tirePerfs={tirePerfs} accent={theme.accent} />
-        ) : (
+        ) : bonus ? null : (
           <div className="relative mt-5">
             <StatList stats={stats} accent={theme.accent} />
           </div>
         )}
-
-        {template.category === "bonus" && template.description && <p className="relative mt-2 text-sm text-zinc-300">{template.description}</p>}
 
         {card?.tire_wear != null && (
           <p className="relative mt-4 font-display text-sm uppercase tracking-wide text-zinc-400">

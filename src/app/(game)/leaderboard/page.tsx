@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { QuestPing } from "@/components/QuestPing";
 import { getLeaderboard } from "@/lib/queries";
 
 export const metadata = { title: "Classement — CarsDuel" };
@@ -37,6 +38,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
 
   return (
     <section className="space-y-4">
+      <QuestPing quest="leaderboard" />
       <h1 className="font-display text-2xl font-bold uppercase">Classement XP</h1>
       <div className="flex gap-2">
         <Link href="/leaderboard?period=weekly" className={tab(!monthly)}>Hebdomadaire</Link>
