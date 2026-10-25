@@ -187,7 +187,7 @@ export function CardView({
           <>
             <div className={`pointer-events-none absolute -bottom-6 -right-8 h-3/5 w-4/5 rounded-full bg-gradient-to-t ${theme.glow} to-transparent blur-2xl`} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img} alt="" className="pointer-events-none absolute -bottom-4 -right-10 h-3/5 w-4/5 object-contain opacity-60 mix-blend-lighten" />
+            <img src={img} alt="" loading="lazy" decoding="async" fetchPriority="low" className="pointer-events-none absolute -bottom-4 -right-10 h-3/5 w-4/5 object-contain opacity-60 mix-blend-lighten" />
           </>
         ) : (
           <Cog aria-hidden strokeWidth={1} className={`pointer-events-none absolute -bottom-6 -right-6 h-44 w-44 opacity-10 ${theme.accent}`} />

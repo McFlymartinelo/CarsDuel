@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Cog, Coins, Disc, Settings2, TriangleAlert, Zap, type LucideIcon } from "lucide-react";
 import { SortLinks } from "@/components/SortLinks";
+import { MobileCatalogFilters } from "@/components/MobileCatalogFilters";
 import { FILTER_TABS, sortsFor, type CatalogQuery } from "@/lib/catalog-filters";
 import { RARITY_LABEL } from "@/lib/format";
 import type { Rarity } from "@/lib/types";
@@ -70,7 +71,8 @@ export function CatalogFilters({
   const bounds = query.min != null || query.max != null || query.risk != null;
 
   return (
-    <div className="space-y-3">
+    <>
+    <div className="hidden space-y-3 md:block">
       <div className={row}>
         <span className={label}>Type</span>
         <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Type de carte">
@@ -144,5 +146,7 @@ export function CatalogFilters({
         </div>
       </form>
     </div>
+    <MobileCatalogFilters path={path} query={query} counts={counts} rarityCounts={rarityCounts} extra={extra} showRisk={showRisk} />
+    </>
   );
 }

@@ -23,17 +23,17 @@ export default async function ShopPage({
   const query = readCatalogQuery({ ...sp, risk: undefined });
   const view = viewMode(sp.vue);
   const { user } = await requireUser();
-  const { items, modifiers: tirePerfs } = await loadShopPage(user.id);
+  const { items, catalogCounts, modifiers: tirePerfs } = await loadShopPage(user.id, query);
 
   const counts: Record<string, number> = {};
-  for (const it of items) counts[it.card_templates.category] = (counts[it.card_templates.category] ?? 0) + 1;
-  const inTab = items.filter((it) => it.card_templates.category === query.tab.category);
   const rarityCounts: Partial<Record<Rarity, number>> = {};
-  for (const it of inTab) {
-    const r = it.card_templates.rarity;
-    if (r) rarityCounts[r] = (rarityCounts[r] ?? 0) + 1;
+  for (const row of catalogCounts) {
+    counts[row.category] = (counts[row.category] ?? 0) + row.n;
+    if (row.category === query.tab.category && row.rarity) {
+      rarityCounts[row.rarity as Rarity] = row.n;
+    }
   }
-  const shown = inTab
+  const shown = items
     .filter((it) => !query.rarity || it.card_templates.rarity === query.rarity)
     .filter((it) => query.min == null || it.price >= query.min)
     .filter((it) => query.max == null || it.price <= query.max)

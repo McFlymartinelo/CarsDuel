@@ -101,11 +101,38 @@ export interface CatalogRow {
   card_templates: CardTemplate;
 }
 
-async function qCatalog(c: PoolClient) {
+async function qCatalog(c: PoolClient, filter?: CatalogQuery) {
+  const where = ["s.is_active"];
+  const params: unknown[] = [];
+  if (filter) {
+    params.push(filter.tab.category);
+    where.push(`t.category = $${params.length}`);
+    if (filter.rarity) {
+      params.push(filter.rarity);
+      where.push(`t.rarity = $${params.length}`);
+    }
+    if (filter.min != null) {
+      params.push(filter.min);
+      where.push(`s.price >= $${params.length}`);
+    }
+    if (filter.max != null) {
+      params.push(filter.max);
+      where.push(`s.price <= $${params.length}`);
+    }
+  }
   return (await c.query<CatalogRow>(
     `select s.id, s.price, s.stock, to_jsonb(t) as card_templates
        from shop_catalog s join card_templates t on t.id = s.template_id
-      where s.is_active order by s.price, t.name`)).rows;
+      where ${where.join(" and ")} order by s.price, t.name`, params)).rows;
+}
+
+async function qCatalogCounts(c: PoolClient) {
+  return (await c.query<{ category: string; rarity: string | null; n: number }>(
+    `select t.category, t.rarity::text as rarity, count(*)::int as n
+       from shop_catalog s join card_templates t on t.id = s.template_id
+      where s.is_active
+      group by t.category, t.rarity`,
+  )).rows;
 }
 
 export const getShopCatalog = (uid: string) => withUser(uid, (c) => qCatalog(c));
@@ -254,8 +281,6 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery
       "select * from marketplace_offers where status = 'pending' order by created_at desc limit $1",
       [OFFER_LIMIT],
     )).rows;
-    const cards = await qCards(c, uid);
-    const decks = await qDecks(c, uid);
     const modifiers = await qModifiers(c);
     const names = await qNames(c, [...new Set(listings.map((x) => x.seller_id))]);
     const templateIds = [...new Set(listings.map((x) => x.user_cards.template_id))];
@@ -289,7 +314,7 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery
         [filter.tab.category],
       )).rows) rarityCounts[row.rarity] = Number(row.n);
     }
-    return { listings, offers, cards, decks, modifiers, names, priceRef, history, page: p, counts, rarityCounts };
+    return { listings, offers, modifiers, names, priceRef, history, page: p, counts, rarityCounts };
   });
 
 /** Notifications du Nav : une seule lecture, calculée en base (cf. migration 018). */
@@ -299,8 +324,9 @@ export const getNotifications = (uid: string) =>
   );
 
 /** Boutique : catalogue et modificateurs pneus. */
-export const loadShopPage = (uid: string) =>
+export const loadShopPage = (uid: string, filter: CatalogQuery) =>
   withUser(uid, async (c) => ({
-    items: await qCatalog(c),
+    items: await qCatalog(c, filter),
+    catalogCounts: await qCatalogCounts(c),
     modifiers: await qModifiers(c),
   }));
