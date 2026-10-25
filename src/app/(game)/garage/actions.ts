@@ -27,7 +27,7 @@ export async function claimDailyPull(_prev: ActionState<{ cards: DrawnCard[] }>,
   const res = await callRpc<{ card_ids: string[] }>(
     "select public.claim_daily_pull($1::uuid) as r",
     (id) => [id],
-    ["/", "/garage"],
+    ["/", "/garage", "/garage/tirages"],
   );
   if (!res?.ok) return { ok: false, message: res?.message };
   return { ok: true, data: { cards: await drawnFromIds(res.data?.card_ids ?? []) } };
@@ -37,7 +37,7 @@ export async function claimWeeklyPull(_prev: ActionState<{ cards: DrawnCard[] }>
   const res = await callRpc<{ card_ids: string[] }>(
     "select public.claim_weekly_pull($1::uuid) as r",
     (id) => [id],
-    ["/", "/garage"],
+    ["/", "/garage", "/garage/tirages"],
   );
   if (!res?.ok) return { ok: false, message: res?.message };
   return { ok: true, data: { cards: await drawnFromIds(res.data?.card_ids ?? []) } };
@@ -47,7 +47,7 @@ export async function recycleCard(_prev: ActionState, fd: FormData): Promise<Act
   const res = await callRpc<{ coins: number }>(
     "select public.recycle_card($1::uuid, $2::uuid) as r",
     (id) => [id, str(fd, "card_id")],
-    ["/", "/garage", "/duel", "/marketplace"],
+    ["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel", "/marketplace"],
   );
   if (res?.ok) return { ok: true, message: `Recyclage : +${res.data?.coins ?? 0} pièces.` };
   return res;
@@ -124,5 +124,5 @@ export async function equipCard(_prev: ActionState, fd: FormData): Promise<Actio
       "insert into user_decks (owner_id, name, engine_card_id, gearbox_card_id, tire_card_id) values ($1, 'Deck principal', $2, $3, $4)",
       [uid, pick.moteur, pick.boite, pick.pneus],
     );
-  }, "Carte équipée.", ["/garage", "/duel"]);
+  }, "Carte équipée.", ["/garage", "/garage/inventaire", "/duel", "/duel/organises"]);
 }

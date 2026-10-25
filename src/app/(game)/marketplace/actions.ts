@@ -19,7 +19,7 @@ export async function listCard(_p: ActionState, fd: FormData): Promise<ActionSta
 
 export async function cancelListing(_p: ActionState, fd: FormData): Promise<ActionState> {
   return done("Annonce retirée.")(
-    await callRpc("select public.cancel_listing($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "listing_id")], ["/marketplace", "/garage"]),
+    await callRpc("select public.cancel_listing($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "listing_id")], ["/marketplace", "/garage", "/garage/inventaire"]),
   );
 }
 

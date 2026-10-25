@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { CardDraw } from "@/components/CardDraw";
+import { PullCountdown } from "@/components/PullCountdown";
 import type { ActionState, DrawnCard } from "@/lib/types";
 
 type PullState = ActionState<{ cards: DrawnCard[] }>;
@@ -12,6 +13,7 @@ function PullCard({
   description,
   claimed,
   claimedText,
+  nextAt,
   drawTitle,
   action,
   variant,
@@ -20,6 +22,7 @@ function PullCard({
   description: string;
   claimed: boolean;
   claimedText: string;
+  nextAt?: string;
   drawTitle: string;
   action: PullAction;
   variant: "primary" | "ghost";
@@ -36,7 +39,10 @@ function PullCard({
     <form action={formAction} className="rounded-xl border border-zinc-800 bg-[#0e1117] p-4">
       <h3 className="font-semibold">{title}</h3>
       {claimed ? (
-        <p className="mt-2 text-sm text-zinc-400">{claimedText}</p>
+        <>
+          <p className="mt-2 text-sm text-zinc-400">{claimedText}</p>
+          {nextAt && <PullCountdown until={nextAt} />}
+        </>
       ) : (
         <>
           <p className="mb-3 text-sm text-zinc-400">{description}</p>
@@ -63,11 +69,15 @@ export function DailyPull({
   weeklyClaimed,
   dailyAction,
   weeklyAction,
+  nextDaily,
+  nextWeekly,
 }: {
   dailyClaimed: boolean;
   weeklyClaimed: boolean;
   dailyAction: PullAction;
   weeklyAction: PullAction;
+  nextDaily: string;
+  nextWeekly: string;
 }) {
   return (
     <section id="tirage" className="scroll-mt-28 space-y-3">
@@ -77,7 +87,8 @@ export function DailyPull({
           title="Quotidien"
           description="3 cartes bonus tirées au sort."
           claimed={dailyClaimed}
-          claimedText="Déjà effectué aujourd'hui. Prochain tirage à minuit (heure de Paris)."
+          claimedText="Déjà effectué aujourd'hui."
+          nextAt={nextDaily}
           drawTitle="Tirage quotidien"
           action={dailyAction}
           variant="primary"
@@ -86,7 +97,8 @@ export function DailyPull({
           title="Hebdomadaire"
           description="Un moteur ou une boîte (raretés 70 / 20 / 7 / 2,5 / 0,5 %)."
           claimed={weeklyClaimed}
-          claimedText="Déjà effectué cette semaine. Prochain tirage lundi (heure de Paris)."
+          claimedText="Déjà effectué cette semaine."
+          nextAt={nextWeekly}
           drawTitle="Tirage hebdomadaire"
           action={weeklyAction}
           variant="ghost"
