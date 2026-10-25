@@ -40,7 +40,7 @@ export function NotificationBell({ feed }: { feed: NotificationFeed }) {
     <details ref={details} onToggle={onToggle} className="relative">
       <summary
         aria-label={feed.unread > 0 ? `Notifications : ${feed.unread} nouvelle(s)` : "Notifications"}
-        className="relative flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 md:h-10 md:w-10 [&::-webkit-details-marker]:hidden"
+        className="relative flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 min-[390px]:h-12 min-[390px]:w-12 md:h-10 md:w-10 [&::-webkit-details-marker]:hidden"
       >
         <Bell size={20} strokeWidth={1.8} />
         {feed.unread > 0 && (

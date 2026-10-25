@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Coins, House, ShoppingBag, Swords, Tag } from "lucide-react";
+import { BarChart3, Coins, Gift, House, ShoppingBag, Swords, Tag } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
@@ -100,29 +100,36 @@ export function Nav({
 
       {/* ---------- Mobile : logo, pièces, tirages ---------- */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-[#0d1015]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
-        <div className="flex items-center gap-2 px-3 py-2">
-          <Link href="/garage" className="flex shrink-0 items-center gap-2 font-display text-xl font-bold uppercase leading-[0.85]">
+        <div className="flex items-center gap-1 px-2 py-2 min-[390px]:gap-1.5 min-[390px]:px-3">
+          <Link href="/garage" className="flex shrink-0 items-center gap-1.5 font-display text-lg font-bold uppercase leading-[0.85] min-[390px]:gap-2 min-[390px]:text-xl">
             <Logo size={36} />
-            <span>
+            <span className="hidden min-[390px]:block">
               Cars<br />
               <span className="text-zinc-500">Duel</span>
             </span>
           </Link>
-          <span className="ml-auto inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1 font-display text-amber-400" title="Pièces">
-            <Coins size={14} strokeWidth={2.25} />
-            <b className="text-sm tabular-nums">{coins.toLocaleString("fr-FR")}</b>
-          </span>
-          <Link
-            href="/garage/tirages"
-            className="flex min-h-11 min-w-16 flex-col items-center justify-center rounded-lg border border-zinc-700 px-3 font-display uppercase leading-tight"
-          >
-            <span className="text-[11px] font-bold tracking-wide">Tirages</span>
-            <span className={`text-xs ${pullsAvailable ? "text-emerald-400" : "text-zinc-500"}`}>
-              {pullsAvailable ? "Dispo ●" : "Déjà fait"}
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <span className="inline-flex h-11 w-[4.9rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1.5 font-display text-amber-400 min-[390px]:h-12 min-[390px]:w-[5.25rem] min-[390px]:gap-1.5" title="Pièces" aria-label={`${coins.toLocaleString("fr-FR")} pièces`}>
+              <Coins size={14} strokeWidth={2.25} className="shrink-0 min-[390px]:h-4 min-[390px]:w-4" />
+              <b className="truncate text-[10px] tabular-nums min-[390px]:text-xs">{coins.toLocaleString("fr-FR")}</b>
             </span>
-          </Link>
-          {bell}
-          {profileMenu}
+            <Link
+              href="/garage/tirages"
+              aria-label={`Tirages : ${pullsAvailable ? "disponibles" : "déjà faits"}`}
+              className="relative inline-flex h-11 w-[4.7rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1 font-display uppercase leading-tight hover:bg-zinc-800 min-[390px]:h-12 min-[390px]:w-[4.75rem] min-[390px]:gap-1.5"
+            >
+              <Gift size={14} strokeWidth={1.9} className="shrink-0 text-zinc-200 min-[390px]:h-4 min-[390px]:w-4" />
+              <span className="flex min-w-0 flex-col items-start">
+                <span className="text-[9px] font-bold tracking-wide min-[390px]:text-[10px]">Tirages</span>
+                <span className={`whitespace-nowrap text-[8px] font-semibold normal-case min-[390px]:text-[9px] ${pullsAvailable ? "text-emerald-400" : "text-zinc-400"}`}>
+                  {pullsAvailable ? "Dispo" : "Déjà fait"}
+                </span>
+              </span>
+              <span aria-hidden className={`absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full ${pullsAvailable ? "bg-emerald-400" : "bg-zinc-500"}`} />
+            </Link>
+            {bell}
+            {profileMenu}
+          </div>
         </div>
       </header>
 
