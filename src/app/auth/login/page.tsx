@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Logo } from "@/components/Logo";
 import { ActionForm } from "@/components/ActionForm";
 import { getCurrentUser } from "@/lib/session";
 import { signIn, signUp } from "../actions";
@@ -11,7 +12,10 @@ export default async function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-4 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-      <h1 className="text-center text-3xl font-bold text-amber-400">CarsDuel</h1>
+      <h1 className="flex flex-col items-center gap-3 text-center text-3xl font-bold text-amber-400">
+        <Logo size={120} />
+        CarsDuel
+      </h1>
       <div className="grid gap-6 sm:grid-cols-2">
         <section className="rounded-lg border border-zinc-800 p-5">
           <h2 className="mb-3 font-semibold">Connexion</h2>

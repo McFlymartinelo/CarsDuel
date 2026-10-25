@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Coins, House, ShoppingBag, Swords, Tag } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import type { NotificationFeed } from "@/lib/types";
@@ -50,9 +51,12 @@ export function Nav({
       {/* ---------- PC / tablette : en-tête complet + onglets ---------- */}
       <header className="hidden border-b border-zinc-800 bg-[#0d1015] md:block">
         <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-x-8 gap-y-3 px-6 py-3 2xl:px-10">
-          <Link href="/garage" className="font-display text-2xl font-bold uppercase leading-[0.85] tracking-wide">
-            Cars<br />
-            <span className="text-zinc-500">Duel</span>
+          <Link href="/garage" className="flex items-center gap-3 font-display text-2xl font-bold uppercase leading-[0.85] tracking-wide">
+            <Logo size={48} />
+            <span>
+              Cars<br />
+              <span className="text-zinc-500">Duel</span>
+            </span>
           </Link>
 
           <div className="ml-auto flex items-center gap-3">
@@ -97,9 +101,12 @@ export function Nav({
       {/* ---------- Mobile : logo, pièces, tirages ---------- */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-[#0d1015]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
         <div className="flex items-center gap-2 px-3 py-2">
-          <Link href="/garage" className="shrink-0 font-display text-xl font-bold uppercase leading-[0.85]">
-            Cars<br />
-            <span className="text-zinc-500">Duel</span>
+          <Link href="/garage" className="flex shrink-0 items-center gap-2 font-display text-xl font-bold uppercase leading-[0.85]">
+            <Logo size={36} />
+            <span>
+              Cars<br />
+              <span className="text-zinc-500">Duel</span>
+            </span>
           </Link>
           <span className="ml-auto inline-flex items-center gap-1 rounded-lg border border-zinc-700 px-2 py-1 font-display text-amber-400" title="Pièces">
             <Coins size={14} strokeWidth={2.25} />
