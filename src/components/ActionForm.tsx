@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { Modal } from "@/components/Modal";
 import type { ActionState } from "@/lib/types";
@@ -24,6 +24,7 @@ export function ActionForm({
   className = "flex flex-wrap items-end gap-2",
   variant = "primary",
   confirmText,
+  onSuccess,
 }: {
   action: Action;
   submitLabel: string;
@@ -32,12 +33,17 @@ export function ActionForm({
   variant?: keyof typeof VARIANTS;
   /** Texte de confirmation ; `{champ}` est remplacé par la valeur saisie (une fonction ne peut pas venir d'un Server Component). */
   confirmText?: string;
+  onSuccess?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const formRef = useRef<HTMLFormElement>(null);
   const skipConfirm = useRef(false);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (state?.ok) onSuccess?.();
+  }, [state, onSuccess]);
 
   function accept() {
     skipConfirm.current = true;

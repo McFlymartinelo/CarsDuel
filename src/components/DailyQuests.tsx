@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Target } from "lucide-react";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { Modal } from "@/components/Modal";
 import { claimQuest } from "@/app/(game)/quests";
@@ -54,7 +53,7 @@ export function DailyQuests({ state }: { state: DailyQuestState | null }) {
         onClick={() => setOpen(true)}
         className={tileClass()}
       >
-        <TileBody icon={Target} title="Défis quotidiens" text="3 défis par jour · 5 pièces chacun" />
+        <TileBody title="Défis quotidiens" text="3 défis par jour · 5 pièces chacun" image="/duel/defis.webp" />
       </button>
       {open && (
         <Modal labelledBy="quests-title" wide>

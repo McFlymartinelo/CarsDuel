@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Shuffle } from "lucide-react";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
 import { ChangeCardDialog } from "@/components/garage/ChangeCardDialog";
@@ -61,9 +60,9 @@ export function DuelForm({
         type="button"
         disabled={!deckId}
         onClick={() => { setShowRace(false); setOpen(true); }}
-        className={tileClass(true)}
+        className={tileClass()}
       >
-        <TileBody primary icon={Shuffle} title="Affronter au hasard" text="Défiez le fantôme d'un pilote" />
+        <TileBody title="Affronter au hasard" text="Défiez le fantôme d'un pilote" image="/duel/hasard.webp" />
       </button>
 
       <form
