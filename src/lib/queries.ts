@@ -11,7 +11,7 @@ import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, Price
 
 export const LISTING_PAGE_SIZE = 30;
 export const OFFER_LIMIT = 50;
-export const DUEL_PAGE_SIZE = 15;
+export const DUEL_PAGE_SIZE = 20;
 export const SUFFERED_LIMIT = 10;
 
 const CARD_SELECT = `select uc.*, to_jsonb(t) as card_templates

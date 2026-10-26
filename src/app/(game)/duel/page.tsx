@@ -1,15 +1,14 @@
 import Link from "next/link";
-import { Swords } from "lucide-react";
-import { tileClass, TileBody } from "@/components/ActionTile";
 import { requireUser } from "@/lib/auth";
 import { DailyQuests } from "@/components/DailyQuests";
 import { DuelForm } from "@/components/DuelForm";
+import { ChallengeList, ProposeDuel } from "@/components/OrganizedDuels";
 import { ConfigBoard } from "@/components/garage/ConfigBoard";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
 import { type SlotKey } from "@/components/garage/SlotTabs";
 import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
-import { DUEL_PAGE_SIZE, getDailyQuests, loadDuelPage } from "@/lib/queries";
+import { DUEL_PAGE_SIZE, getDailyQuests, loadDuelPage, loadOrganizedPage } from "@/lib/queries";
 import { launchDuel } from "./actions";
 
 export const metadata = { title: "Jouer — CarsDuel" };
@@ -20,10 +19,14 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
   const { page: pageParam, slot: slotParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const { user } = await requireUser();
-  const [{ cards: allCards, decks: allDecks, modifiers, history, suffered, names: nameOf }, quests] = await Promise.all([
+  const [{ cards: allCards, decks: allDecks, modifiers, history, suffered, names: nameOf }, quests, organized] = await Promise.all([
     loadDuelPage(user.id, page),
     getDailyQuests(user.id).catch((e) => {
       console.error("défis indisponibles :", e);
+      return null;
+    }),
+    loadOrganizedPage(user.id).catch((e) => {
+      console.error("demandes de duel indisponibles :", e);
       return null;
     }),
   ]);
@@ -69,15 +72,20 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
         <DuelForm action={launchDuel} deckId={playable ? config?.id : undefined} bonuses={bonuses} tirePerfs={modifiers}>
           <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
         </DuelForm>
-        <Link href="/duel/organises" className={tileClass()}>
-          <TileBody icon={Swords} title="Duels organisés" text="Défi direct entre deux pilotes" />
-        </Link>
+        <ProposeDuel />
         <DailyQuests state={quests} />
       </div>
       {!playable && <p className="text-sm text-zinc-500">Complétez Ma config avec un moteur, une boîte et des pneus disponibles.</p>}
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-bold">Duels subis récemment</h2>
+      {organized && <ChallengeList
+        incoming={organized.challenges.filter((c) => c.target_id === user.id).map((c) => ({ id: c.id, name: organized.names.get(c.challenger_id) ?? "?", at: c.created_at }))}
+        outgoing={organized.challenges.filter((c) => c.challenger_id === user.id).map((c) => ({ id: c.id, name: organized.names.get(c.target_id) ?? "?", at: c.created_at }))}
+      />}
+
+      <section className="space-y-5">
+        <h2 className="text-xl font-bold">Historique des duels</h2>
+        <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-zinc-400">Duels subis récemment</h3>
         {suffered.length === 0 && <p className="text-sm text-zinc-500">Personne ne vous a encore attaqué.</p>}
         <ul className="space-y-2">
           {suffered.map((x) => {
@@ -93,10 +101,10 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
             );
           })}
         </ul>
-      </section>
+        </div>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-bold">Historique</h2>
+        <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-zinc-400">Tous les duels</h3>
         <div className="space-y-2 md:hidden">
           {history.map((x) => {
             const attacker = x.attacker_id === user.id;
@@ -144,6 +152,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
         <div className="flex gap-4 text-sm">
           {page > 1 && <Link href={pageHref(page - 1)} className="text-amber-400 hover:underline">Page précédente</Link>}
           {history.length === DUEL_PAGE_SIZE && <Link href={pageHref(page + 1)} className="text-amber-400 hover:underline">Voir plus</Link>}
+        </div>
         </div>
       </section>
     </>

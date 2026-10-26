@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { TileBody, tileClass } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
 import { Modal } from "@/components/Modal";
 import { acceptDuel, cancelDuel, declineDuel, proposeDuel, type ArrangedPlay } from "@/app/(game)/duel/actions";
@@ -21,27 +23,47 @@ export function ProposeDuel() {
 
   return (
     <div className="space-y-2">
-      <button type="button" onClick={() => setOpen(true)} className="min-h-12 rounded-xl bg-amber-500 px-5 font-display text-lg font-bold uppercase text-black hover:bg-amber-400">
-        Proposer un duel
+      <button type="button" onClick={() => setOpen(true)} className={tileClass()}>
+        <TileBody title="Proposer un duel" text="Défiez directement un pilote" image="/duel/direct.webp" />
       </button>
       {sent && <p className="text-sm text-emerald-400">Demande envoyée à {sent}.</p>}
       {open && (
         <Modal labelledBy="propose-title">
-          <h3 id="propose-title" className="font-display text-2xl font-bold uppercase">Proposer un duel</h3>
-          <p className="mt-2 text-sm text-zinc-300">
-            Le duel se déroulera avec la configuration de chacun au moment où le joueur défié accepte.
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-400">Défi direct</p>
+              <h3 id="propose-title" className="mt-1 font-display text-2xl font-bold uppercase">Proposer un duel</h3>
+            </div>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg border border-zinc-700 p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white">
+              <X size={18} aria-hidden />
+            </button>
+          </div>
+          <p className="mt-3 rounded-lg border border-zinc-800 bg-black/20 p-3 text-sm leading-relaxed text-zinc-300">
+            Votre adversaire jouera avec la configuration qu&apos;il aura équipée au moment d&apos;accepter.
           </p>
-          <form action={formAction} className="mt-4 space-y-3">
-            <label className="block text-sm text-zinc-300">
-              Pseudo
-              <input name="username" required minLength={3} maxLength={24} autoComplete="off" className="mt-1 w-full" placeholder="Pseudo du joueur" />
+          <form action={formAction} className="mt-5 space-y-5">
+            <label className="block text-sm font-medium text-zinc-200">
+              Pseudo du pilote
+              <input
+                type="text"
+                name="username"
+                required
+                minLength={3}
+                maxLength={24}
+                autoComplete="username"
+                autoFocus
+                className="mt-2 min-h-12 w-full rounded-lg border border-zinc-600 bg-[#0b0d12] px-3 text-base text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25"
+                placeholder="Ex. AlexRacer"
+                aria-describedby="duel-username-hint"
+              />
+              <span id="duel-username-hint" className="mt-1.5 block text-xs font-normal text-zinc-500">Entre 3 et 24 caractères.</span>
             </label>
-            {state && !state.ok && <p className="text-sm text-red-400">{state.message}</p>}
-            <div className="grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setOpen(false)} className="min-h-12 rounded-xl border border-zinc-600 font-display text-lg font-bold uppercase hover:bg-zinc-800">
+            {state && !state.ok && <p role="alert" className="rounded-lg border border-red-500/30 bg-red-950/30 p-3 text-sm text-red-300">{state.message}</p>}
+            <div className="grid grid-cols-2 gap-3 border-t border-zinc-800 pt-4">
+              <button type="button" onClick={() => setOpen(false)} className="min-h-12 rounded-xl border border-zinc-600 font-display text-base font-bold uppercase text-zinc-200 transition hover:border-zinc-400 hover:bg-zinc-800">
                 Annuler
               </button>
-              <button disabled={pending} className="min-h-12 rounded-xl bg-amber-500 font-display text-lg font-bold uppercase text-black hover:bg-amber-400 disabled:opacity-50">
+              <button disabled={pending} className="min-h-12 rounded-xl bg-amber-500 font-display text-base font-bold uppercase text-black transition hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60">
                 {pending ? "Envoi…" : "Valider"}
               </button>
             </div>

@@ -166,16 +166,16 @@ export async function proposeDuel(_prev: ActionState<{ username: string }>, fd: 
   return callRpc<{ username: string }>(
     "select public.propose_duel($1::uuid, $2::text) as r",
     (id) => [id, str(fd, "username")],
-    ["/", "/duel/organises"],
+    ["/", "/duel", "/duel/organises"],
   );
 }
 
 export async function declineDuel(fd: FormData): Promise<void> {
-  await callRpc("select public.decline_duel($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "challenge_id")], ["/duel/organises"]);
+  await callRpc("select public.decline_duel($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "challenge_id")], ["/duel", "/duel/organises"]);
 }
 
 export async function cancelDuel(fd: FormData): Promise<void> {
-  await callRpc("select public.cancel_duel($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "challenge_id")], ["/duel/organises"]);
+  await callRpc("select public.cancel_duel($1::uuid, $2::uuid) as r", (id) => [id, str(fd, "challenge_id")], ["/duel", "/duel/organises"]);
 }
 
 export type ArrangedPlay =
