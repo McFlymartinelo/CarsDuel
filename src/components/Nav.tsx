@@ -13,7 +13,7 @@ const LINKS = [
   { href: "/duel", label: "Jouer" },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/shop", label: "Boutique" },
-  { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/leaderboard", label: "Classement" },
 ];
 
 const MOBILE_LINKS = [

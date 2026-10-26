@@ -19,7 +19,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
   const { page: pageParam, slot: slotParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const { user } = await requireUser();
-  const [{ cards: allCards, decks: allDecks, modifiers, history, suffered, names: nameOf }, quests, organized] = await Promise.all([
+  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized] = await Promise.all([
     loadDuelPage(user.id, page),
     getDailyQuests(user.id).catch((e) => {
       console.error("défis indisponibles :", e);
@@ -85,26 +85,6 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
       <section className="space-y-5">
         <h2 className="text-xl font-bold">Historique des duels</h2>
         <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-400">Duels subis récemment</h3>
-        {suffered.length === 0 && <p className="text-sm text-zinc-500">Personne ne vous a encore attaqué.</p>}
-        <ul className="space-y-2">
-          {suffered.map((x) => {
-            const won = x.result === "defender_win";
-            return (
-              <li key={x.id} className="rounded-lg border border-zinc-800 bg-[#10131a] p-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-zinc-300">Attaquant : {nameOf.get(x.attacker_id) ?? "?"}</span>
-                  <span className={`font-display font-bold uppercase ${won ? "text-emerald-400" : "text-red-400"}`}>{won ? "Victoire" : "Défaite"}</span>
-                </div>
-                <p className="text-amber-300">{x.defender_rewarded ? `+${x.defender_coins} 🪙 · +${x.defender_xp} XP` : "Plafond de défenses atteint"}</p>
-              </li>
-            );
-          })}
-        </ul>
-        </div>
-
-        <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-400">Tous les duels</h3>
         <div className="space-y-2 md:hidden">
           {history.map((x) => {
             const attacker = x.attacker_id === user.id;
