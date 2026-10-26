@@ -59,7 +59,7 @@ export default async function ShopPage({
   );
 
   return (
-    <section className="space-y-4">
+    <section className="min-w-0 space-y-4">
       <QuestPing quest="boutique" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Magasin de pièces neuves</h1>
@@ -76,7 +76,7 @@ export default async function ShopPage({
       {shown.length === 0 ? (
         <p className="text-sm text-zinc-400">Aucune pièce dans cette sélection pour le moment.</p>
       ) : view === "liste" ? (
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           {shown.map((it) => (
             <CardRow key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} note={<p className="text-sm text-amber-300">{it.price} 🪙{it.stock !== null ? ` · stock ${it.stock}` : ""}</p>}>
               {buy(it.id, it.card_templates.name, it.price)}

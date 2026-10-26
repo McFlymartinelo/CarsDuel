@@ -28,7 +28,7 @@ export function CardRow({
   const tag = rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (TIRE_LABEL[template.tire_type ?? ""] ?? "Pneus") : null;
 
   return (
-    <div className={`relative flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border-2 bg-[#0b0d12] p-2 ${theme.frame}`}>
+    <div className={`relative flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border-2 bg-[#0b0d12] p-2 ${theme.frame}`}>
       <div className={`relative flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-gradient-to-b from-[#12151c] to-[#0a0c10] ${theme.inner}`}>
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -53,7 +53,7 @@ export function CardRow({
         {note}
       </div>
 
-      {children && <div className="relative z-10 w-full sm:w-auto sm:min-w-44">{children}</div>}
+      {children && <div className="relative z-10 w-full min-w-0 sm:w-auto sm:min-w-44">{children}</div>}
     </div>
   );
 }

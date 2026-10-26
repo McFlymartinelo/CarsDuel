@@ -9,9 +9,13 @@ export const dynamic = "force-dynamic";
 
 export default async function GameLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireUser();
-  await settleLeaderboardRewards();
-  // Les notifications ne doivent jamais empêcher d'afficher une page (ex. migration pas encore appliquée).
-  await touchQuest(user.id, "connect").catch((e) => console.error("quêtes indisponibles :", e));
+  // Ces deux opérations ne dépendent pas l'une de l'autre : on les lance ensemble.
+  // La lecture des notifications reste après le règlement des récompenses pour inclure les primes versées.
+  await Promise.all([
+    settleLeaderboardRewards(),
+    // Les notifications ne doivent jamais empêcher d'afficher une page (ex. migration pas encore appliquée).
+    touchQuest(user.id, "connect").catch((e) => console.error("quêtes indisponibles :", e)),
+  ]);
   const notifications = await getNotifications(user.id).catch((e) => {
     console.error("notifications indisponibles :", e);
     return { unread: 0, items: [] };
