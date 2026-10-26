@@ -33,10 +33,12 @@ export async function claimDailyPull(_prev: ActionState<{ cards: DrawnCard[] }>,
   return { ok: true, data: { cards: await drawnFromIds(res.data?.card_ids ?? []) } };
 }
 
-export async function claimWeeklyPull(_prev: ActionState<{ cards: DrawnCard[] }>, _fd: FormData): Promise<ActionState<{ cards: DrawnCard[] }>> {
+export async function claimWeeklyPull(_prev: ActionState<{ cards: DrawnCard[] }>, fd: FormData): Promise<ActionState<{ cards: DrawnCard[] }>> {
+  const category = str(fd, "category");
+  if (category !== "moteur" && category !== "boite") return { ok: false, message: "Choisissez un moteur ou une boîte." };
   const res = await callRpc<{ card_ids: string[] }>(
-    "select public.claim_weekly_pull($1::uuid) as r",
-    (id) => [id],
+    "select public.claim_weekly_pull($1::uuid, $2::text) as r",
+    (id) => [id, category],
     ["/", "/garage", "/garage/tirages"],
   );
   if (!res?.ok) return { ok: false, message: res?.message };

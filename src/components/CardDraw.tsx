@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { CATEGORY_LABEL, RARITY_LABEL, TIRE_LABEL, TIRE_THEME } from "@/lib/format";
 import type { DrawnCard } from "@/lib/types";
 
@@ -88,19 +88,49 @@ function Back({ fx }: { fx: Fx }) {
   );
 }
 
+export function DrawProgress({ step }: { step: 1 | 2 | 3 }) {
+  const labels = ["Choix", "Rareté", "Carte"];
+  return (
+    <div className="mx-auto grid w-full max-w-lg grid-cols-[1fr_auto_1fr_auto_1fr] items-center">
+      {labels.map((label, i) => {
+        const number = i + 1;
+        const active = number === step;
+        const complete = number < step;
+        return (
+          <Fragment key={label}>
+            <div className="flex min-w-0 flex-col items-center gap-1.5">
+              <span className={`flex h-9 w-9 items-center justify-center rounded-full border-2 font-display text-base font-bold ${active ? "border-amber-400 bg-amber-400 text-black shadow-[0_0_18px_rgba(245,158,11,0.55)]" : complete ? "border-amber-500/70 bg-amber-500/15 text-amber-300" : "border-zinc-600 bg-[#090b10] text-zinc-500"}`}>
+                {complete ? "✓" : number}
+              </span>
+              <span className={`whitespace-nowrap font-display text-xs font-bold uppercase tracking-wide sm:text-sm ${active ? "text-amber-300" : complete ? "text-zinc-300" : "text-zinc-500"}`}>
+                {number}. {label}
+              </span>
+            </div>
+            {number < labels.length && <span aria-hidden className={`mb-5 h-0.5 w-8 sm:w-16 ${number < step ? "bg-amber-500" : "bg-zinc-700"}`} />}
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Tirage carte par carte. Un clic avance. Mouvement réduit : toutes les cartes d'un coup. */
 export function CardDraw({
   cards,
   title,
   onClose,
+  weekly = false,
 }: {
   cards: DrawnCard[];
   title: string;
   onClose: () => void;
+  weekly?: boolean;
 }) {
   const [reduce, setReduce] = useState(false);
   const [index, setIndex] = useState(0);
   const [faceUp, setFaceUp] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
+  const advanceTimer = useRef<number | null>(null);
   const done = index >= cards.length;
   const card = cards[index];
   const fx = fxOf(card);
@@ -109,23 +139,33 @@ export function CardDraw({
     setReduce(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
-  useEffect(() => {
-    if (reduce || done) return;
+  useEffect(() => () => {
+    if (advanceTimer.current !== null) window.clearTimeout(advanceTimer.current);
+  }, []);
+
+  function advance() {
+    if (advanceTimer.current !== null) return;
     setFaceUp(false);
-    const flip = window.setTimeout(() => setFaceUp(true), fx.flipAt);
-    const next = window.setTimeout(() => setIndex((n) => n + 1), fx.flipAt + fx.dwell);
-    return () => {
-      window.clearTimeout(flip);
-      window.clearTimeout(next);
-    };
-  }, [index, reduce, done, fx]);
+    setAdvancing(true);
+    advanceTimer.current = window.setTimeout(() => {
+      advanceTimer.current = null;
+      setIndex((n) => n + 1);
+      setAdvancing(false);
+    }, 700);
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal aria-label={title}>
-      <div className="flex w-full max-w-3xl flex-col items-center gap-4">
-        <p className="font-display text-sm font-semibold uppercase tracking-widest text-amber-400">{title}</p>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-[#030507]/80 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal aria-label={title}>
+      <div className="draw-modal relative my-auto flex max-h-[94dvh] w-full max-w-4xl flex-col items-center gap-4 overflow-y-auto rounded-3xl border border-amber-500/35 p-4 shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:gap-5 sm:p-7">
+        <div aria-hidden className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/70 to-transparent" />
+        <header className="relative flex w-full items-center justify-center">
+          <p className="font-display text-center text-lg font-bold uppercase tracking-[0.12em] text-white sm:text-2xl">
+            {weekly ? <>Tirage <span className="text-amber-400">hebdomadaire</span></> : title}
+          </p>
+        </header>
+        {weekly && <DrawProgress step={3} />}
         {reduce || done ? (
-          <div className="grid max-h-[70vh] w-full grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
+          <div className="grid max-h-[58dvh] w-full grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
             {cards.map((c) => (
               <div key={c.id} className="min-h-72">
                 <Face card={c} />
@@ -133,12 +173,9 @@ export function CardDraw({
             ))}
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setIndex((n) => n + 1)}
-            className="card-scene relative h-[28rem] w-72 max-w-full"
-            aria-label="Carte suivante"
-          >
+          <div className="relative flex min-h-0 flex-col items-center justify-center">
+            <div className="draw-platform pointer-events-none absolute bottom-0 left-1/2 h-16 w-[140%] -translate-x-1/2" />
+            <div className="card-scene draw-card-glow relative z-10 h-[min(52dvh,27rem)] w-64 max-w-full rounded-2xl" style={{ ["--rarity-glow" as string]: fx.color }}>
             <span className="sr-only">{card.name}</span>
             <span className={`card-flip absolute inset-0 ${faceUp ? "is-flipped" : ""}`}>
               <span className="card-face absolute inset-0">
@@ -149,20 +186,28 @@ export function CardDraw({
               </span>
             </span>
             {faceUp && fx.sparks > 0 && <Sparks key={index} fx={fx} />}
-          </button>
+            </div>
+            {faceUp && card.rarity && <p className="draw-rarity-text relative z-10 mt-2 font-display text-xl font-bold uppercase tracking-[0.2em]" style={{ ["--rarity-glow" as string]: fx.color }}>{RARITY_LABEL[card.rarity]}</p>}
+          </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-4">
           {!done && !reduce && (
             <p className="text-sm text-zinc-400">
               {index + 1} / {cards.length}
             </p>
           )}
-          <button
+          {!done && !reduce && <button
             type="button"
-            onClick={onClose}
-            className="min-h-11 rounded-lg bg-amber-500 px-5 font-display text-lg font-bold uppercase text-black hover:bg-amber-400"
+            onClick={() => faceUp ? advance() : setFaceUp(true)}
+            disabled={advancing}
+            className="min-h-12 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 px-6 font-display text-lg font-bold uppercase text-black shadow-[0_6px_24px_rgba(245,158,11,0.25)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
           >
-            {done || reduce ? "Fermer" : "Passer"}
+            {advancing ? "…" : faceUp ? (index + 1 < cards.length ? "Suivante" : "Terminer") : "Révéler"}
+          </button>}
+          <button type="button" onClick={onClose}
+            className="min-h-12 rounded-xl border border-zinc-600 bg-[#11141a]/80 px-5 font-display text-base font-bold uppercase text-zinc-200 transition hover:border-zinc-400 hover:bg-zinc-800"
+          >
+            {done || reduce ? "Fermer" : "Passer le tirage"}
           </button>
         </div>
       </div>
