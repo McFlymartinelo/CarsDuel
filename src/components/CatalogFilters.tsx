@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Cog, Coins, Disc, Settings2, TriangleAlert, Zap, type LucideIcon } from "lucide-react";
 import { SortLinks } from "@/components/SortLinks";
@@ -5,6 +7,7 @@ import { MobileCatalogFilters } from "@/components/MobileCatalogFilters";
 import { FILTER_TABS, sortsFor, type CatalogQuery } from "@/lib/catalog-filters";
 import { RARITY_LABEL } from "@/lib/format";
 import type { Rarity } from "@/lib/types";
+import { useShopViewIfAvailable } from "@/components/ShopCatalogDisplay";
 
 const ICONS: Record<string, LucideIcon> = { moteurs: Cog, boites: Settings2, pneus: Disc, bonus: Zap };
 
@@ -33,6 +36,7 @@ export function CatalogFilters({
   counts,
   rarityCounts,
   extra,
+  preserveShopView = false,
   showRisk = true,
 }: {
   path: string;
@@ -40,8 +44,13 @@ export function CatalogFilters({
   counts: Record<string, number>;
   rarityCounts: Partial<Record<Rarity, number>>;
   extra?: Record<string, string | undefined>;
+  preserveShopView?: boolean;
   showRisk?: boolean;
 }) {
+  const shopView = useShopViewIfAvailable();
+  const effectiveExtra = preserveShopView
+    ? { ...extra, vue: shopView === "liste" ? "liste" : undefined }
+    : extra;
   const mechanical = query.tab.category === "moteur" || query.tab.category === "boite";
   const href = (over: {
     tab?: string;
@@ -65,7 +74,7 @@ export function CatalogFilters({
     if (min != null) q.set("min", String(min));
     if (max != null) q.set("max", String(max));
     if (risk != null) q.set("risk", String(risk));
-    for (const [key, value] of Object.entries(extra ?? {})) if (value) q.set(key, value);
+    for (const [key, value] of Object.entries(effectiveExtra ?? {})) if (value) q.set(key, value);
     return `${path}?${q.toString()}`;
   };
   const bounds = query.min != null || query.max != null || query.risk != null;
@@ -117,7 +126,7 @@ export function CatalogFilters({
         <input type="hidden" name="tab" value={query.tab.key} />
         {query.rarity && <input type="hidden" name="rarity" value={query.rarity} />}
         {query.sort && <input type="hidden" name="sort" value={query.sort} />}
-        {Object.entries(extra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
+        {Object.entries(effectiveExtra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
         <span className={label}>{showRisk && mechanical ? "Limites" : "Prix"}</span>
         <div className="inline-flex max-w-full flex-wrap items-center justify-self-start gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1">
           <label className={field}>
@@ -146,7 +155,7 @@ export function CatalogFilters({
         </div>
       </form>
     </div>
-    <MobileCatalogFilters path={path} query={query} counts={counts} rarityCounts={rarityCounts} extra={extra} showRisk={showRisk} />
+    <MobileCatalogFilters path={path} query={query} counts={counts} rarityCounts={rarityCounts} extra={effectiveExtra} showRisk={showRisk} />
     </>
   );
 }

@@ -4,7 +4,8 @@ import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView } from "@/components/CardView";
 import { CatalogFilters } from "@/components/CatalogFilters";
-import { ViewToggle, viewMode, type CardViewMode } from "@/components/ViewToggle";
+import { viewMode, type CardViewMode } from "@/components/ViewToggle";
+import { ShopViewPanels, ShopViewProvider, ShopViewToggle } from "@/components/ShopCatalogDisplay";
 import { compareTemplates } from "@/lib/catalog-sort";
 import { readCatalogQuery } from "@/lib/catalog-filters";
 import type { Category, Rarity } from "@/lib/types";
@@ -43,15 +44,6 @@ export default async function ShopPage({
       return query.sort ? compareTemplates(a.card_templates, b.card_templates, query.sort) : 0;
     });
 
-  const href = (mode: CardViewMode) => {
-    const q = new URLSearchParams({ tab: query.tab.key });
-    if (query.rarity) q.set("rarity", query.rarity);
-    if (query.sort) q.set("sort", query.sort);
-    if (query.min != null) q.set("min", String(query.min));
-    if (query.max != null) q.set("max", String(query.max));
-    if (mode === "liste") q.set("vue", "liste");
-    return `/shop?${q.toString()}`;
-  };
   const buy = (id: string, name: string, price: number) => (
     <ActionForm action={buyShopItem} submitLabel="Acheter" confirmText={`Acheter ${name} pour ${price} pièces ?`} className="flex flex-wrap gap-2">
       <input type="hidden" name="catalog_id" value={id} />
@@ -59,42 +51,49 @@ export default async function ShopPage({
   );
 
   return (
-    <section className="min-w-0 space-y-4">
-      <QuestPing quest="boutique" />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Magasin de pièces neuves</h1>
-        <ViewToggle current={view} hrefFor={href} />
-      </div>
-      <CatalogFilters
-        path="/shop"
-        query={query}
-        counts={counts as Record<Category, number>}
-        rarityCounts={rarityCounts}
-        showRisk={false}
-        extra={view === "liste" ? { vue: "liste" } : undefined}
-      />
-      {shown.length === 0 ? (
-        <p className="text-sm text-zinc-400">Aucune pièce dans cette sélection pour le moment.</p>
-      ) : view === "liste" ? (
-        <div className="grid min-w-0 gap-2">
-          {shown.map((it) => (
-            <CardRow key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} note={<p className="text-sm text-amber-300">{it.price} 🪙{it.stock !== null ? ` · stock ${it.stock}` : ""}</p>}>
-              {buy(it.id, it.card_templates.name, it.price)}
-            </CardRow>
-          ))}
+    <ShopViewProvider initialView={view}>
+      <section className="min-w-0 space-y-4">
+        <QuestPing quest="boutique" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-xl font-bold">Magasin de pièces neuves</h1>
+          <ShopViewToggle />
         </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-          {shown.map((it) => (
-            <CardView key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} tirePerfs={tirePerfs}>
-              <p className="mb-2 text-sm">
-                {it.price} 🪙 {it.stock !== null && <span className="text-zinc-500">· stock {it.stock}</span>}
-              </p>
-              {buy(it.id, it.card_templates.name, it.price)}
-            </CardView>
-          ))}
-        </div>
-      )}
-    </section>
+        <CatalogFilters
+          path="/shop"
+          query={query}
+          counts={counts as Record<Category, number>}
+          rarityCounts={rarityCounts}
+          showRisk={false}
+          preserveShopView
+        />
+        {shown.length === 0 ? (
+          <p className="text-sm text-zinc-400">Aucune pièce dans cette sélection pour le moment.</p>
+        ) : (
+          <ShopViewPanels
+            cards={(
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+              {shown.map((it) => (
+                <CardView key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} tirePerfs={tirePerfs}>
+                  <p className="mb-2 text-sm">
+                    {it.price} 🪙 {it.stock !== null && <span className="text-zinc-500">· stock {it.stock}</span>}
+                  </p>
+                  {buy(it.id, it.card_templates.name, it.price)}
+                </CardView>
+              ))}
+            </div>
+            )}
+            list={(
+            <div className="grid min-w-0 gap-2">
+              {shown.map((it) => (
+                <CardRow key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} note={<p className="text-sm text-amber-300">{it.price} 🪙{it.stock !== null ? ` · stock ${it.stock}` : ""}</p>}>
+                  {buy(it.id, it.card_templates.name, it.price)}
+                </CardRow>
+              ))}
+            </div>
+            )}
+          />
+        )}
+      </section>
+    </ShopViewProvider>
   );
 }
