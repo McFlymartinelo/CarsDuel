@@ -61,19 +61,43 @@ export function Inventory({
         <ViewToggle current={view} hrefFor={hrefForView} />
       </div>
       {!museum && (
-        <nav className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Catégories de l'inventaire">
-          {TABS.map((x) => {
-            const on = x.key === current.key;
-            const n = cards.filter((c) => !c.is_destroyed && c.card_templates.category === x.category).length;
-            return (
-              <Link key={x.key} href={hrefForTab(x.key)} scroll={false} aria-current={on ? "true" : undefined} className={seg(on)}>
-                <x.icon size={15} strokeWidth={2} />
-                {x.label}
-                <span className={countClass(on)}>{n}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <>
+          <nav className="hidden max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:inline-flex" aria-label="Catégories de l'inventaire">
+            {TABS.map((x) => {
+              const on = x.key === current.key;
+              const n = cards.filter((c) => !c.is_destroyed && c.card_templates.category === x.category).length;
+              return (
+                <Link key={x.key} href={hrefForTab(x.key)} scroll={false} aria-current={on ? "true" : undefined} className={seg(on)}>
+                  <x.icon size={15} strokeWidth={2} />
+                  {x.label}
+                  <span className={countClass(on)}>{n}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          <nav className="grid grid-cols-4 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:hidden" aria-label="Catégories de l'inventaire">
+            {TABS.map((x) => {
+              const on = x.key === current.key;
+              const n = cards.filter((c) => !c.is_destroyed && c.card_templates.category === x.category).length;
+              return (
+                <Link
+                  key={x.key}
+                  href={hrefForTab(x.key)}
+                  scroll={false}
+                  aria-current={on ? "true" : undefined}
+                  aria-label={`${x.label}, ${n} carte${n === 1 ? "" : "s"}`}
+                  className={`relative inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-1 pt-1 text-[10px] font-semibold ${on ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}
+                >
+                  <x.icon size={14} strokeWidth={2} className="shrink-0" />
+                  <span className="truncate">{x.label}</span>
+                  <span aria-hidden className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#10131a] px-1 text-[10px] font-bold leading-none tabular-nums shadow-sm ${n > 0 ? "bg-amber-500 text-black" : "bg-zinc-700 text-zinc-200"}`}>
+                    {n}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </>
       )}
 
       {museum && (
