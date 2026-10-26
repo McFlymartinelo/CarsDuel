@@ -66,12 +66,16 @@ export function Nav({
             </span>
             <Link
               href="/garage/tirages"
-              className="rounded-lg border border-zinc-700 px-3 py-1 text-center font-display uppercase leading-tight hover:bg-zinc-800"
+              className="relative inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-700 px-3 font-display uppercase leading-tight hover:bg-zinc-800"
             >
-              <span className="block text-sm font-semibold">Tirages</span>
-              <span className={`text-xs ${pullsAvailable ? "text-emerald-400" : "text-zinc-500"}`}>
-                {pullsAvailable ? "Dispo ●" : "Déjà fait"}
+              <Gift size={18} strokeWidth={1.9} className="shrink-0 text-zinc-200" />
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold">Tirages</span>
+                <span className={`text-xs normal-case ${pullsAvailable ? "text-emerald-400" : "text-zinc-400"}`}>
+                  {pullsAvailable ? "Dispo" : "Déjà fait"}
+                </span>
               </span>
+              <span aria-hidden className={`absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-[#0d1015] ${pullsAvailable ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.55)]" : "bg-zinc-500"}`} />
             </Link>
             {bell}
             {profileMenu}
@@ -100,32 +104,32 @@ export function Nav({
 
       {/* ---------- Mobile : logo, pièces, tirages ---------- */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-[#0d1015]/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
-        <div className="flex items-center gap-1 px-2 py-2 min-[390px]:gap-1.5 min-[390px]:px-3">
-          <Link href="/garage" className="flex shrink-0 items-center gap-1.5 font-display text-lg font-bold uppercase leading-[0.85] min-[390px]:gap-2 min-[390px]:text-xl">
-            <Logo size={36} />
-            <span className="hidden min-[390px]:block">
+        <div className="flex items-center gap-1 px-1.5 py-1.5 min-[380px]:gap-1.5 min-[380px]:px-3">
+          <Link href="/garage" className="flex shrink-0 items-center gap-1 font-display text-base font-bold uppercase leading-[0.85] min-[380px]:gap-2 min-[380px]:text-xl">
+            <Logo size={32} />
+            <span>
               Cars<br />
               <span className="text-zinc-500">Duel</span>
             </span>
           </Link>
-          <div className="ml-auto flex shrink-0 items-center gap-1">
-            <span className="inline-flex h-11 w-[4.9rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1.5 font-display text-amber-400 min-[390px]:h-12 min-[390px]:w-[5.25rem] min-[390px]:gap-1.5" title="Pièces" aria-label={`${coins.toLocaleString("fr-FR")} pièces`}>
-              <Coins size={14} strokeWidth={2.25} className="shrink-0 min-[390px]:h-4 min-[390px]:w-4" />
-              <b className="truncate text-[10px] tabular-nums min-[390px]:text-xs">{coins.toLocaleString("fr-FR")}</b>
+          <div className="ml-auto flex shrink-0 items-center gap-1 min-[380px]:gap-1.5">
+            <span className="inline-flex h-10 w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1 font-display text-amber-400 min-[380px]:w-20 min-[380px]:gap-1.5" title="Pièces" aria-label={`${coins.toLocaleString("fr-FR")} pièces`}>
+              <Coins size={13} strokeWidth={2.25} className="shrink-0 min-[380px]:h-4 min-[380px]:w-4" />
+              <b className="truncate text-[10px] tabular-nums min-[380px]:text-xs">{coins.toLocaleString("fr-FR")}</b>
             </span>
             <Link
               href="/garage/tirages"
               aria-label={`Tirages : ${pullsAvailable ? "disponibles" : "déjà faits"}`}
-              className="relative inline-flex h-11 w-[4.7rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1 font-display uppercase leading-tight hover:bg-zinc-800 min-[390px]:h-12 min-[390px]:w-[4.75rem] min-[390px]:gap-1.5"
+              className="relative inline-flex h-10 w-[4.125rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1 font-display uppercase leading-tight hover:bg-zinc-800 min-[380px]:w-[4.625rem] min-[380px]:gap-1.5"
             >
-              <Gift size={14} strokeWidth={1.9} className="shrink-0 text-zinc-200 min-[390px]:h-4 min-[390px]:w-4" />
+              <Gift size={13} strokeWidth={1.9} className="shrink-0 text-zinc-200 min-[380px]:h-4 min-[380px]:w-4" />
               <span className="flex min-w-0 flex-col items-start">
-                <span className="text-[9px] font-bold tracking-wide min-[390px]:text-[10px]">Tirages</span>
-                <span className={`whitespace-nowrap text-[8px] font-semibold normal-case min-[390px]:text-[9px] ${pullsAvailable ? "text-emerald-400" : "text-zinc-400"}`}>
+                <span className="text-[8px] font-bold tracking-wide min-[380px]:text-[9px]">Tirages</span>
+                <span className={`whitespace-nowrap text-[8px] font-semibold normal-case ${pullsAvailable ? "text-emerald-400" : "text-zinc-400"}`}>
                   {pullsAvailable ? "Dispo" : "Déjà fait"}
                 </span>
               </span>
-              <span aria-hidden className={`absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full ${pullsAvailable ? "bg-emerald-400" : "bg-zinc-500"}`} />
+              <span aria-hidden className={`absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-[#0d1015] ${pullsAvailable ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.55)]" : "bg-zinc-500"}`} />
             </Link>
             {bell}
             {profileMenu}
