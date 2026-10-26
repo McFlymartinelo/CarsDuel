@@ -7,7 +7,7 @@ import { MobileCatalogFilters } from "@/components/MobileCatalogFilters";
 import { FILTER_TABS, sortsFor, type CatalogQuery } from "@/lib/catalog-filters";
 import { RARITY_LABEL } from "@/lib/format";
 import type { Rarity } from "@/lib/types";
-import { useShopViewIfAvailable } from "@/components/ShopCatalogDisplay";
+import { useCatalogViewIfAvailable } from "@/components/CatalogView";
 
 const ICONS: Record<string, LucideIcon> = { moteurs: Cog, boites: Settings2, pneus: Disc, bonus: Zap };
 
@@ -36,7 +36,7 @@ export function CatalogFilters({
   counts,
   rarityCounts,
   extra,
-  preserveShopView = false,
+  preserveCatalogView = false,
   showRisk = true,
 }: {
   path: string;
@@ -44,12 +44,12 @@ export function CatalogFilters({
   counts: Record<string, number>;
   rarityCounts: Partial<Record<Rarity, number>>;
   extra?: Record<string, string | undefined>;
-  preserveShopView?: boolean;
+  preserveCatalogView?: boolean;
   showRisk?: boolean;
 }) {
-  const shopView = useShopViewIfAvailable();
-  const effectiveExtra = preserveShopView
-    ? { ...extra, vue: shopView === "liste" ? "liste" : undefined }
+  const catalogView = useCatalogViewIfAvailable();
+  const effectiveExtra = preserveCatalogView
+    ? { ...extra, vue: catalogView === "liste" ? "liste" : undefined }
     : extra;
   const mechanical = query.tab.category === "moteur" || query.tab.category === "boite";
   const href = (over: {

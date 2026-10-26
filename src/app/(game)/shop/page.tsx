@@ -5,7 +5,7 @@ import { CardRow } from "@/components/CardRow";
 import { CardView } from "@/components/CardView";
 import { CatalogFilters } from "@/components/CatalogFilters";
 import { viewMode, type CardViewMode } from "@/components/ViewToggle";
-import { ShopViewPanels, ShopViewProvider, ShopViewToggle } from "@/components/ShopCatalogDisplay";
+import { CatalogViewPanels, CatalogViewProvider, CatalogViewToggle } from "@/components/CatalogView";
 import { compareTemplates } from "@/lib/catalog-sort";
 import { readCatalogQuery } from "@/lib/catalog-filters";
 import type { Category, Rarity } from "@/lib/types";
@@ -51,12 +51,12 @@ export default async function ShopPage({
   );
 
   return (
-    <ShopViewProvider initialView={view}>
+    <CatalogViewProvider initialView={view}>
       <section className="min-w-0 space-y-4">
         <QuestPing quest="boutique" />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-bold">Magasin de pièces neuves</h1>
-          <ShopViewToggle />
+          <CatalogViewToggle />
         </div>
         <CatalogFilters
           path="/shop"
@@ -64,12 +64,12 @@ export default async function ShopPage({
           counts={counts as Record<Category, number>}
           rarityCounts={rarityCounts}
           showRisk={false}
-          preserveShopView
+          preserveCatalogView
         />
         {shown.length === 0 ? (
           <p className="text-sm text-zinc-400">Aucune pièce dans cette sélection pour le moment.</p>
         ) : (
-          <ShopViewPanels
+          <CatalogViewPanels
             cards={(
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
               {shown.map((it) => (
@@ -94,6 +94,6 @@ export default async function ShopPage({
           />
         )}
       </section>
-    </ShopViewProvider>
+    </CatalogViewProvider>
   );
 }

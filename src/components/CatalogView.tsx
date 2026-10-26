@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { LayoutGrid, List } from "lucide-react";
+import Link from "next/link";
 import type { CardViewMode } from "@/components/ViewToggle";
 
-const ShopViewContext = createContext<{ view: CardViewMode; setView: (view: CardViewMode) => void } | null>(null);
+const CatalogViewContext = createContext<{ view: CardViewMode; setView: (view: CardViewMode) => void } | null>(null);
 
-/** Conserve le catalogue monté pendant le changement de présentation. */
-export function ShopViewProvider({ initialView, children }: { initialView: CardViewMode; children: ReactNode }) {
+/** Conserve les données montées pendant le changement de présentation. */
+export function CatalogViewProvider({ initialView, children }: { initialView: CardViewMode; children: ReactNode }) {
   const [view, setView] = useState(initialView);
 
   useEffect(() => {
@@ -28,24 +29,24 @@ export function ShopViewProvider({ initialView, children }: { initialView: CardV
   }
 
   return (
-    <ShopViewContext.Provider value={{ view, setView: changeView }}>
+    <CatalogViewContext.Provider value={{ view, setView: changeView }}>
       {children}
-    </ShopViewContext.Provider>
+    </CatalogViewContext.Provider>
   );
 }
 
-export function useShopView() {
-  const value = useContext(ShopViewContext);
-  if (!value) throw new Error("Shop view components must be inside ShopViewProvider");
+export function useCatalogView() {
+  const value = useContext(CatalogViewContext);
+  if (!value) throw new Error("Catalog view components must be inside CatalogViewProvider");
   return value;
 }
 
-export function useShopViewIfAvailable() {
-  return useContext(ShopViewContext)?.view ?? null;
+export function useCatalogViewIfAvailable() {
+  return useContext(CatalogViewContext)?.view ?? null;
 }
 
-export function ShopViewToggle() {
-  const { view, setView } = useShopView();
+export function CatalogViewToggle() {
+  const { view, setView } = useCatalogView();
   return (
       <nav className="inline-flex gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
         <button
@@ -70,12 +71,25 @@ export function ShopViewToggle() {
   );
 }
 
-export function ShopViewPanels({ cards, list }: { cards: ReactNode; list: ReactNode }) {
-  const { view } = useShopView();
+export function CatalogViewPanels({ cards, list }: { cards: ReactNode; list: ReactNode }) {
+  const { view } = useCatalogView();
   return (
     <>
       <div hidden={view !== "cartes"}>{cards}</div>
       <div hidden={view !== "liste"}>{list}</div>
     </>
+  );
+}
+
+export function CatalogViewLink({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
+  const { view } = useCatalogView();
+  const [pathname, search = ""] = href.split("?", 2);
+  const params = new URLSearchParams(search);
+  if (view === "liste") params.set("vue", "liste");
+  else params.delete("vue");
+  return (
+    <Link href={`${pathname}?${params.toString()}`} className={className}>
+      {children}
+    </Link>
   );
 }

@@ -3,7 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView } from "@/components/CardView";
-import { ViewToggle, viewMode, type CardViewMode } from "@/components/ViewToggle";
+import { viewMode, type CardViewMode } from "@/components/ViewToggle";
+import { CatalogViewLink, CatalogViewPanels, CatalogViewProvider, CatalogViewToggle } from "@/components/CatalogView";
 import { QuestPing } from "@/components/QuestPing";
 import { CatalogFilters } from "@/components/CatalogFilters";
 import { readCatalogQuery } from "@/lib/catalog-filters";
@@ -65,9 +66,8 @@ export default async function MarketplacePage({
   };
   const pageHref = (n: number) => href({ page: n });
 
-  const grid = view === "liste" ? "grid gap-2 xl:grid-cols-2" : "grid gap-3 md:grid-cols-2";
-  const card = (x: Listing, children: React.ReactNode, note?: React.ReactNode) =>
-    view === "liste" ? (
+  const card = (x: Listing, mode: CardViewMode, children: React.ReactNode, note?: React.ReactNode) =>
+    mode === "liste" ? (
       <CardRow key={x.id} template={x.user_cards.card_templates} card={x.user_cards} note={note}>
         {children}
       </CardRow>
@@ -78,15 +78,93 @@ export default async function MarketplacePage({
       </CardView>
     );
 
+  const mineGrid = (mode: CardViewMode) => (
+    <div className={mode === "liste" ? "grid gap-2 xl:grid-cols-2" : "grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"}>
+      {mine.map((x) =>
+        card(
+          x,
+          mode,
+          <>
+            {mode === "cartes" && <p className="text-sm">{x.price !== null ? `${x.price} 🪙` : "Offres uniquement"}</p>}
+            {offersOn(x.id).map((off) => (
+              <div key={off.id} className="mt-2 flex flex-wrap items-center gap-2 rounded bg-zinc-800 p-2 text-sm">
+                <span>Offre : <b>{off.amount} 🪙</b></span>
+                <ActionForm action={respondOffer} submitLabel="Accepter" className="flex">
+                  <input type="hidden" name="offer_id" value={off.id} />
+                  <input type="hidden" name="accept" value="true" />
+                </ActionForm>
+                <ActionForm action={respondOffer} submitLabel="Refuser" variant="ghost" className="flex">
+                  <input type="hidden" name="offer_id" value={off.id} />
+                  <input type="hidden" name="accept" value="false" />
+                </ActionForm>
+              </div>
+            ))}
+            <ActionForm action={cancelListing} submitLabel="Retirer l'annonce" variant="danger" className="mt-2 flex">
+              <input type="hidden" name="listing_id" value={x.id} />
+            </ActionForm>
+          </>,
+          mode === "liste" ? <p className="text-sm text-amber-300">{x.price !== null ? `${x.price} 🪙` : "Offres uniquement"}</p> : undefined,
+        ),
+      )}
+    </div>
+  );
+
+  const othersGrid = (mode: CardViewMode) => (
+    <div className={mode === "liste" ? "grid gap-2 xl:grid-cols-2" : "grid gap-3 md:grid-cols-2"}>
+      {others.map((x) => {
+        const myOffer = myOffers.find((m) => m.listing_id === x.id);
+        return card(
+          x,
+          mode,
+          <>
+            {x.price !== null && (
+              <ActionForm
+                action={buyListing}
+                submitLabel={`Acheter — ${x.price} 🪙`}
+                confirmText={`Acheter ${x.user_cards.card_templates.name} pour ${x.price} pièces ?`}
+                className="flex"
+              >
+                <input type="hidden" name="listing_id" value={x.id} />
+              </ActionForm>
+            )}
+            {x.accepts_offers && !myOffer && (
+              <ActionForm
+                action={makeOffer}
+                submitLabel="Faire une offre"
+                variant="ghost"
+                confirmText="Envoyer une offre de {amount} pièces ?"
+                className="mt-2 flex items-end gap-2"
+              >
+                <input type="hidden" name="listing_id" value={x.id} />
+                <input name="amount" type="number" min={1} required placeholder="Montant" className="w-28" />
+              </ActionForm>
+            )}
+            {myOffer && (
+              <ActionForm action={withdrawOffer} submitLabel="Retirer mon offre" variant="ghost" className="mt-2 flex items-center gap-2">
+                <input type="hidden" name="offer_id" value={myOffer.id} />
+                <span className="text-sm text-amber-300">Offre en cours : {myOffer.amount} 🪙 (séquestre)</span>
+              </ActionForm>
+            )}
+          </>,
+          <>
+            <p className="mb-1 text-xs text-zinc-500">Vendeur : {nameOf.get(x.seller_id) ?? "?"}</p>
+            <PriceHint price={x.price} reference={priceRef.get(x.user_cards.template_id)} />
+          </>,
+        );
+      })}
+    </div>
+  );
+
   return (
+    <CatalogViewProvider initialView={view}>
     <>
       <QuestPing quest="marketplace" />
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold">Filtrer les annonces</h2>
-          <ViewToggle current={view} hrefFor={(mode) => href({ view: mode })} />
+          <CatalogViewToggle />
         </div>
-        <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} extra={view === "liste" ? { vue: "liste" } : undefined} />
+        <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} preserveCatalogView />
       </section>
 
       <section className="space-y-3">
@@ -96,85 +174,18 @@ export default async function MarketplacePage({
             Aucune de vos annonces dans cette sélection.
           </p>
         )}
-        <div className={view === "liste" ? grid : "grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"}>
-          {mine.map((x) =>
-            card(
-              x,
-              <>
-                {view === "cartes" && <p className="text-sm">{x.price !== null ? `${x.price} 🪙` : "Offres uniquement"}</p>}
-                {offersOn(x.id).map((off) => (
-                  <div key={off.id} className="mt-2 flex flex-wrap items-center gap-2 rounded bg-zinc-800 p-2 text-sm">
-                    <span>Offre : <b>{off.amount} 🪙</b></span>
-                    <ActionForm action={respondOffer} submitLabel="Accepter" className="flex">
-                      <input type="hidden" name="offer_id" value={off.id} />
-                      <input type="hidden" name="accept" value="true" />
-                    </ActionForm>
-                    <ActionForm action={respondOffer} submitLabel="Refuser" variant="ghost" className="flex">
-                      <input type="hidden" name="offer_id" value={off.id} />
-                      <input type="hidden" name="accept" value="false" />
-                    </ActionForm>
-                  </div>
-                ))}
-                <ActionForm action={cancelListing} submitLabel="Retirer l'annonce" variant="danger" className="mt-2 flex">
-                  <input type="hidden" name="listing_id" value={x.id} />
-                </ActionForm>
-              </>,
-              view === "liste" ? <p className="text-sm text-amber-300">{x.price !== null ? `${x.price} 🪙` : "Offres uniquement"}</p> : undefined,
-            ),
-          )}
-        </div>
+        <CatalogViewPanels cards={mineGrid("cartes")} list={mineGrid("liste")} />
       </section>
 
       <section className="space-y-3">
         <h2 className="text-xl font-bold">Annonces</h2>
         {others.length === 0 && <p className="text-sm text-zinc-500">Aucune annonce pour le moment.</p>}
-        <div className={grid}>
-          {others.map((x) => {
-            const myOffer = myOffers.find((m) => m.listing_id === x.id);
-            return card(
-              x,
-              <>
-                {x.price !== null && (
-                  <ActionForm
-                    action={buyListing}
-                    submitLabel={`Acheter — ${x.price} 🪙`}
-                    confirmText={`Acheter ${x.user_cards.card_templates.name} pour ${x.price} pièces ?`}
-                    className="flex"
-                  >
-                    <input type="hidden" name="listing_id" value={x.id} />
-                  </ActionForm>
-                )}
-                {x.accepts_offers && !myOffer && (
-                  <ActionForm
-                    action={makeOffer}
-                    submitLabel="Faire une offre"
-                    variant="ghost"
-                    confirmText="Envoyer une offre de {amount} pièces ?"
-                    className="mt-2 flex items-end gap-2"
-                  >
-                    <input type="hidden" name="listing_id" value={x.id} />
-                    <input name="amount" type="number" min={1} required placeholder="Montant" className="w-28" />
-                  </ActionForm>
-                )}
-                {myOffer && (
-                  <ActionForm action={withdrawOffer} submitLabel="Retirer mon offre" variant="ghost" className="mt-2 flex items-center gap-2">
-                    <input type="hidden" name="offer_id" value={myOffer.id} />
-                    <span className="text-sm text-amber-300">Offre en cours : {myOffer.amount} 🪙 (séquestre)</span>
-                  </ActionForm>
-                )}
-              </>,
-              <>
-                <p className="mb-1 text-xs text-zinc-500">Vendeur : {nameOf.get(x.seller_id) ?? "?"}</p>
-                <PriceHint price={x.price} reference={priceRef.get(x.user_cards.template_id)} />
-              </>,
-            );
-          })}
-        </div>
+        <CatalogViewPanels cards={othersGrid("cartes")} list={othersGrid("liste")} />
       </section>
 
       <div className="flex gap-4 text-sm">
-        {page > 1 && <Link href={pageHref(page - 1)} className="text-amber-400 hover:underline">Page précédente</Link>}
-        {listings.length === LISTING_PAGE_SIZE && <Link href={pageHref(page + 1)} className="text-amber-400 hover:underline">Voir plus</Link>}
+        {page > 1 && <CatalogViewLink href={pageHref(page - 1)} className="text-amber-400 hover:underline">Page précédente</CatalogViewLink>}
+        {listings.length === LISTING_PAGE_SIZE && <CatalogViewLink href={pageHref(page + 1)} className="text-amber-400 hover:underline">Voir plus</CatalogViewLink>}
       </div>
 
       {history.length > 0 && (
@@ -208,5 +219,6 @@ export default async function MarketplacePage({
         </details>
       )}
     </>
+    </CatalogViewProvider>
   );
 }
