@@ -151,9 +151,32 @@ async function loadDetail(duelId: string): Promise<DetailRow | undefined> {
 
 /** Lance le duel (RPC) puis relit les détails pour l'affichage. Le joueur est l'attaquant. */
 export async function launchDuel(_prev: ActionState<DuelReport>, fd: FormData): Promise<ActionState<DuelReport>> {
+  const deckId = str(fd, "deck_id");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deckId)) {
+    return { ok: false, message: "Votre configuration n'est plus disponible. Équipez un moteur, une boîte et des pneus avant de rejouer." };
+  }
+  const { user } = await requireUser();
+  const { rows: configs } = await withUser(user.id, (c) =>
+    c.query<{ engine_destroyed: boolean; gearbox_destroyed: boolean; tire_destroyed: boolean }>(
+      `select ce.is_destroyed as engine_destroyed,
+              cg.is_destroyed as gearbox_destroyed,
+              ct.is_destroyed as tire_destroyed
+         from user_decks d
+         join user_cards ce on ce.id = d.engine_card_id
+         join user_cards cg on cg.id = d.gearbox_card_id
+         join user_cards ct on ct.id = d.tire_card_id
+        where d.id = $1::uuid and d.owner_id = $2`,
+      [deckId, user.id],
+    ),
+  );
+  const config = configs[0];
+  if (!config) return { ok: false, message: "Configuration introuvable. Vérifiez votre garage avant de relancer." };
+  if (config.engine_destroyed) return { ok: false, message: "Votre moteur est détruit. Équipez-en un autre avant de lancer un duel." };
+  if (config.gearbox_destroyed) return { ok: false, message: "Votre boîte est détruite. Équipez-en une autre avant de lancer un duel." };
+  if (config.tire_destroyed) return { ok: false, message: "Vos pneus sont détruits. Équipez-en d'autres avant de lancer un duel." };
   const res = await callRpc<DuelOutcome>(
     "select public.execute_duel($1::uuid, $2::uuid, $3::uuid) as r",
-    (id) => [id, str(fd, "deck_id"), str(fd, "bonus_id") || null],
+    (id) => [id, deckId, str(fd, "bonus_id") || null],
     ["/", "/duel", "/garage", "/leaderboard"],
   );
   if (!res?.ok || !res.data) return { ok: false, message: res?.message };

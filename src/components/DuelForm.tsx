@@ -88,7 +88,12 @@ export function DuelForm({
             waiting ? (
               <p className="py-10 text-center font-display text-2xl font-bold uppercase text-amber-400">Course en cours…</p>
             ) : report ? (
-              <DuelCinema key={report.duelId} r={report} onReplay={launch} onClose={close} />
+              <DuelCinema
+                key={report.duelId}
+                r={report}
+                onReplay={deckId && !report.brokenPart ? launch : undefined}
+                onClose={close}
+              />
             ) : (
               <div className="space-y-4">
                 <p className="text-red-400">{state?.message ?? "Le duel n'a pas pu être lancé."}</p>
