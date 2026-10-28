@@ -110,7 +110,7 @@ function RaceStep({ r }: { r: DuelReport }) {
 }
 
 /** Une étape à la fois : piste, config adverse, course, résultat. */
-export function DuelCinema({ r, onReplay, onClose }: { r: DuelReport; onReplay?: () => void; onClose: () => void }) {
+export function DuelCinema({ r, onReplay, onReplaceBrokenPart, onClose }: { r: DuelReport; onReplay?: () => void; onReplaceBrokenPart?: () => void; onClose: () => void }) {
   const [phase, setPhase] = useState<Phase>(1);
 
   return (
@@ -127,7 +127,7 @@ export function DuelCinema({ r, onReplay, onClose }: { r: DuelReport; onReplay?:
       {phase === 1 && <TrackCard weather={r.weather} lines={r.weatherLines} />}
       {phase === 2 && <GhostStep r={r} />}
       {phase === 3 && <RaceStep r={r} />}
-      {phase === 4 && <DuelResult r={r} onReplay={onReplay} onClose={onClose} />}
+      {phase === 4 && <DuelResult r={r} onReplay={onReplay} onReplaceBrokenPart={onReplaceBrokenPart} onClose={onClose} />}
 
       {phase < 4 && (
         <button

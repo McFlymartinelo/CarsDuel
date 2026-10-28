@@ -55,6 +55,14 @@ export function DuelForm({
     router.refresh();
   }
 
+  function replaceBrokenPart() {
+    const brokenPart = report?.brokenPart;
+    if (brokenPart !== "moteur" && brokenPart !== "boite") return;
+    setOpen(false);
+    setShowRace(false);
+    window.dispatchEvent(new CustomEvent("carsduel:change-slot", { detail: brokenPart }));
+  }
+
   const effect = bonus?.card_templates.name;
 
   return (
@@ -95,6 +103,7 @@ export function DuelForm({
                 key={report.duelId}
                 r={report}
                 onReplay={deckId && !report.brokenPart ? launch : undefined}
+                onReplaceBrokenPart={report.brokenPart === "moteur" || report.brokenPart === "boite" ? replaceBrokenPart : undefined}
                 onClose={close}
               />
             ) : (

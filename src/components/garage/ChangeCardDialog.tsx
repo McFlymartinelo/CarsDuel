@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionForm } from "@/components/ActionForm";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { Modal } from "@/components/Modal";
@@ -26,6 +26,14 @@ export function ChangeCardDialog({
 }) {
   const [open, setOpen] = useState(false);
   const title = `Choisir ${slot === "boite" || slot === "bonus" ? "une" : "un"} ${SLOT_LABEL[slot]}`;
+
+  useEffect(() => {
+    const handleRequest = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === slot) setOpen(true);
+    };
+    window.addEventListener("carsduel:change-slot", handleRequest);
+    return () => window.removeEventListener("carsduel:change-slot", handleRequest);
+  }, [slot]);
 
   return (
     <>
