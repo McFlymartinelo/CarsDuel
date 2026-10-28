@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
 import { ChangeCardDialog } from "@/components/garage/ChangeCardDialog";
@@ -29,6 +30,7 @@ export function DuelForm({
   const [open, setOpen] = useState(false);
   const [showRace, setShowRace] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const router = useRouter();
   const report = state?.ok ? state.data : undefined;
   const waiting = pending || launching;
 
@@ -50,6 +52,7 @@ export function DuelForm({
   function close() {
     setOpen(false);
     setShowRace(false);
+    router.refresh();
   }
 
   const effect = bonus?.card_templates.name;

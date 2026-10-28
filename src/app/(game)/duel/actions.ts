@@ -3,6 +3,7 @@
 import { requireUser } from "@/lib/auth";
 import { withUser } from "@/lib/db";
 import { callRpc, str } from "@/lib/rpc";
+import { rpcErrorMessage } from "@/lib/errors";
 import { weatherEffects } from "@/lib/format";
 import { scoreMecaRaw, tireMalus, tireModifier } from "@/lib/game";
 import type { ActionState, DuelOutcome, DuelReport, Weather } from "@/lib/types";
@@ -174,15 +175,27 @@ export async function launchDuel(_prev: ActionState<DuelReport>, fd: FormData): 
   if (config.engine_destroyed) return { ok: false, message: "Votre moteur est détruit. Équipez-en un autre avant de lancer un duel." };
   if (config.gearbox_destroyed) return { ok: false, message: "Votre boîte est détruite. Équipez-en une autre avant de lancer un duel." };
   if (config.tire_destroyed) return { ok: false, message: "Vos pneus sont détruits. Équipez-en d'autres avant de lancer un duel." };
-  const res = await callRpc<DuelOutcome>(
-    "select public.execute_duel($1::uuid, $2::uuid, $3::uuid) as r",
-    (id) => [id, deckId, str(fd, "bonus_id") || null],
-    ["/", "/duel", "/garage", "/leaderboard"],
-  );
-  if (!res?.ok || !res.data) return { ok: false, message: res?.message };
-  const d = await loadDetail(res.data.duel_id);
-  if (!d) return { ok: true, data: undefined, message: "Duel effectué." };
-  return { ok: true, data: buildReport(res.data, d, "attacker") };
+  let outcome: DuelOutcome | undefined;
+  let detail: DetailRow | undefined;
+  try {
+    const result = await withUser(user.id, async (c) => {
+      const { rows } = await c.query<{ r: DuelOutcome }>(
+        "select public.execute_duel($1::uuid, $2::uuid, $3::uuid) as r",
+        [user.id, deckId, str(fd, "bonus_id") || null],
+      );
+      const duel = rows[0]?.r;
+      if (!duel) return { duel: undefined, detail: undefined };
+      const { rows: details } = await c.query<DetailRow>(DETAIL_SQL, [duel.duel_id]);
+      return { duel, detail: details[0] };
+    });
+    outcome = result.duel;
+    detail = result.detail;
+  } catch (e) {
+    return { ok: false, message: rpcErrorMessage(e) };
+  }
+  if (!outcome) return { ok: false, message: "Le duel n'a pas renvoyé de résultat." };
+  if (!detail) return { ok: true, data: undefined, message: "Duel effectué." };
+  return { ok: true, data: buildReport(outcome, detail, "attacker") };
 }
 
 export async function proposeDuel(_prev: ActionState<{ username: string }>, fd: FormData): Promise<ActionState<{ username: string }>> {
