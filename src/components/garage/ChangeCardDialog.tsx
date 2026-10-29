@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { ActionForm } from "@/components/ActionForm";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { Modal } from "@/components/Modal";
 import { equipCard } from "@/app/(game)/garage/actions";
+import { compareTemplates, ENGINE_SORTS, GEARBOX_SORTS, type CardSort } from "@/lib/catalog-sort";
 import type { UserCard } from "@/lib/types";
 
 const SLOT_LABEL = { moteur: "moteur", boite: "boîte", pneus: "pneu", bonus: "bonus" } as const;
+const SEGMENT = "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors";
 
 /** Choisir une carte dans une grille, pas dans une liste de texte. */
 export function ChangeCardDialog({
@@ -25,7 +28,14 @@ export function ChangeCardDialog({
   onPick?: (card: UserCard | null) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [sort, setSort] = useState<CardSort | "">("");
   const title = `Choisir ${slot === "boite" || slot === "bonus" ? "une" : "un"} ${SLOT_LABEL[slot]}`;
+  const sorts: readonly { key: CardSort; label: string; title: string }[] =
+    slot === "moteur" ? ENGINE_SORTS : slot === "boite" ? GEARBOX_SORTS : [];
+  const ordered = useMemo(
+    () => (sort ? alternatives.slice().sort((a, b) => compareTemplates(a.card_templates, b.card_templates, sort)) : alternatives),
+    [alternatives, sort],
+  );
 
   useEffect(() => {
     const handleRequest = (event: Event) => {
@@ -61,9 +71,34 @@ export function ChangeCardDialog({
               Aucun bonus
             </button>
           )}
+          {sorts.length > 0 && alternatives.length > 1 && (
+            <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="font-display text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Trier</span>
+              <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" role="group" aria-label="Trier les cartes">
+                {sorts.map(({ key, label, title }) => {
+                  const active = sort === key;
+                  const Direction = key === "power" ? ArrowDown : ArrowUp;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={active}
+                      title={title}
+                      onClick={() => setSort(active ? "" : key)}
+                      className={`${SEGMENT} ${active ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}
+                    >
+                      {label}
+                      {key !== "ref" && <Direction size={14} strokeWidth={2.25} className={active ? "text-black/70" : "text-zinc-600"} />}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-xs tabular-nums text-zinc-500">{alternatives.length} pièce{alternatives.length > 1 ? "s" : ""}</span>
+            </div>
+          )}
           {alternatives.length === 0 && <p className="text-sm text-zinc-500">Aucune autre carte disponible.</p>}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {alternatives.map((alt) => (
+            {ordered.map((alt) => (
               <CardView key={alt.id} template={alt.card_templates} card={alt} image={alt.image} tirePerfs={tirePerfs}>
                 {onPick ? (
                   <button
