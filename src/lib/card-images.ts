@@ -9,8 +9,9 @@ import type { CardTemplate } from "./types";
  *   1. card_templates.image_url (URL ou chemin explicite en base)
  *   2. <code>.webp|png|jpg|jpeg|avif        image propre à la carte      (ex. moteur/m_1a.webp)
  *   3. _<famille>.webp ...                  image générique de la famille (ex. moteur/_v8.webp)
- *   4. _default.webp ...                    image par défaut de la catégorie
- *   5. null → l'interface affiche une icône
+ *   4. _<famille de base>.webp ...          repli moins précis           (ex. moteur/_6-cylindres.webp)
+ *   5. _default.webp ...                    image par défaut de la catégorie
+ *   6. null → l'interface affiche une icône
  * Famille = architecture (moteur), type de boîte, type de pneu ou effet du bonus.
  */
 
@@ -52,6 +53,15 @@ function family(t: CardTemplate): string | null {
   }
 }
 
+/** "6 cylindres en ligne" → ["_6-cylindres-en-ligne", "_6-cylindres"] ; "V8" → ["_v8"]. */
+function familyKeys(fam: string): string[] {
+  const s = slug(fam);
+  const keys = [`_${s}`];
+  const base = s.match(/^(\d+)-cylindres(?:-|$)/);
+  if (base && `_${base[1]}-cylindres` !== keys[0]) keys.push(`_${base[1]}-cylindres`);
+  return keys;
+}
+
 export function cardImageUrl(t: CardTemplate): string | null {
   if (t.image_url) return t.image_url;
   const dir = DIR[t.category];
@@ -59,7 +69,7 @@ export function cardImageUrl(t: CardTemplate): string | null {
   if (files.size === 0) return null;
 
   const fam = family(t);
-  const candidates = [t.code?.toLowerCase(), fam ? `_${slug(fam)}` : null, "_default"];
+  const candidates = [t.code?.toLowerCase(), ...(fam ? familyKeys(fam) : []), "_default"];
   for (const key of candidates) {
     const file = key ? files.get(key) : undefined;
     if (file) return `/cards/${dir}/${file}`;
