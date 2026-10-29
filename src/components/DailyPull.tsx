@@ -57,6 +57,7 @@ function PullCard({
   }, [state, weekly]);
 
   return (
+    <>
     <form ref={formRef} action={formAction} className={`${tileClass()} pull-tile`}>
       {weekly && <input type="hidden" name="category" value={category} />}
       <TileBody
@@ -81,6 +82,7 @@ function PullCard({
         )}
       />
       {state && !state.ok && <p className="mt-2 text-sm text-red-400">{state.message}</p>}
+    </form>
       {chooseOpen && weekly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#030507]/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choisir la carte hebdomadaire">
           <div className="draw-modal w-full max-w-lg space-y-5 rounded-3xl border border-amber-500/35 p-5 shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:p-7">
@@ -123,7 +125,7 @@ function PullCard({
         </div>
       )}
       {showCard && cards.length > 0 && <CardDraw cards={cards} title={drawTitle} weekly={weekly} onClose={() => setShowCard(false)} />}
-    </form>
+    </>
   );
 }
 
