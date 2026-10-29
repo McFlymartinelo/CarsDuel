@@ -8,6 +8,7 @@ import type { ActionState } from "@/lib/types";
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
 const VARIANTS = {
+  none: "",
   primary: "bg-amber-500 text-black hover:bg-amber-400",
   danger: "bg-red-600 text-white hover:bg-red-500",
   ghost: "border border-zinc-600 text-zinc-200 hover:bg-zinc-800",
@@ -25,12 +26,15 @@ export function ActionForm({
   variant = "primary",
   confirmText,
   onSuccess,
+  submitClassName,
 }: {
   action: Action;
-  submitLabel: string;
+  submitLabel: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
   variant?: keyof typeof VARIANTS;
+  /** Classes du bouton de soumission ; remplacent le style par défaut. */
+  submitClassName?: string;
   /** Texte de confirmation ; `{champ}` est remplacé par la valeur saisie (une fonction ne peut pas venir d'un Server Component). */
   confirmText?: string;
   onSuccess?: () => void;
@@ -72,7 +76,7 @@ export function ActionForm({
       <button
         type="submit"
         disabled={pending}
-        className={`rounded px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${VARIANTS[variant]}`}
+        className={`${submitClassName ?? "rounded px-3 py-1.5 text-sm font-medium"} disabled:opacity-50 ${VARIANTS[variant]}`}
       >
         {pending ? "…" : submitLabel}
       </button>
