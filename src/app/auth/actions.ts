@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { PoolClient } from "pg";
 import { withAdmin } from "@/lib/db";
+import { resolveClientIp } from "@/lib/client-ip";
 import { createSession, destroySession, hashPassword, verifyPassword } from "@/lib/session";
 import type { ActionState } from "@/lib/types";
 
@@ -11,11 +12,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BLOCKED = "Trop de tentatives, réessayez plus tard.";
 const SIGNUP_GENERIC = "Impossible de créer le compte avec ces informations.";
 
-/** Première IP de x-forwarded-for, sinon "unknown" (pas de liste de proxies de confiance). */
+/** IP client fiable selon TRUSTED_PROXY_COUNT (cf. src/lib/client-ip.ts), sinon "unknown". */
 async function clientIp(): Promise<string> {
   const fwd = (await headers()).get("x-forwarded-for");
-  const ip = fwd?.split(",")[0]?.trim();
-  return ip || "unknown";
+  return resolveClientIp(fwd, process.env.TRUSTED_PROXY_COUNT);
 }
 
 async function countRecent(c: PoolClient, kind: string, key: string, window: string): Promise<number> {
