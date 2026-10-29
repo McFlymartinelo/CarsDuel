@@ -25,28 +25,6 @@ export const LISTING_ORDER_SQL: Record<CardSort, string> = {
   price: "l.price asc nulls last, t.name",
 };
 
-const has = (options: readonly { key: string }[], sort: string | undefined) => options.some((s) => s.key === sort);
-
-export function engineSort(sort: string | undefined): CardSort | undefined {
-  return has(ENGINE_SORTS, sort) ? (sort as CardSort) : undefined;
-}
-
-export function gearboxSort(sort: string | undefined): CardSort | undefined {
-  return has(GEARBOX_SORTS, sort) ? (sort as CardSort) : undefined;
-}
-
-export function marketFilter(cat: string | undefined, sort: string | undefined): { category: "moteur" | "boite"; sort: CardSort } | null {
-  if (cat === "moteur") {
-    const key = engineSort(sort);
-    return key ? { category: "moteur", sort: key } : null;
-  }
-  if (cat === "boite") {
-    const key = gearboxSort(sort);
-    return key ? { category: "boite", sort: key } : null;
-  }
-  return null;
-}
-
 function refParts(code: string | null): [number, string] {
   const m = code?.match(/^[mb]_(\d+)(.*)$/i);
   if (!m) return [Number.MAX_SAFE_INTEGER, code ?? ""];

@@ -21,11 +21,6 @@ export function rankFor(monthlyXp: number): PaddockRank {
   return current;
 }
 
-export function rankRange(rank: PaddockRank): string {
-  if (rank.max == null) return `${rank.min.toLocaleString("fr-FR")}+`;
-  return `${rank.min.toLocaleString("fr-FR")} – ${rank.max.toLocaleString("fr-FR")}`;
-}
-
 /** Progression dans le palier courant, vers le rang suivant. */
 export function rankProgress(monthlyXp: number): { rank: PaddockRank; next: PaddockRank | null; pct: number; remaining: number } {
   const xp = Math.max(0, Math.floor(Number(monthlyXp) || 0));
@@ -65,8 +60,6 @@ export function tireState(gum: number): TireState {
   if (gum >= 30) return { label: "USÉ", tone: "worn" };
   return { label: "CRITIQUE", tone: "critical" };
 }
-
-export const isNewTire = (c: Pick<UserCard, "tire_wear">) => (c.tire_wear ?? 100) >= 100;
 
 /** Risque de casse hors météo : R0 + duels × sensibilité. Moteur et boîte seulement. */
 export function currentBreakRisk(

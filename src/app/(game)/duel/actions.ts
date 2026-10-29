@@ -91,7 +91,6 @@ function buildReport(o: DuelOutcome, d: DetailRow, side: "attacker" | "defender"
   const theirBonus = num(you ? d.d_perf : d.perf_bonus_pct);
   const wearGum = you ? yourGum : 100;
   const effect = you ? o.bonus : null;
-  const broken = you && o.broken_part !== null;
   return {
     duelId: o.duel_id,
     weather: o.weather as Weather,
@@ -116,10 +115,7 @@ function buildReport(o: DuelOutcome, d: DetailRow, side: "attacker" | "defender"
     gearboxProb: you ? d.gearbox_break_prob : null,
     coins: o.coins,
     xp: o.xp,
-    gumBefore: yourGum,
     gumAfter: you ? o.tire_gum_after : null,
-    engineRun: !broken && effect !== "revision_express" && effect !== "revision_complete",
-    gearboxRun: !broken && effect !== "vidange_boite" && effect !== "revision_complete",
     engineName: (you ? d.engine_name : d.d_engine_name) ?? "Moteur",
     gearboxName: (you ? d.gearbox_name : d.d_gearbox_name) ?? "Boîte",
     tireName: (you ? d.tire_name : d.d_tire_name) ?? "Pneus",

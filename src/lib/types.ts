@@ -128,10 +128,7 @@ export interface DuelReport {
   gearboxProb: number | null; // null : non testée (casse moteur)
   coins: number;
   xp: number;
-  gumBefore: number;
   gumAfter: number | null;
-  engineRun: boolean;
-  gearboxRun: boolean;
   engineName: string;
   gearboxName: string;
   tireName: string;

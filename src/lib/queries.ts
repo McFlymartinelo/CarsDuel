@@ -3,8 +3,9 @@ import type { PoolClient } from "pg";
 import { withUser } from "@/lib/db";
 import type { CatalogQuery } from "@/lib/catalog-filters";
 import { LISTING_ORDER_SQL } from "@/lib/catalog-sort";
+import { parsePage } from "@/lib/pagination";
 import type { DailyQuestState } from "@/lib/quests";
-import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, PriceRef, Profile, UserCard, UserDeck, CardTemplate } from "@/lib/types";
+import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, PriceRef, UserCard, UserDeck, CardTemplate } from "@/lib/types";
 
 // Toutes les lectures passent par withUser : la RLS s'applique (rôle app_user).
 // Les chargeurs de page enchaînent leurs requêtes sur le MÊME client (une transaction).
@@ -12,7 +13,6 @@ import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, Price
 export const LISTING_PAGE_SIZE = 30;
 export const OFFER_LIMIT = 50;
 export const DUEL_PAGE_SIZE = 20;
-export const SUFFERED_LIMIT = 10;
 
 const CARD_SELECT = `select uc.*, to_jsonb(t) as card_templates
   from user_cards uc join card_templates t on t.id = uc.template_id`;
@@ -21,14 +21,6 @@ const LISTING_SELECT = `select l.*, (to_jsonb(uc) || jsonb_build_object('card_te
   from marketplace_listings l
   join user_cards uc on uc.id = l.card_id
   join card_templates t on t.id = uc.template_id`;
-
-function pageIndex(page: number) {
-  return Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
-}
-
-async function qProfile(c: PoolClient, uid: string) {
-  return (await c.query<Profile>("select id, username, coins, xp_total, last_daily_pull, last_weekly_pull from profiles where id = $1", [uid])).rows[0] ?? null;
-}
 
 async function qCards(c: PoolClient, uid: string) {
   return (await c.query<UserCard>(`${CARD_SELECT} where uc.owner_id = $1 order by uc.acquired_at desc`, [uid])).rows;
@@ -49,40 +41,9 @@ async function qNames(c: PoolClient, ids: string[]) {
   return new Map(rows.map((r) => [r.id, r.username]));
 }
 
-export const getProfile = (uid: string) => withUser(uid, (c) => qProfile(c, uid));
-export const getOwnCards = (uid: string) => withUser(uid, (c) => qCards(c, uid));
-export const getOwnDecks = (uid: string) => withUser(uid, (c) => qDecks(c, uid));
-
 export const getDuelHistory = (uid: string, limit = DUEL_PAGE_SIZE, offset = 0) =>
   withUser(uid, async (c) =>
     (await c.query<DuelRow>("select * from duels_history order by created_at desc limit $1 offset $2", [limit, offset])).rows,
-  );
-
-export const getSufferedDuels = (uid: string, limit = SUFFERED_LIMIT) =>
-  withUser(uid, async (c) =>
-    (await c.query<DuelRow>(
-      "select * from duels_history where defender_id = $1 order by created_at desc limit $2",
-      [uid, limit],
-    )).rows,
-  );
-
-export const getUsernames = (uid: string, ids: string[]) => withUser(uid, (c) => qNames(c, ids));
-
-export const getActiveListings = (uid: string, page = 1) =>
-  withUser(uid, async (c) => {
-    const p = pageIndex(page);
-    return (await c.query<Listing>(
-      `${LISTING_SELECT} where l.status = 'active' order by l.created_at desc limit $1 offset $2`,
-      [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE],
-    )).rows;
-  });
-
-export const getPendingOffers = (uid: string) =>
-  withUser(uid, async (c) =>
-    (await c.query<Offer>(
-      "select * from marketplace_offers where status = 'pending' order by created_at desc limit $1",
-      [OFFER_LIMIT],
-    )).rows,
   );
 
 export interface TireModifier {
@@ -91,8 +52,6 @@ export interface TireModifier {
   perf_bonus_pct: number;
   wear_pct: number;
 }
-
-export const getTireModifiers = (uid: string) => withUser(uid, (c) => qModifiers(c));
 
 export interface CatalogRow {
   id: string;
@@ -134,8 +93,6 @@ async function qCatalogCounts(c: PoolClient) {
       group by t.category, t.rarity`,
   )).rows;
 }
-
-export const getShopCatalog = (uid: string) => withUser(uid, (c) => qCatalog(c));
 
 export interface LeaderboardRow {
   user_id: string;
@@ -196,11 +153,9 @@ export interface DuelChallengeRow {
   status: string;
 }
 
-export const loadOrganizedPage = (uid: string) =>
+/** Demandes de duel en attente et pseudos associés (page /duel uniquement). */
+export const loadOrganizedChallenges = (uid: string) =>
   withUser(uid, async (c) => {
-    const cards = await qCards(c, uid);
-    const decks = await qDecks(c, uid);
-    const modifiers = await qModifiers(c);
     const challenges = (await c.query<DuelChallengeRow>(
       `select id, challenger_id, target_id, created_at, status
          from duel_challenges
@@ -209,7 +164,7 @@ export const loadOrganizedPage = (uid: string) =>
       [uid],
     )).rows;
     const names = await qNames(c, [...new Set(challenges.flatMap((x) => [x.challenger_id, x.target_id]))]);
-    return { cards, decks, modifiers, challenges, names };
+    return { challenges, names };
   });
 
 export const touchQuest = (uid: string, key: string) =>
@@ -224,32 +179,25 @@ export const getDailyQuests = (uid: string) =>
     return { second: row.second, third: row.third, progress, claimed: row.claimed ?? [] };
   });
 
-/** Duel : inventaire, historique paginé, duels subis et pseudos. */
+/** Duel : inventaire, historique paginé et pseudos des adversaires. */
 export const loadDuelPage = (uid: string, page = 1) =>
   withUser(uid, async (c) => {
-    const p = pageIndex(page);
+    const p = parsePage(page);
     const cards = await qCards(c, uid);
     const decks = await qDecks(c, uid);
     const history = (await c.query<DuelRow>(
       "select * from duels_history order by created_at desc limit $1 offset $2",
       [DUEL_PAGE_SIZE, (p - 1) * DUEL_PAGE_SIZE],
     )).rows;
-    const suffered = (await c.query<DuelRow>(
-      "select * from duels_history where defender_id = $1 order by created_at desc limit $2",
-      [uid, SUFFERED_LIMIT],
-    )).rows;
     const modifiers = await qModifiers(c);
-    const ids = [...new Set([
-      ...history.map((x) => (x.attacker_id === uid ? x.defender_id : x.attacker_id)),
-      ...suffered.map((x) => x.attacker_id),
-    ])];
-    return { cards, decks, modifiers, history, suffered, names: await qNames(c, ids), page: p };
+    const ids = [...new Set(history.map((x) => (x.attacker_id === uid ? x.defender_id : x.attacker_id)))];
+    return { cards, decks, modifiers, history, names: await qNames(c, ids), page: p };
   });
 
 /** Marketplace : annonces filtrées (page), offres, inventaire et pseudos des vendeurs. */
 export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery | null) =>
   withUser(uid, async (c) => {
-    const p = pageIndex(page);
+    const p = parsePage(page);
     const where = ["l.status = 'active'"];
     const params: unknown[] = [LISTING_PAGE_SIZE, (p - 1) * LISTING_PAGE_SIZE];
     if (filter) {

@@ -67,22 +67,6 @@ async function deckWrite(fn: (c: PoolClient, userId: string) => Promise<void>, o
   return { ok: true, message: okMessage };
 }
 
-export async function createDeck(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  return deckWrite(async (c, uid) => {
-    await c.query(
-      `insert into user_decks (owner_id, name, engine_card_id, gearbox_card_id, tire_card_id)
-       values ($1, $2, $3::uuid, $4::uuid, $5::uuid)`,
-      [uid, str(fd, "name") || "Deck", str(fd, "engine"), str(fd, "gearbox"), str(fd, "tire")],
-    );
-  }, "Deck créé.");
-}
-
-export async function deleteDeck(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  return deckWrite(async (c, uid) => {
-    await c.query("delete from user_decks where owner_id = $1 and id = $2::uuid", [uid, str(fd, "deck_id")]);
-  });
-}
-
 // Colonne du deck selon la catégorie (valeurs fixes : jamais issues du formulaire).
 const SLOT_COLUMN = { moteur: "engine_card_id", boite: "gearbox_card_id", pneus: "tire_card_id" } as const;
 type Slot = keyof typeof SLOT_COLUMN;
