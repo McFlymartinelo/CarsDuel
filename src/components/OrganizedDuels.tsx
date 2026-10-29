@@ -28,7 +28,7 @@ export function ProposeDuel() {
       </button>
       {sent && <p className="text-sm text-emerald-400">Demande envoyée à {sent}.</p>}
       {open && (
-        <Modal labelledBy="propose-title">
+        <Modal labelledBy="propose-title" onClose={pending ? undefined : () => setOpen(false)}>
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-400">Défi direct</p>
@@ -141,7 +141,7 @@ export function ChallengeList({
         </section>
       )}
       {showModal && (
-        <Modal labelledBy="accept-title" wide={Boolean(report)}>
+        <Modal labelledBy="accept-title" wide={Boolean(report)} onClose={pending ? undefined : close}>
           <h3 id="accept-title" className="sr-only">Accepter le duel</h3>
           {pending ? (
             <p className="py-8 text-center font-display text-xl uppercase text-amber-300">Duel en cours…</p>

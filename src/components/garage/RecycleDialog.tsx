@@ -45,7 +45,7 @@ export function RecycleDialog({
         Recycler
       </button>
       {open && (
-        <Modal labelledBy="recycle-title">
+        <Modal labelledBy="recycle-title" onClose={() => setOpen(false)}>
             <h3 id="recycle-title" className="font-display text-2xl font-bold uppercase">Recycler</h3>
             <p className="mt-2 text-zinc-200">{name}</p>
             <p className="mt-4 font-display text-4xl font-bold text-amber-400">+{coins.toLocaleString("fr-FR")} {coins > 1 ? "pièces" : "pièce"}</p>
@@ -59,7 +59,7 @@ export function RecycleDialog({
               <button type="button" onClick={() => setOpen(false)} className={`${btn} flex-1`}>
                 Annuler
               </button>
-              <ActionForm action={action} submitLabel="Confirmer" className="flex flex-1 [&>button]:min-h-11 [&>button]:flex-1 [&>button]:rounded-lg sm:[&>button]:min-h-10">
+              <ActionForm action={action} submitLabel="Confirmer" onSuccess={() => setOpen(false)} className="flex flex-1 [&>button]:min-h-11 [&>button]:flex-1 [&>button]:rounded-lg sm:[&>button]:min-h-10">
                 <input type="hidden" name="card_id" value={cardId} />
               </ActionForm>
             </div>

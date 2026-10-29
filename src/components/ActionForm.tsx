@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { Modal } from "@/components/Modal";
 import type { ActionState } from "@/lib/types";
@@ -39,20 +39,26 @@ export function ActionForm({
   confirmText?: string;
   onSuccess?: () => void;
 }) {
-  const [state, formAction, pending] = useActionState(action, null);
+  // Fermeture pilotée depuis la promesse de l'action, pas depuis l'état : après un
+  // rafraîchissement RSC, ce formulaire peut être démonté (la carte équipée sort de la
+  // liste des alternatives) avant que l'effet sur `state` n'ait pu appeler `onSuccess`.
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
+    const result = await action(prev, formData);
+    if (result?.ok) onSuccess?.();
+    return result;
+  }, null);
   const formRef = useRef<HTMLFormElement>(null);
   const skipConfirm = useRef(false);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
 
-  useEffect(() => {
-    if (state?.ok) onSuccess?.();
-  }, [state, onSuccess]);
-
   function accept() {
     skipConfirm.current = true;
     setOpen(false);
     formRef.current?.requestSubmit();
+    // requestSubmit() est synchrone : si la validation native échoue, aucun submit
+    // n'est déclenché et le flag doit être remis à zéro pour redemander la confirmation.
+    skipConfirm.current = false;
   }
 
   return (
@@ -60,6 +66,9 @@ export function ActionForm({
       ref={formRef}
       action={formAction}
       className={className}
+      onInvalid={() => {
+        skipConfirm.current = false;
+      }}
       onSubmit={(e) => {
         if (!confirmText) return;
         if (skipConfirm.current) {
@@ -84,7 +93,7 @@ export function ActionForm({
         <p className={`w-full text-sm ${state.ok ? "text-emerald-400" : "text-red-400"}`}>{state.message}</p>
       )}
       {open && (
-        <Modal labelledBy="confirm-title">
+        <Modal labelledBy="confirm-title" onClose={() => setOpen(false)}>
           <h3 id="confirm-title" className="font-display text-2xl font-bold uppercase">Confirmer</h3>
           <p className="mt-3 text-zinc-200">{text}</p>
           <div className="mt-5 grid grid-cols-2 gap-2">

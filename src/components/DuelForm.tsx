@@ -93,7 +93,7 @@ export function DuelForm({
       </form>
 
       {open && (
-        <Modal labelledBy="duel-dialog-title" wide>
+        <Modal labelledBy="duel-dialog-title" wide onClose={waiting ? undefined : close}>
           <h3 id="duel-dialog-title" className="sr-only">Affronter au hasard</h3>
           {showRace ? (
             waiting ? (

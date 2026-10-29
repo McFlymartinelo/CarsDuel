@@ -27,10 +27,10 @@ export function SellDialog({
         Vendre
       </button>
       {open && (
-        <Modal labelledBy="sell-title">
+        <Modal labelledBy="sell-title" onClose={() => setOpen(false)}>
             <h3 id="sell-title" className="font-display text-2xl font-bold uppercase">Vendre</h3>
             <p className="mt-2 text-zinc-200">{name}</p>
-            <ActionForm action={action} submitLabel="Mettre en vente" className="mt-4 flex flex-col items-stretch gap-3">
+            <ActionForm action={action} submitLabel="Mettre en vente" onSuccess={() => setOpen(false)} className="mt-4 flex flex-col items-stretch gap-3">
               <input type="hidden" name="card_id" value={cardId} />
               <label className="flex flex-col gap-1 text-sm text-zinc-300">
                 Prix (min. 1)

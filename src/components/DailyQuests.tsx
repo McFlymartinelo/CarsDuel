@@ -56,7 +56,7 @@ export function DailyQuests({ state }: { state: DailyQuestState | null }) {
         <TileBody title="Défis quotidiens" text="3 défis par jour · 5 pièces chacun" image="/duel/defis.webp" />
       </button>
       {open && (
-        <Modal labelledBy="quests-title" wide>
+        <Modal labelledBy="quests-title" wide onClose={() => setOpen(false)}>
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 id="quests-title" className="font-display text-2xl font-bold uppercase">Défis quotidiens</h3>
             <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-zinc-600 px-3 py-1.5 text-sm hover:bg-zinc-800">Fermer</button>
