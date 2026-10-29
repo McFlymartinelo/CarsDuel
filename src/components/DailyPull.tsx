@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { CardDraw, DrawProgress } from "@/components/CardDraw";
 import { Cog, Settings2 } from "lucide-react";
 import { PullCountdown } from "@/components/PullCountdown";
+import { TileBody, tileClass } from "@/components/ActionTile";
 import type { ActionState, DrawnCard } from "@/lib/types";
 import { RARITY_LABEL } from "@/lib/format";
 
@@ -25,7 +26,7 @@ function PullCard({
   nextAt,
   drawTitle,
   action,
-  variant,
+  image,
   weekly = false,
 }: {
   title: string;
@@ -35,7 +36,7 @@ function PullCard({
   nextAt?: string;
   drawTitle: string;
   action: PullAction;
-  variant: "primary" | "ghost";
+  image: string;
   weekly?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
@@ -56,31 +57,29 @@ function PullCard({
   }, [state, weekly]);
 
   return (
-    <form ref={formRef} action={formAction} className="rounded-xl border border-zinc-800 bg-[#0e1117] p-4">
+    <form ref={formRef} action={formAction} className={`${tileClass()} pull-tile`}>
       {weekly && <input type="hidden" name="category" value={category} />}
-      <h3 className="font-semibold">{title}</h3>
-      {claimed ? (
-        <>
-          <p className="mt-2 text-sm text-zinc-400">{claimedText}</p>
-          {nextAt && <PullCountdown until={nextAt} />}
-        </>
-      ) : (
-        <>
-          <p className="mb-3 text-sm text-zinc-400">{description}</p>
+      <TileBody
+        title={title}
+        text={description}
+        image={image}
+        imageFit="contain"
+        badge={claimed ? (
+          <span className="mt-2 flex flex-col gap-1 text-left text-xs text-zinc-300">
+            <span>{claimedText}</span>
+            {nextAt && <PullCountdown until={nextAt} />}
+          </span>
+        ) : (
           <button
             type={weekly ? "button" : "submit"}
             onClick={weekly ? () => setChooseOpen(true) : undefined}
             disabled={pending}
-            className={`min-h-11 rounded-lg px-4 py-1.5 text-sm font-medium disabled:opacity-50 ${
-              variant === "primary"
-                ? "bg-amber-500 text-black hover:bg-amber-400"
-                : "border border-zinc-600 text-zinc-200 hover:bg-zinc-800"
-            }`}
+            className="mt-2 min-h-10 rounded-lg border border-amber-400/70 bg-black/75 px-4 py-2 text-sm font-bold uppercase tracking-wide text-amber-200 shadow-[0_0_18px_rgba(255,138,31,0.22)] transition hover:border-amber-300 hover:bg-amber-500/15 disabled:cursor-wait disabled:opacity-50"
           >
-            {pending ? "Tirage…" : "Tirer"}
+            {pending ? "Tirage…" : "Lancer le tirage"}
           </button>
-        </>
-      )}
+        )}
+      />
       {state && !state.ok && <p className="mt-2 text-sm text-red-400">{state.message}</p>}
       {chooseOpen && weekly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#030507]/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choisir la carte hebdomadaire">
@@ -155,7 +154,7 @@ export function DailyPull({
           nextAt={nextDaily}
           drawTitle="Tirage quotidien"
           action={dailyAction}
-          variant="primary"
+          image="/pulls/daily-cards.webp"
         />
         <PullCard
           title="Hebdomadaire"
@@ -165,7 +164,7 @@ export function DailyPull({
           nextAt={nextWeekly}
           drawTitle="Tirage hebdomadaire"
           action={weeklyAction}
-          variant="ghost"
+          image="/pulls/weekly-engine-gearbox.webp"
           weekly
         />
       </div>
