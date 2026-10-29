@@ -8,7 +8,8 @@ import { SummaryPanel } from "@/components/garage/SummaryPanel";
 import { type SlotKey } from "@/components/garage/SlotTabs";
 import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
-import { DUEL_PAGE_SIZE, getDailyQuests, loadDuelPage, loadOrganizedPage } from "@/lib/queries";
+import { parsePage } from "@/lib/pagination";
+import { DUEL_PAGE_SIZE, getDailyQuests, loadDuelPage, loadOrganizedChallenges } from "@/lib/queries";
 import { launchDuel } from "./actions";
 
 export const metadata = { title: "Jouer — CarsDuel" };
@@ -17,7 +18,8 @@ const SLOTS: SlotKey[] = ["moteur", "boite", "pneus"];
 
 export default async function DuelPage({ searchParams }: { searchParams: Promise<{ page?: string; slot?: string }> }) {
   const { page: pageParam, slot: slotParam } = await searchParams;
-  const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
+  const page = parsePage(pageParam);
+  const nextPage = parsePage(page + 1);
   const { user } = await requireUser();
   const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized] = await Promise.all([
     loadDuelPage(user.id, page),
@@ -25,7 +27,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
       console.error("défis indisponibles :", e);
       return null;
     }),
-    loadOrganizedPage(user.id).catch((e) => {
+    loadOrganizedChallenges(user.id).catch((e) => {
       console.error("demandes de duel indisponibles :", e);
       return null;
     }),
@@ -131,7 +133,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
         {history.length === 0 && <p className="text-sm text-zinc-500">Aucun duel pour l&apos;instant.</p>}
         <div className="flex gap-4 text-sm">
           {page > 1 && <Link href={pageHref(page - 1)} className="text-amber-400 hover:underline">Page précédente</Link>}
-          {history.length === DUEL_PAGE_SIZE && <Link href={pageHref(page + 1)} className="text-amber-400 hover:underline">Voir plus</Link>}
+          {history.length === DUEL_PAGE_SIZE && nextPage > page && <Link href={pageHref(nextPage)} className="text-amber-400 hover:underline">Voir plus</Link>}
         </div>
         </div>
       </section>

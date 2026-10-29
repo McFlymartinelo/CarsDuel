@@ -10,6 +10,7 @@ import { readCatalogQuery } from "@/lib/catalog-filters";
 import type { Rarity } from "@/lib/types";
 import { CATEGORY_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
+import { parsePage } from "@/lib/pagination";
 import { LISTING_PAGE_SIZE, loadMarketplacePage } from "@/lib/queries";
 import type { Listing, PriceRef } from "@/lib/types";
 import { buyListing, cancelListing, makeOffer, respondOffer, withdrawOffer } from "./actions";
@@ -40,7 +41,8 @@ export default async function MarketplacePage({
   searchParams: Promise<{ page?: string; tab?: string; rarity?: string; sort?: string; min?: string; max?: string; risk?: string; vue?: string }>;
 }) {
   const sp = await searchParams;
-  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const page = parsePage(sp.page);
+  const nextPage = parsePage(page + 1);
   const query = readCatalogQuery(sp);
   const view = viewMode(sp.vue);
   const { user } = await requireUser();
@@ -191,7 +193,7 @@ export default async function MarketplacePage({
 
       <div className="flex gap-4 text-sm">
         {page > 1 && <CatalogViewLink href={pageHref(page - 1)} className="text-amber-400 hover:underline">Page précédente</CatalogViewLink>}
-        {listings.length === LISTING_PAGE_SIZE && <CatalogViewLink href={pageHref(page + 1)} className="text-amber-400 hover:underline">Voir plus</CatalogViewLink>}
+        {listings.length === LISTING_PAGE_SIZE && nextPage > page && <CatalogViewLink href={pageHref(nextPage)} className="text-amber-400 hover:underline">Voir plus</CatalogViewLink>}
       </div>
 
       {history.length > 0 && (
