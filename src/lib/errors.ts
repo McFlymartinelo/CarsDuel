@@ -40,6 +40,7 @@ const MESSAGES: Record<string, string> = {
   invalid_deck_card: "Carte invalide pour cet emplacement (propriété, catégorie ou mise en vente).",
   not_recyclable: "Cette carte ne se recycle pas.",
   bonus_not_sellable: "Les cartes bonus ne se vendent pas. Vous pouvez les recycler contre 1 pièce.",
+  card_not_sellable: "Cette carte ne peut pas être mise en vente.",
   user_not_found: "Ce pseudo est introuvable.",
   cannot_challenge_self: "Vous ne pouvez pas vous défier vous-même.",
   challenge_pending: "Une demande est déjà en attente entre vous et ce joueur.",

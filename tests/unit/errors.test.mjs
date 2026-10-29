@@ -6,6 +6,7 @@ test("rpcErrorMessage : codes métier nouvellement mappés", () => {
   assert.equal(rpcErrorMessage({ message: "invalid_category" }), "Catégorie de tirage invalide.");
   assert.equal(rpcErrorMessage({ message: "profile_not_found" }), "Profil introuvable.");
   assert.equal(rpcErrorMessage({ message: "template_not_found" }), "Modèle de carte introuvable.");
+  assert.equal(rpcErrorMessage({ message: "card_not_sellable" }), "Cette carte ne peut pas être mise en vente.");
 });
 
 test("rpcErrorMessage : code connu existant", () => {

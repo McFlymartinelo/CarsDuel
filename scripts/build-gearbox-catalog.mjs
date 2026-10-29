@@ -163,6 +163,7 @@ on conflict (code) do update set
 update public.card_templates
 set is_active = false
 where category = 'boite'
+  and restricted_to_username is null
   and code not in (${codeList});
 
 insert into public.shop_catalog (vendor_id, template_id, price, is_active)
@@ -181,6 +182,7 @@ set is_active = false
 from public.card_templates t
 where sc.template_id = t.id
   and t.category = 'boite'
+  and t.restricted_to_username is null
   and t.code not in (${soldList});
 `;
 

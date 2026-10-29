@@ -70,6 +70,7 @@ on conflict (code) do update set
 update public.card_templates
 set is_active = false
 where category = 'boite'
+  and restricted_to_username is null
   and code not in ('b_1', 'b_2', 'b_3', 'b_4', 'b_5', 'b_6', 'b_7', 'b_8', 'b_9', 'b_10', 'b_11', 'b_12', 'b_13', 'b_14', 'b_15', 'b_16', 'b_17', 'b_18', 'b_19', 'b_20', 'b_21', 'b_22', 'b_23', 'b_24', 'b_25', 'b_26', 'b_27', 'b_28', 'b_29', 'b_30', 'b_31', 'b_32', 'b_33', 'b_34', 'b_35', 'b_36', 'b_37', 'b_38', 'b_39', 'b_40', 'b_41', 'b_42', 'b_43', 'b_44', 'b_45', 'b_46', 'b_47', 'b_48', 'b_49', 'b_50');
 
 insert into public.shop_catalog (vendor_id, template_id, price, is_active)
@@ -102,4 +103,5 @@ set is_active = false
 from public.card_templates t
 where sc.template_id = t.id
   and t.category = 'boite'
+  and t.restricted_to_username is null
   and t.code not in ('b_5', 'b_6', 'b_20', 'b_22', 'b_24', 'b_27', 'b_31', 'b_34', 'b_35', 'b_37', 'b_40', 'b_42', 'b_45', 'b_46', 'b_49');

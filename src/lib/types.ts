@@ -29,6 +29,7 @@ export interface CardTemplate {
   tire_type: string | null;
   tire_base_wear: number | null;
   bonus_effect: string | null;
+  restricted_to_username: string | null;
 }
 
 export interface UserCard {
