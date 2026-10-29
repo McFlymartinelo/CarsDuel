@@ -26,7 +26,7 @@ const CARD_CLAIMED = "border-emerald-400/30 shadow-[inset_0_1px_0_rgba(255,255,2
 const CTA = "inline-flex h-10 w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-b from-amber-300 to-amber-500 font-display text-[13px] font-bold uppercase tracking-[0.09em] text-[#1c1203] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_20px_-10px_rgba(251,191,36,0.65)] transition-[filter] hover:brightness-105";
 const CTA_COMPACT = "max-sm:ml-auto max-sm:h-9 max-sm:w-auto max-sm:gap-1.5 max-sm:px-3 max-sm:text-[11px]";
 
-const PILL = "inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border px-2 font-display text-[10px] font-bold uppercase tracking-wide";
+const PILL = "inline-flex h-5 shrink-0 items-center gap-1 rounded-md border px-1.5 font-display text-[9px] font-bold uppercase tracking-[0.06em] sm:gap-1.5 sm:px-2 sm:text-[10px]";
 
 /** Jauge en segments (6 max) : chaque segment se remplit proportionnellement. */
 function SegmentBar({ owned, total, complete }: { owned: number; total: number; complete: boolean }) {
@@ -54,22 +54,24 @@ export function ChallengeTile({ challengeKey, name, condition, item, reward, own
       <div className="flex items-start gap-2.5 sm:gap-3">
         <span aria-hidden="true" className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border sm:h-12 sm:w-12 lg:h-10 lg:w-10 ${claimed ? "border-emerald-400/30 text-emerald-300 shadow-[inset_0_0_18px_rgba(52,211,153,0.1)]" : "border-amber-400/25 text-amber-400 shadow-[inset_0_0_18px_rgba(251,191,36,0.08)]"}`}>{icon}</span>
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-baseline gap-2">
+          <div className="flex min-w-0 items-start gap-2">
             <h4 className="min-w-0 flex-1 font-display text-[15px] font-bold uppercase leading-tight tracking-wide text-zinc-50 lg:text-[14px]">{name}</h4>
             <span className={`font-display text-xs font-bold text-zinc-100 ${compact ? "hidden max-sm:inline" : "hidden"}`}>{owned} <span className="font-semibold text-zinc-500">/ {total}</span></span>
           </div>
           <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-400 lg:text-[10.5px]" title={condition}>{condition}</p>
           {item !== "Aucune" && <p className="mt-0.5 line-clamp-2 text-[10.5px] leading-snug text-amber-300/75 lg:text-[10px]" title={item}>+ {item}</p>}
         </div>
+        {!ready && <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
+          {claimed
+            ? <span className={`${PILL} border-emerald-400/45 bg-emerald-500/10 text-emerald-300`}><Check size={11} strokeWidth={2.5} aria-hidden="true" />Réclamé</span>
+            : <span className={`${PILL} border-amber-400/50 bg-black/30 text-amber-300 shadow-[inset_0_0_10px_rgba(251,191,36,0.12)]`}><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_currentColor]" />En cours</span>}
+          {!claimed && <span className="hidden text-[10px] leading-tight text-zinc-500 sm:block">{total === 0 ? "Aucune carte éligible" : `${missing} carte${missing > 1 ? "s" : ""} restante${missing > 1 ? "s" : ""}`}</span>}
+        </div>}
       </div>
 
       <div className="mt-2.5 flex min-w-0 items-center gap-2.5 lg:mt-2">
         <span className={`shrink-0 font-display text-[13px] font-bold text-zinc-100 lg:text-xs ${compact ? "max-sm:hidden" : ""}`}>{owned} <span className="font-semibold text-zinc-500">/ {total}</span></span>
         <SegmentBar owned={owned} total={total} complete={complete} />
-        {!ready && (claimed
-          ? <span className={`${PILL} border-emerald-400/45 bg-emerald-500/10 text-emerald-300`}><Check size={12} strokeWidth={2.5} aria-hidden="true" />Réclamé</span>
-          : <span className={`${PILL} border-amber-400/50 bg-black/30 text-amber-300 shadow-[inset_0_0_10px_rgba(251,191,36,0.12)]`}><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_currentColor]" />En cours</span>)}
-        {!ready && <span className="ml-auto hidden shrink-0 text-[10px] text-zinc-500 sm:block">{claimed ? `+${reward} pièces` : total === 0 ? "Aucune carte éligible" : `${missing} carte${missing > 1 ? "s" : ""} restante${missing > 1 ? "s" : ""}`}</span>}
         {!ready && compact && <span aria-label={`Récompense : ${reward} pièces`} className="ml-auto flex shrink-0 items-center gap-1 sm:hidden">
           <Coins size={12} strokeWidth={1.7} aria-hidden="true" className="text-amber-400" />
           <strong className="font-display text-xs font-bold text-amber-300">{reward}</strong>

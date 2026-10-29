@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { ChallengeScrollList } from "@/components/ChallengeScrollList";
 
 /** Panneau de défis : repliable sur téléphone, toujours ouvert dès `sm`. */
 export function CollectorAccordion({ icon, title, subtitle, summary, children }: {
@@ -23,6 +24,6 @@ export function CollectorAccordion({ icon, title, subtitle, summary, children }:
         {summary}<span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-400/60">défis</span>
       </span>
     </button>
-    <div className={`collector-scroll mt-4 flex-col gap-2 sm:grid sm:max-h-[26rem] sm:overflow-y-auto sm:overscroll-contain sm:pr-1 ${open ? "flex" : "hidden"}`}>{children}</div>
+    <ChallengeScrollList open={open}>{children}</ChallengeScrollList>
   </>;
 }
