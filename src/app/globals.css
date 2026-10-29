@@ -186,6 +186,7 @@ html {
   .draw-aura, .draw-shake, .draw-burst, .draw-spark { animation: none; }
   .card-flip { transition: none; }
   .duel-rise, .duel-from-left, .duel-from-right, .duel-verdict { animation: none; }
+  .filter-sheet-in, .filter-backdrop-in { animation: none; }
 }
 
 /* Boutons du garage : même langage visuel que les cartes (pierre sombre, filets orange lumineux, coins marqués). */
@@ -278,3 +279,24 @@ html {
 
 /* Défis du collectionneur : défilement discret aux couleurs du jeu. */
 .collector-scroll { scrollbar-width: thin; scrollbar-color: rgba(245, 158, 11, 0.55) rgba(255, 255, 255, 0.05); }
+
+/* Feuille de filtres mobile : fond atelier + entrée depuis le bas. */
+.filter-sheet {
+  background-color: #0c0f15;
+  background-image:
+    radial-gradient(120% 60% at 50% 0%, rgba(245, 158, 11, 0.1), transparent 62%),
+    linear-gradient(180deg, #12161e, #0b0e13);
+}
+
+.filter-sheet-in { animation: filter-sheet-in 0.32s cubic-bezier(0.22, 0.8, 0.24, 1); }
+.filter-backdrop-in { animation: filter-backdrop-in 0.2s ease-out; }
+
+@keyframes filter-sheet-in {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes filter-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

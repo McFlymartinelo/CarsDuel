@@ -2,13 +2,53 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  ArrowRight,
+  Coins,
+  Cog,
+  Disc,
+  RotateCcw,
+  Settings2,
+  SlidersHorizontal,
+  TriangleAlert,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { FILTER_TABS, sortsFor, type CatalogQuery } from "@/lib/catalog-filters";
 import { RARITY_LABEL } from "@/lib/format";
 import type { Rarity } from "@/lib/types";
+import {
+  FILTER_BODY_CLASS,
+  FILTER_CHIPS_CLASS,
+  FILTER_COUNT_OFF,
+  FILTER_COUNT_ON,
+  FILTER_FOOTER_CLASS,
+  FILTER_RARITY_OFF,
+  FILTER_RARITY_ON,
+  FILTER_RARITY_TILE,
+  FILTER_RESET_CLASS,
+  FILTER_SUBMIT_CLASS,
+  FILTER_TYPE_OFF,
+  FILTER_TYPE_ON,
+  FILTER_TYPE_TILE,
+  FilterChip,
+  FilterSectionTitle,
+  FilterSheet,
+  FilterTrigger,
+  RARITY_TONE,
+} from "@/components/MobileFilterUi";
 
 type RarityCounts = Partial<Record<Rarity, number>>;
+
+const TAB_ICONS: Record<string, LucideIcon> = {
+  moteurs: Cog,
+  boites: Settings2,
+  pneus: Disc,
+  bonus: Zap,
+};
+
+const PRICE_PRESETS = [1_000, 5_000, 20_000];
 
 export function MobileCatalogFilters({
   path,
@@ -26,6 +66,8 @@ export function MobileCatalogFilters({
   showRisk?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [minValue, setMinValue] = useState("");
+  const [maxValue, setMaxValue] = useState("");
   const router = useRouter();
   const mechanical = query.tab.category === "moteur" || query.tab.category === "boite";
   const activeCount = Number(query.tab.key !== FILTER_TABS[0].key)
@@ -36,17 +78,9 @@ export function MobileCatalogFilters({
 
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
+    setMinValue(query.min != null ? String(query.min) : "");
+    setMaxValue(query.max != null ? String(query.max) : "");
+  }, [open, query.min, query.max]);
 
   const href = (over: {
     tab?: string;
@@ -74,146 +108,253 @@ export function MobileCatalogFilters({
     return `${path}?${params.toString()}`;
   };
 
+  const resetHref = href({ tab: FILTER_TABS[0].key, rarity: null, sort: null, min: null, max: null, risk: null });
   const sorts = sortsFor(query.tab.category);
-  const summary = [
-    query.tab.label,
-    query.rarity ? RARITY_LABEL[query.rarity] : null,
-    query.min != null || query.max != null
-      ? `${query.min?.toLocaleString("fr-FR") ?? "0"}–${query.max?.toLocaleString("fr-FR") ?? "∞"} 🪙`
-      : null,
-    query.risk != null ? `Casse ≤ ${query.risk} %` : null,
-  ].filter(Boolean).join(" · ");
+  const rarityTotal = Object.values(rarityCounts).reduce((sum, n) => sum + (n ?? 0), 0);
+
+  const chips: { key: string; label: string; href: string; icon?: LucideIcon; dot?: string }[] = [];
+  if (query.tab.key !== FILTER_TABS[0].key) {
+    chips.push({
+      key: "tab",
+      label: query.tab.label,
+      href: href({ tab: FILTER_TABS[0].key, rarity: null, sort: null, risk: null }),
+      icon: TAB_ICONS[query.tab.key],
+    });
+  }
+  if (query.rarity) {
+    chips.push({ key: "rarity", label: RARITY_LABEL[query.rarity], href: href({ rarity: null }), dot: RARITY_TONE[query.rarity].dot });
+  }
+  if (query.min != null || query.max != null) {
+    chips.push({
+      key: "price",
+      label: `${query.min?.toLocaleString("fr-FR") ?? "0"} – ${query.max?.toLocaleString("fr-FR") ?? "∞"}`,
+      href: href({ min: null, max: null }),
+      icon: Coins,
+    });
+  }
+  if (query.risk != null) {
+    chips.push({ key: "risk", label: `Casse ≤ ${query.risk} %`, href: href({ risk: null }), icon: TriangleAlert });
+  }
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    form.querySelectorAll<HTMLInputElement>("input[name='min'], input[name='max'], input[name='risk']").forEach((input) => {
+      if (input.value.trim() === "") input.disabled = true;
+    });
+    // Laisse la soumission native partir avant de refermer la feuille.
+    window.setTimeout(() => setOpen(false), 0);
+  };
 
   return (
     <div className="md:hidden">
-      <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-[#10131a] p-2">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-amber-500 px-3 text-sm font-semibold text-black"
-        >
-          <SlidersHorizontal size={16} />
-          Filtres
-          {activeCount > 0 && <span className="rounded-full bg-black/15 px-1.5 py-0.5 text-xs">{activeCount}</span>}
-        </button>
-        <label className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Tri</span>
-          <select
-            aria-label="Trier les résultats"
-            value={query.sort ?? ""}
-            onChange={(event) => {
-              const selected = sorts.find((sort) => sort.key === event.target.value);
-              if (selected) router.push(href({ sort: selected.key }));
-              else if (query.sort) router.push(href({ sort: null }));
-            }}
-            className="min-w-0 flex-1 appearance-none truncate rounded-lg border border-zinc-700 bg-[#0d1015] px-2 py-2 text-sm text-zinc-200"
-          >
-            <option value="">Par défaut</option>
-            {sorts.map((sort) => <option key={sort.key} value={sort.key}>{sort.label}</option>)}
-          </select>
-        </label>
-      </div>
-      <p className="mt-1.5 truncate px-1 text-xs text-amber-300" title={summary}>{summary}</p>
+      <FilterTrigger
+        activeCount={activeCount}
+        open={open}
+        onOpen={() => setOpen(true)}
+        sorts={sorts}
+        sort={query.sort ?? ""}
+        onSortChange={(key) => {
+          if (key) router.push(href({ sort: key }));
+          else if (query.sort) router.push(href({ sort: null }));
+        }}
+      />
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[60] flex items-end"
-        >
-          <button type="button" onClick={() => setOpen(false)} aria-label="Fermer les filtres" className="absolute inset-0 bg-black/70" />
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mobile-filters-title"
-            className="relative z-10 max-h-[88dvh] w-full overflow-y-auto rounded-t-3xl border border-zinc-700 bg-[#10131a] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
-          >
-            <div className="mx-auto mb-4 h-1 w-14 rounded-full bg-zinc-600" />
-            <div className="mb-4 flex items-center justify-between">
-              <h2 id="mobile-filters-title" className="font-display text-xl font-bold uppercase">Filtres</h2>
-              <div className="flex items-center gap-3">
-                <Link href={href({ rarity: null, sort: null, min: null, max: null, risk: null })} onClick={() => setOpen(false)} className="text-sm font-medium text-amber-300">
-                  Réinitialiser
-                </Link>
-                <button type="button" onClick={() => setOpen(false)} aria-label="Fermer les filtres" className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white">
-                  <X size={19} />
-                </button>
+      {chips.length > 0 && (
+        <div className={FILTER_CHIPS_CLASS}>
+          {chips.map(({ key, ...chip }) => <FilterChip key={key} {...chip} />)}
+        </div>
+      )}
+
+      <FilterSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        labelId="mobile-filters-title"
+        activeCount={activeCount}
+        reset={(
+          <Link href={resetHref} onClick={() => setOpen(false)} className={FILTER_RESET_CLASS}>
+            <RotateCcw size={12} strokeWidth={2.25} />
+            Réinitialiser
+          </Link>
+        )}
+      >
+        <form action={path} method="get" onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <input type="hidden" name="tab" value={query.tab.key} />
+          {query.rarity && <input type="hidden" name="rarity" value={query.rarity} />}
+          {query.sort && <input type="hidden" name="sort" value={query.sort} />}
+          {Object.entries(extra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
+
+          <div className={FILTER_BODY_CLASS}>
+            <section>
+              <FilterSectionTitle>Type</FilterSectionTitle>
+              <div className="grid grid-cols-2 gap-2">
+                {FILTER_TABS.map((tab) => {
+                  const selected = tab.key === query.tab.key;
+                  const Icon = TAB_ICONS[tab.key] ?? SlidersHorizontal;
+                  return (
+                    <Link
+                      key={tab.key}
+                      href={href({ tab: tab.key, rarity: null, sort: null, risk: null })}
+                      scroll={false}
+                      onClick={() => setOpen(false)}
+                      aria-current={selected ? "true" : undefined}
+                      className={`${FILTER_TYPE_TILE} ${selected ? FILTER_TYPE_ON : FILTER_TYPE_OFF}`}
+                    >
+                      <Icon size={17} strokeWidth={2} className={selected ? "shrink-0 text-black/75" : "shrink-0 text-amber-400/80"} />
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{tab.label}</span>
+                      <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${selected ? FILTER_COUNT_ON : FILTER_COUNT_OFF}`}>
+                        {counts[tab.category] ?? 0}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
-            </div>
+            </section>
 
-            <div className="space-y-5">
+            {mechanical && (
               <section>
-                <h3 className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">Type</h3>
+                <FilterSectionTitle hint={query.rarity ? RARITY_LABEL[query.rarity] : "Toutes"}>Niveau</FilterSectionTitle>
                 <div className="grid grid-cols-2 gap-2">
-                  {FILTER_TABS.map((tab) => {
-                    const selected = tab.key === query.tab.key;
+                  <Link
+                    href={href({ rarity: null })}
+                    scroll={false}
+                    onClick={() => setOpen(false)}
+                    aria-current={!query.rarity ? "true" : undefined}
+                    className={`${FILTER_RARITY_TILE} ${!query.rarity ? FILTER_RARITY_ON : FILTER_RARITY_OFF}`}
+                  >
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${!query.rarity ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.7)]" : "bg-zinc-600"}`} />
+                    <span className="min-w-0 flex-1 truncate">Toutes</span>
+                    <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${!query.rarity ? "bg-amber-400/15 text-amber-200/80" : FILTER_COUNT_OFF}`}>
+                      {rarityTotal}
+                    </span>
+                  </Link>
+                  {(Object.keys(RARITY_LABEL) as Rarity[]).filter((rarity) => (rarityCounts[rarity] ?? 0) > 0 || rarity === query.rarity).map((rarity) => {
+                    const selected = rarity === query.rarity;
+                    const tone = RARITY_TONE[rarity];
                     return (
                       <Link
-                        key={tab.key}
-                        href={href({ tab: tab.key, rarity: null, sort: null, risk: null })}
+                        key={rarity}
+                        href={href({ rarity })}
+                        scroll={false}
                         onClick={() => setOpen(false)}
                         aria-current={selected ? "true" : undefined}
-                        className={`flex min-h-10 items-center justify-between rounded-lg border px-3 text-sm font-semibold ${selected ? "border-amber-500 bg-amber-500 text-black" : "border-zinc-700 bg-[#171a21] text-zinc-300"}`}
+                        className={`${FILTER_RARITY_TILE} ${selected ? tone.on : FILTER_RARITY_OFF}`}
                       >
-                        <span className="truncate">{tab.label}</span>
-                        <span className="ml-2 text-xs tabular-nums opacity-70">{counts[tab.category] ?? 0}</span>
+                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot} ${selected ? "shadow-[0_0_6px_currentColor]" : ""}`} />
+                        <span className="min-w-0 flex-1 truncate">{RARITY_LABEL[rarity]}</span>
+                        <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${selected ? "bg-white/10 text-white/80" : FILTER_COUNT_OFF}`}>
+                          {rarityCounts[rarity] ?? 0}
+                        </span>
                       </Link>
                     );
                   })}
                 </div>
               </section>
+            )}
 
-              {mechanical && (
-                <section>
-                  <h3 className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">Niveau</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <Link href={href({ rarity: null })} onClick={() => setOpen(false)} aria-current={!query.rarity ? "true" : undefined} className={`rounded-lg border px-3 py-2 text-sm font-medium ${!query.rarity ? "border-amber-500 bg-amber-500 text-black" : "border-zinc-700 bg-[#171a21] text-zinc-300"}`}>
-                      Tous
-                    </Link>
-                    {(Object.keys(RARITY_LABEL) as Rarity[]).filter((rarity) => (rarityCounts[rarity] ?? 0) > 0 || rarity === query.rarity).map((rarity) => {
-                      const selected = rarity === query.rarity;
-                      return (
-                        <Link key={rarity} href={href({ rarity })} onClick={() => setOpen(false)} aria-current={selected ? "true" : undefined} className={`rounded-lg border px-3 py-2 text-sm font-medium ${selected ? "border-amber-500 bg-amber-500 text-black" : "border-zinc-700 bg-[#171a21] text-zinc-300"}`}>
-                          {RARITY_LABEL[rarity]} <span className="text-xs opacity-70">{rarityCounts[rarity] ?? 0}</span>
-                        </Link>
-                      );
-                    })}
+            <section>
+              <FilterSectionTitle>Prix</FilterSectionTitle>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                <label className="min-w-0">
+                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Mini</span>
+                  <div className="relative">
+                    <Coins size={14} strokeWidth={2} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70" />
+                    <input
+                      name="min"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={minValue}
+                      onChange={(event) => setMinValue(event.target.value)}
+                      placeholder="0"
+                      className="!w-full !rounded-xl !border-white/10 !bg-[#0b0e13] !py-2.5 !pl-9 !pr-3 text-base font-semibold tabular-nums text-white placeholder:font-normal placeholder:text-zinc-600 [appearance:textfield] focus:!border-amber-400/60 focus:!outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
                   </div>
-                </section>
-              )}
-
-              <form action={path} method="get" className="space-y-4">
-                <input type="hidden" name="tab" value={query.tab.key} />
-                {query.rarity && <input type="hidden" name="rarity" value={query.rarity} />}
-                {query.sort && <input type="hidden" name="sort" value={query.sort} />}
-                {Object.entries(extra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
-                <section>
-                  <h3 className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">Limites de prix</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="space-y-1 text-xs text-zinc-400">
-                      Prix mini
-                      <input name="min" type="number" min={0} step={1} defaultValue={query.min ?? ""} placeholder="Montant" className="!w-full !py-2 text-sm text-white" />
-                    </label>
-                    <label className="space-y-1 text-xs text-zinc-400">
-                      Prix maxi
-                      <input name="max" type="number" min={0} step={1} defaultValue={query.max ?? ""} placeholder="Montant" className="!w-full !py-2 text-sm text-white" />
-                    </label>
+                </label>
+                <span className="pb-3 text-xs text-zinc-600">–</span>
+                <label className="min-w-0">
+                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Maxi</span>
+                  <div className="relative">
+                    <Coins size={14} strokeWidth={2} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70" />
+                    <input
+                      name="max"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={maxValue}
+                      onChange={(event) => setMaxValue(event.target.value)}
+                      placeholder="∞"
+                      className="!w-full !rounded-xl !border-white/10 !bg-[#0b0e13] !py-2.5 !pl-9 !pr-3 text-base font-semibold tabular-nums text-white placeholder:font-normal placeholder:text-zinc-600 [appearance:textfield] focus:!border-amber-400/60 focus:!outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
                   </div>
-                </section>
-                {showRisk && mechanical && (
-                  <label className="block space-y-1 text-xs text-zinc-400">
-                    Casse maximale (%)
-                    <input name="risk" type="number" min={0} step={0.1} defaultValue={query.risk ?? ""} placeholder="Pourcentage" className="!w-full !py-2 text-sm text-white" />
-                  </label>
+                </label>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {PRICE_PRESETS.map((preset) => {
+                  const selected = maxValue === String(preset) && minValue === "";
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => {
+                        setMinValue("");
+                        setMaxValue(String(preset));
+                      }}
+                      aria-pressed={selected}
+                      className={`rounded-full border px-2.5 py-1 text-[11px] font-medium tabular-nums transition ${
+                        selected
+                          ? "border-amber-400/50 bg-amber-400/15 text-amber-200"
+                          : "border-white/[0.07] bg-white/[0.03] text-zinc-400 active:bg-white/[0.07]"
+                      }`}
+                    >
+                      ≤ {preset.toLocaleString("fr-FR")}
+                    </button>
+                  );
+                })}
+                {(minValue !== "" || maxValue !== "") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMinValue("");
+                      setMaxValue("");
+                    }}
+                    className="rounded-full px-2 py-1 text-[11px] font-medium text-zinc-500 underline decoration-zinc-700 underline-offset-2 active:text-zinc-300"
+                  >
+                    Effacer
+                  </button>
                 )}
-                <button type="submit" className="min-h-11 w-full rounded-lg bg-amber-500 px-4 font-semibold text-black hover:bg-amber-400">
-                  Appliquer les filtres
-                </button>
-              </form>
-            </div>
-          </section>
-        </div>
-      )}
+              </div>
+            </section>
+
+            {showRisk && mechanical && (
+              <section>
+                <FilterSectionTitle hint="%">Casse maximale</FilterSectionTitle>
+                <div className="relative">
+                  <TriangleAlert size={14} strokeWidth={2} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70" />
+                  <input
+                    name="risk"
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step={0.1}
+                    defaultValue={query.risk ?? ""}
+                    placeholder="Pourcentage accepté"
+                    className="!w-full !rounded-xl !border-white/10 !bg-[#0b0e13] !py-2.5 !pl-9 !pr-3 text-base font-semibold tabular-nums text-white placeholder:font-normal placeholder:text-zinc-600 [appearance:textfield] focus:!border-amber-400/60 focus:!outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                </div>
+              </section>
+            )}
+          </div>
+
+          <div className={FILTER_FOOTER_CLASS}>
+            <button type="submit" className={FILTER_SUBMIT_CLASS}>
+              Appliquer les filtres
+              <ArrowRight size={18} strokeWidth={2.25} className="transition-transform group-hover:translate-x-0.5" />
+            </button>
+          </div>
+        </form>
+      </FilterSheet>
     </div>
   );
 }

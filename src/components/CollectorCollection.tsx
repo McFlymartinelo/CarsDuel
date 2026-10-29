@@ -74,6 +74,11 @@ export function CollectorCollection({ entries }: { entries: Entry[] }) {
       return 0;
     }), [entries, category, rarity, ownedOnly, sort, sorts]);
 
+  const ownedCount = useMemo(() => entries.filter(({ card_templates, obtained }) =>
+    obtained
+    && (category === "tout" || card_templates.category === category)
+    && (!rarity || card_templates.rarity === rarity)).length, [entries, category, rarity]);
+
   const changeCategory = (next: Category | "tout") => {
     setCategory(next);
     setRarity("");
@@ -132,6 +137,7 @@ export function CollectorCollection({ entries }: { entries: Entry[] }) {
         category={category} setCategory={changeCategory} rarity={rarity} setRarity={setRarity}
         sort={sort} setSort={setSort} ownedOnly={ownedOnly} setOwnedOnly={setOwnedOnly}
         counts={counts} rarityCounts={rarityCounts}
+        ownedCount={ownedCount}
         sorts={sorts.map((key) => ({ key, label: SORT_LABEL[key] }))} resultCount={shown.length}
       />
       <p className="text-xs text-zinc-400">{shown.length} carte{shown.length > 1 ? "s" : ""} affichée{shown.length > 1 ? "s" : ""} sur {entries.length}</p>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
@@ -160,17 +159,20 @@ export default async function MarketplacePage({
     <>
       <QuestPing quest="marketplace" />
       <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-bold">Filtrer les annonces</h2>
-          <CatalogViewToggle />
-        </div>
+        <header>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Marketplace</h1>
+            <CatalogViewToggle />
+          </div>
+          <p className="mt-0.5 text-sm text-zinc-400">Achetez et vendez des pièces entre joueurs.</p>
+        </header>
         <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} preserveCatalogView />
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-xl font-bold">Mes annonces</h2>
+        <h2 className="font-display text-xl font-bold uppercase tracking-wide">Mes annonces</h2>
         {mine.length === 0 && (
-          <p className="text-sm text-zinc-500">
+          <p className="rounded-xl border border-zinc-800 bg-[#10131a] px-4 py-6 text-center text-sm text-zinc-500">
             Aucune de vos annonces dans cette sélection.
           </p>
         )}
@@ -178,8 +180,12 @@ export default async function MarketplacePage({
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-xl font-bold">Annonces</h2>
-        {others.length === 0 && <p className="text-sm text-zinc-500">Aucune annonce pour le moment.</p>}
+        <h2 className="font-display text-xl font-bold uppercase tracking-wide">Annonces</h2>
+        {others.length === 0 && (
+          <p className="rounded-xl border border-zinc-800 bg-[#10131a] px-4 py-6 text-center text-sm text-zinc-500">
+            Aucune annonce pour le moment.
+          </p>
+        )}
         <CatalogViewPanels cards={othersGrid("cartes")} list={othersGrid("liste")} />
       </section>
 
