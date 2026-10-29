@@ -330,3 +330,11 @@ export const loadShopPage = (uid: string, filter: CatalogQuery) =>
     catalogCounts: await qCatalogCounts(c),
     modifiers: await qModifiers(c),
   }));
+
+/** Collection : toutes les cartes, avec l'historique d'obtention du joueur. */
+export const loadCollectorCollection = (uid: string) =>
+  withUser(uid, async (c) => (await c.query<{ card_templates: CardTemplate; obtained: boolean }>(
+    `select to_jsonb(t) as card_templates,
+            exists (select 1 from user_cards uc where uc.owner_id = $1 and uc.template_id = t.id) as obtained
+       from card_templates t
+      order by t.category, t.code nulls last, t.name`, [uid])).rows);

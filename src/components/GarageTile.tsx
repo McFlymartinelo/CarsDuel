@@ -7,15 +7,16 @@ type Props = {
   title: string;
   text: string;
   image: string;
+  imageFit?: "cover" | "contain";
   /** Pastille optionnelle sous le texte (ex. disponibilité des tirages). */
   badge?: ReactNode;
 };
 
 /** Lien-carte du garage. */
-export function GarageTile({ href, title, text, image, badge }: Props) {
+export function GarageTile({ href, title, text, image, badge, imageFit }: Props) {
   return (
     <Link href={href} className={tileClass()}>
-      <TileBody title={title} text={text} image={image} badge={badge} />
+      <TileBody title={title} text={text} image={image} badge={badge} imageFit={imageFit} />
     </Link>
   );
 }

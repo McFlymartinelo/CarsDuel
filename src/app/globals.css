@@ -228,6 +228,20 @@ html {
   mask-image: linear-gradient(to right, transparent, #000 40%);
 }
 
+/* Le classeur garde une présence plus discrète, sans cadre d'image visible. */
+.garage-tile-art-contained {
+  inset: 0 0 0 40%;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 8%);
+}
+
+.pull-tile .garage-tile-art {
+  inset: 10% 2% 10% 62%;
+  opacity: 0.74;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 15%);
+  mask-image: linear-gradient(to right, transparent, #000 15%);
+}
+
 .garage-tile:hover .garage-tile-art,
 .garage-tile:focus-visible .garage-tile-art { opacity: 1; transform: scale(1.03); }
 
@@ -261,3 +275,6 @@ html {
 
 .garage-tile-title { color: #fff; text-shadow: 0 0 14px rgba(255, 138, 31, 0.45); transition: color 0.2s ease; }
 .garage-tile:hover .garage-tile-title { color: #ffc27a; }
+
+/* Défis du collectionneur : défilement discret aux couleurs du jeu. */
+.collector-scroll { scrollbar-width: thin; scrollbar-color: rgba(245, 158, 11, 0.55) rgba(255, 255, 255, 0.05); }

@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 /** Bouton-carte (garage, page Jouer) : cadre orange lumineux, texte à gauche, visuel en fond à droite. Styles : `.garage-tile*`. */
 export const tileClass = () => "garage-tile group w-full text-left disabled:cursor-not-allowed disabled:opacity-50";
 
-export function TileBody({ title, text, image, badge }: { title: string; text?: string; image: string; badge?: ReactNode }) {
+export function TileBody({ title, text, image, badge, imageFit = "cover" }: { title: string; text?: string; image: string; badge?: ReactNode; imageFit?: "cover" | "contain" }) {
   return (
     <>
-      <span aria-hidden className="garage-tile-art">
+      <span aria-hidden className={`garage-tile-art ${imageFit === "contain" ? "garage-tile-art-contained" : ""}`}>
         <Image src={image} alt="" fill sizes="(min-width: 640px) 30vw, 70vw" className="object-cover object-right" />
       </span>
       <span aria-hidden className="garage-tile-frame" />

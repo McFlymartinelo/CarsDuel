@@ -11,9 +11,10 @@ export const metadata = { title: "Garage — CarsDuel" };
 
 const ORDER = { moteur: 0, boite: 1, bonus: 2, pneus: 3 } as const;
 
-const TILES = [
+const TILES: { href: string; title: string; text: string; image: string; imageFit?: "cover" | "contain" }[] = [
   { href: "/garage/tirages", title: "Mes tirages gratuits", text: "Le quotidien, l'hebdomadaire et l'historique.", image: "/garage/tirages.webp" },
   { href: "/garage/inventaire", title: "Mon inventaire", text: "Moteurs, boîtes, pneus et bonus.", image: "/garage/inventaire.webp" },
+  { href: "/garage/collection", title: "Le coin du collectionneur", text: "Toutes les cartes du jeu et votre progression.", image: "/garage/collectionneur.png", imageFit: "contain" },
   { href: "/garage/casse", title: "Musée de la casse", text: "Les pièces détruites, à recycler.", image: "/garage/casse.webp" },
   { href: "/garage/regles", title: "Règles du jeu", text: "Comment se déroule une course.", image: "/garage/regles.webp" },
 ];
@@ -40,13 +41,14 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
         <h1 className="font-display text-3xl font-bold uppercase">Bienvenue dans votre garage {user.username}</h1>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {TILES.map(({ href, title, text, image }) => (
+        {TILES.map(({ href, title, text, image, imageFit }) => (
           <GarageTile
             key={href}
             href={href}
             title={title}
             text={text}
             image={image}
+            imageFit={imageFit}
             badge={
               href === "/garage/tirages" ? (
                 <span className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${drawReady ? "border-emerald-400/30 bg-emerald-950/65 text-emerald-300" : "border-zinc-500/30 bg-black/50 text-zinc-300"}`}>
