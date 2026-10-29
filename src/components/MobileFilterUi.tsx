@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ArrowUpDown, ChevronDown, SlidersHorizontal, X, type LucideIcon } from "lucide-react";
 import type { Rarity } from "@/lib/types";
@@ -139,10 +139,48 @@ export function FilterSheet({
   children: ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ startY: number; startTime: number } | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
   useEffect(() => setMounted(true), []);
+
+  // Réinitialise le glissement à chaque fermeture pour rouvrir la feuille bien en place.
+  useEffect(() => {
+    if (open) return;
+    dragRef.current = null;
+    setDragging(false);
+    setDragY(0);
+  }, [open]);
+
+  /** Poignée : on suit le doigt, puis on ferme au-delà du seuil ou on revient en place. */
+  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    dragRef.current = { startY: event.clientY, startTime: event.timeStamp };
+    setDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    setDragY(Math.max(0, event.clientY - dragRef.current.startY));
+  };
+
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = dragRef.current;
+    if (!start) return;
+    dragRef.current = null;
+    const elapsed = Math.max(event.timeStamp - start.startTime, 1);
+    const flicked = dragY > 32 && dragY / elapsed > 0.6;
+    if (dragY > 96 || flicked) {
+      closeRef.current();
+      return;
+    }
+    setDragging(false);
+    requestAnimationFrame(() => setDragY(0));
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -162,15 +200,31 @@ export function FilterSheet({
 
   return createPortal(
     <div className="fixed inset-0 z-[70] flex items-end">
-      <button type="button" onClick={() => closeRef.current()} aria-label="Fermer les filtres" className="filter-backdrop-in absolute inset-0 bg-black/75 backdrop-blur-[2px]" />
+      <button
+        type="button"
+        onClick={() => closeRef.current()}
+        aria-label="Fermer les filtres"
+        style={dragY > 0 ? { opacity: Math.max(0.35, 1 - dragY / 480) } : undefined}
+        className="filter-backdrop-in absolute inset-0 bg-black/75 backdrop-blur-[2px] transition-opacity duration-200"
+      />
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelId}
-        className="filter-sheet filter-sheet-in relative z-10 flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] border border-b-0 border-white/10 shadow-[0_-24px_70px_-24px_rgba(0,0,0,0.95)]"
+        style={dragging || dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: dragging ? "none" : undefined } : undefined}
+        className="filter-sheet filter-sheet-in relative z-10 flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] border border-b-0 border-white/10 shadow-[0_-24px_70px_-24px_rgba(0,0,0,0.95)] transition-transform duration-200 ease-out"
       >
-        <div className="mx-auto mt-2.5 h-1.5 w-12 rounded-full bg-zinc-700" />
-        <header className="flex items-center justify-between gap-2 px-4 pb-3 pt-2.5">
+        <div
+          aria-hidden="true"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="group flex h-7 shrink-0 touch-none select-none items-center justify-center"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-zinc-700 transition-colors group-active:bg-amber-400/70" />
+        </div>
+        <header className="flex items-center justify-between gap-2 px-4 pb-3 pt-1">
           <div className="min-w-0">
             <p className="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/70">Affiner</p>
             <div className="mt-0.5 flex items-center gap-2">
