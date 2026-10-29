@@ -338,3 +338,8 @@ export const loadCollectorCollection = (uid: string) =>
             exists (select 1 from user_cards uc where uc.owner_id = $1 and uc.template_id = t.id) as obtained
        from card_templates t
       order by t.category, t.code nulls last, t.name`, [uid])).rows);
+
+/** Défis du collectionneur déjà réclamés par le joueur. */
+export const loadCollectorChallengeClaims = (uid: string) =>
+  withUser(uid, async (c) => (await c.query<{ challenge_key: string }>(
+    `select challenge_key from collector_challenge_claims where owner_id = $1`, [uid])).rows.map((row) => row.challenge_key));

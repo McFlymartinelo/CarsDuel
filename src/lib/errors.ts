@@ -44,6 +44,10 @@ const MESSAGES: Record<string, string> = {
   quest_unknown: "Ce défi n'est pas au programme aujourd'hui.",
   quest_not_done: "Ce défi n'est pas encore terminé.",
   quest_already_claimed: "Ces pièces ont déjà été récupérées.",
+  collector_challenge_unknown: "Ce défi du collectionneur est inconnu.",
+  collector_challenge_unavailable: "Ce défi n'est pas disponible dans le catalogue actuel.",
+  collector_challenge_not_done: "Ce défi n'est pas encore terminé.",
+  collector_challenge_already_claimed: "La récompense de ce défi a déjà été réclamée.",
 };
 
 type PgErr = { message?: string; code?: string; stack?: string };
