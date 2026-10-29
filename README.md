@@ -24,15 +24,29 @@ Jeu de cartes automobile asynchrone. Next.js 15 (App Router) + PostgreSQL **pur*
 - Migrations : `db/migrations/*.sql` (appliquées une fois, suivies dans `schema_migrations`, verrou `pg_advisory_lock` pour éviter deux migrate en parallèle).
 
 ## Limites
-- **Connexion** : 5 échecs par e-mail sur 15 min, et 20 tentatives par IP sur 15 min. **Inscription** : 5 par heure et par IP. L'IP est le premier `x-forwarded-for`, sinon `unknown`. Message unique en cas de blocage : « Trop de tentatives, réessayez plus tard. » Un login réussi efface les échecs de cet e-mail. L'inscription ne révèle pas si l'e-mail existe déjà.
+- **Connexion** : 5 échecs par e-mail sur 15 min, et 20 tentatives par IP sur 15 min. **Inscription** : 5 par heure et par IP. L'IP client est résolue depuis `x-forwarded-for` selon `TRUSTED_PROXY_COUNT` (nombre de reverse proxies de confiance) : le premier maillon n'est jamais utilisé, car il est forgeable. Derrière un seul proxy, définir `TRUSTED_PROXY_COUNT=1` (le dernier maillon est retenu). Sans configuration (`0` ou absent), l'en-tête est ignoré et l'IP vaut `unknown` : toutes les requêtes partagent alors le même compteur, donc configurez cette variable en production. Message unique en cas de blocage : « Trop de tentatives, réessayez plus tard. » Un login réussi efface les échecs de cet e-mail. L'inscription ne révèle pas si l'e-mail existe déjà.
 - **Duels** : attaques illimitées. Le fantôme est tiré au hasard parmi les configs éligibles. Défense : 5 récompenses par jour (Europe/Paris).
 - **Marketplace** : prix minimum 1 pièce (ou offres seules). Taxe `floor(prix × 0,90)`. Au plus 3 ventes entre les deux mêmes comptes sur 24 h glissantes.
 
 ## Tests et CI
-`npm test` crée la base jetable `carsduel_test` (le rôle doit pouvoir `CREATE DATABASE`), applique les migrations et le seed, puis lance les tests `node:test` dans `tests/db`. Ne pas pointer ces tests vers la base de développement.
+`npm test` crée la base jetable `carsduel_test` (le rôle doit pouvoir `CREATE DATABASE`), applique les migrations et le seed, puis lance les tests `node:test` dans `tests/unit` et `tests/db`. Ne pas pointer ces tests vers la base de développement.
 `npm run lint` exécute ESLint (`eslint` + `eslint-config-next`).
 `npm run typecheck` vérifie les types.
 Le workflow GitHub Actions (`.github/workflows/ci.yml`) démarre Postgres 16 puis enchaîne `npm ci`, typecheck, lint, `db:setup`, tests et build.
 
+## Aperçu local
+`tools/dev-preview/index.html` contient un aperçu iframe de développement. Il est volontairement hors de `public/` et exclu de l'image Docker : l'application de production n'expose jamais cette page et conserve `frame-ancestors 'none'` / `X-Frame-Options: DENY`.
+
+Pour l'utiliser, lancez `npm run dev`, puis dans un autre terminal :
+
+```bash
+npx serve tools/dev-preview -l 4173
+```
+
+Ouvrez ensuite `http://localhost:4173/?base=http://localhost:3000` (le paramètre `base` cible le serveur Next).
+
 ## Production
-`npm run build && npm start`, avec `DATABASE_URL` défini, derrière HTTPS (cookie `secure` activé en production).
+`npm run build && npm start`, avec `DATABASE_URL` défini, derrière HTTPS (cookie `secure` activé en production) et avec `TRUSTED_PROXY_COUNT` ajusté au nombre de reverse proxies.
+
+## Sécurité des dépendances
+`npm audit --omit=dev` signale encore 2 vulnérabilités `postcss` embarquées par Next 15. La montée vers Next 16.4.3 a été tentée mais reportée (règles React Hooks 7 incompatibles avec des composants existants). Détail, mitigation et version cible : [SECURITY.md](SECURITY.md).

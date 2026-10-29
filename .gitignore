@@ -4,3 +4,7 @@ next-env.d.ts
 .env*
 !env.example
 *.tsbuildinfo
+
+# Export JSON intermédiaire du CSV moteurs : non consommé par les scripts.
+# La source versionnée est db/catalog_engines.sql (générée par build-engine-catalog.mjs).
+db/catalog_engines.json
