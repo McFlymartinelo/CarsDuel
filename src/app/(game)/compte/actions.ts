@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { withAdmin } from "@/lib/db";
-import { hashPassword, verifyPassword } from "@/lib/session";
+import { hashPassword, invalidateOtherSessions, verifyPassword } from "@/lib/session";
 import type { ActionState } from "@/lib/types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -80,5 +80,6 @@ export async function updatePassword(_prev: ActionState, formData: FormData): Pr
 
   const hash = await hashPassword(next);
   await withAdmin((c) => c.query("update users set password_hash = $1 where id = $2", [hash, user.id]));
+  await invalidateOtherSessions(user.id);
   return { ok: true, message: "Mot de passe mis à jour." };
 }

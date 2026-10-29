@@ -3,6 +3,7 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { withAdmin } from "@/lib/db";
+import { invalidateOtherSessionsForHash } from "@/lib/session-tokens";
 import type { Profile } from "@/lib/types";
 
 /** Session + profil : une seule lecture (le Nav et les pages partagent ce cache de requête). */
@@ -53,6 +54,23 @@ export async function destroySession() {
   const token = store.get(SESSION_COOKIE)?.value;
   if (token) await withAdmin((c) => c.query("delete from sessions where token_hash = $1", [hashToken(token)]));
   store.delete(SESSION_COOKIE);
+}
+
+/**
+ * Révoque toutes les sessions de l'utilisateur sauf la session courante.
+ * Utilisé après un changement de mot de passe : un jeton volé devient inutile
+ * sans déconnecter le joueur qui vient d'effectuer la modification.
+ * `currentTokenHash` est injectable pour les tests ; sinon le cookie courant est lu.
+ */
+export async function invalidateOtherSessions(userId: string, currentTokenHash?: string) {
+  const keepHash = currentTokenHash ?? (await currentSessionHash());
+  if (!keepHash) return;
+  await withAdmin((c) => invalidateOtherSessionsForHash(c, userId, keepHash));
+}
+
+async function currentSessionHash(): Promise<string | undefined> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  return token ? hashToken(token) : undefined;
 }
 
 /** Utilisateur de la requête courante, profil inclus (mis en cache pour la durée du rendu). */
