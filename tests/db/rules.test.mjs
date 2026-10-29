@@ -146,11 +146,16 @@ test("claim_daily_pull : 3 bonus, un seul tirage par jour Paris", async () => {
   });
 });
 
-test("claim_weekly_pull : un moteur ou une boîte, une fois par semaine", async () => {
+test("claim_weekly_pull : un moteur, une fois par semaine", async () => {
   const user = await withAdmin((c) => createPlayer(c));
-  const { rows } = await asUser(user, (c) => c.query("select public.claim_weekly_pull($1::uuid) as r", [user]));
+  const { rows } = await asUser(user, (c) =>
+    c.query("select public.claim_weekly_pull($1::uuid, 'moteur') as r", [user]));
   assert.equal(rows[0].r.card_ids.length, 1);
-  await expectError(user, (c) => c.query("select public.claim_weekly_pull($1::uuid)", [user]), "weekly_already_claimed");
+  await expectError(
+    user,
+    (c) => c.query("select public.claim_weekly_pull($1::uuid, 'moteur')", [user]),
+    "weekly_already_claimed",
+  );
   const daily = await asUser(user, (c) => c.query("select public.claim_daily_pull($1::uuid) as r", [user]));
   assert.equal(daily.rows[0].r.card_ids.length, 3);
   await withAdmin(async (c) => {
@@ -160,8 +165,51 @@ test("claim_weekly_pull : un moteur ou une boîte, une fois par semaine", async 
       [user],
     );
     assert.equal(cards.length, 1);
-    assert.ok(cards[0].category === "moteur" || cards[0].category === "boite");
+    assert.equal(cards[0].category, "moteur");
   });
+});
+
+test("claim_weekly_pull : une boîte", async () => {
+  const user = await withAdmin((c) => createPlayer(c));
+  const { rows } = await asUser(user, (c) =>
+    c.query("select public.claim_weekly_pull($1::uuid, 'boite') as r", [user]));
+  assert.equal(rows[0].r.card_ids.length, 1);
+  await withAdmin(async (c) => {
+    const { rows: cards } = await c.query(
+      `select t.category from user_cards uc join card_templates t on t.id = uc.template_id
+        where uc.owner_id = $1 and uc.source = 'weekly_pull'`,
+      [user],
+    );
+    assert.equal(cards.length, 1);
+    assert.equal(cards[0].category, "boite");
+  });
+});
+
+test("claim_weekly_pull : catégorie invalide refusée", async () => {
+  const user = await withAdmin((c) => createPlayer(c));
+  for (const category of ["pneus", "bonus", "xxx"]) {
+    await expectError(
+      user,
+      (c) => c.query("select public.claim_weekly_pull($1::uuid, $2::text)", [user, category]),
+      "invalid_category",
+    );
+  }
+  await withAdmin(async (c) => {
+    const n = Number((await c.query(
+      "select count(*)::int as n from user_cards where owner_id = $1 and source = 'weekly_pull'",
+      [user],
+    )).rows[0].n);
+    assert.equal(n, 0);
+  });
+});
+
+test("claim_weekly_pull : seule la signature (uuid, text) subsiste", async () => {
+  const { rows } = await withAdmin((c) => c.query(
+    `select oidvectortypes(p.proargtypes) as args
+       from pg_proc p
+      where p.pronamespace = 'public'::regnamespace and p.proname = 'claim_weekly_pull'`,
+  ));
+  assert.deepEqual(rows.map((r) => r.args), ["uuid, text"]);
 });
 
 test("RLS : A ne lit ni les cartes non listées, ni les duels, ni les offres de B", async () => {
@@ -199,3 +247,41 @@ test("RLS : A ne lit ni les cartes non listées, ni les duels, ni les offres de 
     assert.equal(ownListing.rows.length, 1);
   });
 });
+
+test("validate_deck refuse une carte d'un autre joueur, une carte en vente ou une mauvaise catégorie", async () => {
+  const fx = await withAdmin(async (c) => {
+    const owner = await createPlayer(c);
+    const other = await createPlayer(c);
+    const engine = await giveCard(c, owner, "t_eng");
+    const gearbox = await giveCard(c, owner, "t_gb");
+    const tire = await giveCard(c, owner, "tire_route");
+    const foreign = await giveCard(c, other, "t_eng");
+    return { owner, other, engine, gearbox, tire, foreign };
+  });
+
+  const insert = `insert into user_decks (owner_id, name, engine_card_id, gearbox_card_id, tire_card_id)
+                  values ($1, 'Test', $2::uuid, $3::uuid, $4::uuid)`;
+
+  await expectError(
+    fx.owner,
+    (c) => c.query(insert, [fx.owner, fx.foreign, fx.gearbox, fx.tire]),
+    "invalid_deck_card",
+  );
+
+  await asUser(fx.owner, (c) =>
+    c.query("select public.create_listing($1::uuid, $2::uuid, 5, false)", [fx.owner, fx.engine]));
+  await expectError(
+    fx.owner,
+    (c) => c.query(insert, [fx.owner, fx.engine, fx.gearbox, fx.tire]),
+    "invalid_deck_card",
+  );
+
+  await expectError(
+    fx.owner,
+    (c) => c.query(insert, [fx.owner, fx.gearbox, fx.gearbox, fx.tire]),
+    "invalid_deck_card",
+  );
+});
+
+// Audit point 6 : validate_deck ne vérifie pas encore is_destroyed.
+test.todo("une carte détruite ne devrait pas pouvoir être équipée — audit point 6");

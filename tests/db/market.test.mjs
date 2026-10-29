@@ -198,3 +198,35 @@ test("historique, prix de référence et notifications après une vente", async 
   const after = (await asUser(fx.seller, (c) => c.query("select public.my_notifications($1::uuid) as r", [fx.seller]))).rows[0].r;
   assert.equal(after.unread, 0);
 });
+
+test("notifications : duel gagné et demande de duel, puis marquage lu", async () => {
+  const fx = await withAdmin(async (c) => {
+    const attacker = await createPlayer(c);
+    const defender = await createPlayer(c);
+    await c.query(
+      `insert into duels_history
+         (attacker_id, defender_id, weather, defender_sp, result, attacker_coins, attacker_xp, defender_coins)
+       values ($1, $2, 'sunny_hot', 0, 'defender_win', 2, 2, 10)`,
+      [attacker, defender],
+    );
+    await c.query(
+      "insert into duel_challenges (challenger_id, target_id) values ($1, $2)",
+      [attacker, defender],
+    );
+    return { attacker, defender };
+  });
+
+  const feed = (await asUser(fx.defender, (c) =>
+    c.query("select public.my_notifications($1::uuid) as r", [fx.defender]))).rows[0].r;
+  const kinds = feed.items.map((item) => item.kind);
+  assert.ok(kinds.includes("duel_won"));
+  assert.ok(kinds.includes("duel_request"));
+  assert.equal(feed.unread, 2);
+  assert.ok(feed.items.every((item) => ["kind", "at", "label", "amount", "unread"].every((key) => key in item)));
+
+  await asUser(fx.defender, (c) => c.query("select public.mark_notifications_seen($1::uuid)", [fx.defender]));
+  const after = (await asUser(fx.defender, (c) =>
+    c.query("select public.my_notifications($1::uuid) as r", [fx.defender]))).rows[0].r;
+  assert.equal(after.unread, 0);
+  assert.equal(after.items.length, 2);
+});

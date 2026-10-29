@@ -61,6 +61,11 @@ try {
 
 let failed = false;
 try {
+  const unitFiles = fs.readdirSync(path.join(root, "tests", "unit"))
+    .filter((f) => f.endsWith(".test.mjs"))
+    .map((f) => path.join("tests", "unit", f));
+  if (unitFiles.length > 0) await run(["--test", ...unitFiles]);
+
   await run(["scripts/db.mjs", "migrate"]);
   await run(["scripts/db.mjs", "seed"]);
   const files = fs.readdirSync(path.join(root, "tests", "db"))
