@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>preview</title>
+<style>
+  body { margin: 0; background: #222; font: 12px sans-serif; color: #eee; }
+  .wrap { padding: 8px; }
+  iframe { display: block; width: var(--w); height: 1000px; border: 1px solid #555; background: #000; }
+  .label { margin: 4px 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label" id="label"></div>
+  <iframe id="frame"></iframe>
+</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const w = Number(params.get("w") || 1560);
+  const base = (params.get("base") || "http://localhost:3000").replace(/\/$/, "");
+  const frame = document.getElementById("frame");
+  frame.src = base + "/garage/collection";
+  frame.style.width = w + "px";
+  document.getElementById("label").textContent = "iframe " + w + "px";
+</script>
+</body>
+</html>

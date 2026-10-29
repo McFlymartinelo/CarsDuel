@@ -3,6 +3,7 @@
 node_modules
 assets-src
 tests
+tools
 .env
 .env.*
 *.tsbuildinfo
