@@ -19,7 +19,10 @@ export function CollectorAccordion({ icon, title, subtitle, summary, children }:
         <span className="font-display text-xs font-bold text-amber-400">{summary}</span>
         <ChevronDown size={18} aria-hidden="true" className={`text-zinc-300 transition-transform ${open ? "rotate-180" : ""}`} />
       </span>
+      <span className="hidden shrink-0 items-baseline gap-1.5 rounded-lg border border-amber-400/25 bg-amber-400/[0.06] px-3 py-1.5 font-display text-sm font-bold tabular-nums text-amber-300 sm:flex" title="Défis complétés">
+        {summary}<span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-400/60">défis</span>
+      </span>
     </button>
-    <div className={`collector-scroll mt-4 flex-col gap-2 sm:flex sm:max-h-[15.6rem] sm:overflow-y-auto sm:overscroll-contain sm:pr-1 ${open ? "flex" : "hidden"}`}>{children}</div>
+    <div className={`collector-scroll mt-4 flex-col gap-2 sm:grid sm:max-h-[26rem] sm:overflow-y-auto sm:overscroll-contain sm:pr-1 ${open ? "flex" : "hidden"}`}>{children}</div>
   </>;
 }
