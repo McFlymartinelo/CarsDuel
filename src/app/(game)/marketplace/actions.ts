@@ -11,7 +11,7 @@ export async function listCard(_p: ActionState, fd: FormData): Promise<ActionSta
   return done("Carte mise en vente.")(
     await callRpc(
       "select public.create_listing($1::uuid, $2::uuid, $3::int, $4::boolean) as r",
-      (id) => [id, str(fd, "card_id"), int(fd, "price"), offers],
+      (id) => [id, str(fd, "card_id"), int(fd, "price", "invalid_price"), offers],
       ["/marketplace", "/garage"],
     ),
   );
@@ -33,7 +33,7 @@ export async function makeOffer(_p: ActionState, fd: FormData): Promise<ActionSt
   return done("Offre envoyée (pièces mises en séquestre).")(
     await callRpc(
       "select public.make_offer($1::uuid, $2::uuid, $3::int) as r",
-      (id) => [id, str(fd, "listing_id"), int(fd, "amount")],
+      (id) => [id, str(fd, "listing_id"), int(fd, "amount", "invalid_amount")],
       ["/", "/marketplace"],
     ),
   );

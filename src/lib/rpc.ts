@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { withUser } from "@/lib/db";
 import { rpcErrorMessage } from "@/lib/errors";
+import { parseFormInt } from "@/lib/form-int";
 import type { ActionState } from "@/lib/types";
 
 /**
@@ -43,7 +44,4 @@ export async function callRpc<T = unknown>(
 
 export const str = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
 export const optStr = (fd: FormData, key: string) => str(fd, key) || null;
-export const int = (fd: FormData, key: string) => {
-  const v = str(fd, key);
-  return v === "" ? null : Number.parseInt(v, 10);
-};
+export const int = (fd: FormData, key: string, errorCode?: string) => parseFormInt(str(fd, key), errorCode);
