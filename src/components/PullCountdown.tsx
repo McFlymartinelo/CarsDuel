@@ -14,7 +14,7 @@ function label(ms: number): string {
 
 /** Décompte jusqu'à la prochaine disponibilité d'un tirage. */
 export function PullCountdown({ until }: { until: string }) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState("…");
 
   useEffect(() => {
     const tick = () => setText(label(new Date(until).getTime() - Date.now()));

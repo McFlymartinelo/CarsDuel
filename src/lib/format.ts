@@ -72,7 +72,7 @@ export function cardSummary(t: CardTemplate, c?: Pick<UserCard, "runs_count" | "
       return `${head} · risque initial ${t.base_break_risk} %`;
     }
     case "pneus":
-      return `${t.tire_type} · usure nominale ${t.tire_base_wear}%/run${c?.tire_wear != null ? ` · gomme ${c.tire_wear}%` : ""}`;
+      return `${TIRE_LABEL[t.tire_type ?? ""] ?? t.tire_type} · usure nominale ${t.tire_base_wear}%/run${c?.tire_wear != null ? ` · gomme ${c.tire_wear}%` : ""}`;
     default:
       return bonusEffectText(t.bonus_effect, t.description);
   }

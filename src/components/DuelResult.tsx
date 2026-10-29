@@ -13,7 +13,8 @@ function Row({ label, children }: { label: React.ReactNode; children: React.Reac
   );
 }
 
-function Break({ broke }: { broke: boolean }) {
+function Break({ broke, tested = true }: { broke: boolean; tested?: boolean }) {
+  if (!tested) return <span className="text-zinc-500">Non testée</span>;
   return broke ? <span className="text-red-400">OUI</span> : <span className="text-emerald-400">NON</span>;
 }
 
@@ -50,7 +51,7 @@ export function DuelResult({ r, onReplay, onReplaceBrokenPart, onClose }: { r: D
           <Row label="Score mécanique">{f(r.scoreMeca)}</Row>
           <TireRow type={r.tireType} bonusPct={r.tireBonusPct} malus={r.tireMalus} mod={r.tireMod} />
           <Row label="Casse moteur"><Break broke={engineBroke} /></Row>
-          <Row label="Casse boîte"><Break broke={gearboxBroke} /></Row>
+          <Row label="Casse boîte"><Break broke={gearboxBroke} tested={r.gearboxProb !== null} /></Row>
           {r.bonus && <Row label="Bonus"><span className="text-amber-300">{BONUS_LABEL[r.bonus] ?? r.bonus}</span></Row>}
         </div>
 
