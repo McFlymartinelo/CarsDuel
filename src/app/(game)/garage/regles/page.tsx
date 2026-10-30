@@ -68,6 +68,7 @@ const SUMMARY = [
   ["bonus", "Cartes bonus"],
   ["economie", "Récompenses et économie"],
   ["rangs", "Classements et rangs"],
+  ["clm", "Contre-La-Montre solo"],
 ];
 
 export default function RulesPage() {
@@ -88,7 +89,7 @@ export default function RulesPage() {
 
       <Section id="principe" title="1. Principe général du jeu">
         <P>
-          Cars Duel est un jeu de cartes et de stratégie automobile tactique fondé sur le deck-building mécanique. Deux modes d&apos;affrontement régissent les courses :
+          Cars Duel est un jeu de cartes et de stratégie automobile tactique fondé sur le deck-building mécanique. Trois modes de course structurent les affrontements :
         </P>
         <List
           items={[
@@ -97,6 +98,9 @@ export default function RulesPage() {
             </>,
             <>
               {b("Mode « Organiser un duel » :")} un défi direct entre deux pilotes ciblés. Les deux adversaires sont en statut {b("Actif")} : chacun engage son propre deck, choisit optionnellement un bonus et assume l&apos;usure ainsi que les risques mécaniques de la course.
+            </>,
+            <>
+              {b("Mode « Contre-La-Montre solo » :")} un défi chronométré quotidien sur un circuit tiré au sort. Le pilote engage sa configuration, subit les mêmes usures et risques de casse, et vise les trois paliers de médailles du jour.
             </>,
           ]}
         />
@@ -350,6 +354,41 @@ export default function RulesPage() {
           items={[
             <>{b("Classement hebdomadaire :")} cumul de l&apos;XP du lundi 00:00:00 au dimanche 23:59:59.</>,
             <>{b("Classement mensuel :")} cumul de l&apos;XP du premier jour du mois à 00:00:00 au dernier jour à 23:59:59.</>,
+          ]}
+        />
+      </Section>
+
+      <Section id="clm" title="8. Contre-La-Montre solo">
+        <P>
+          Un circuit et une météo sont tirés au sort pour chaque jour calendaire (heure de Paris). Le tirage change à minuit.
+          Les participations sont illimitées, mais chaque tentative consomme réellement la gomme des pneus, fait avancer la
+          garantie et expose le moteur et la boîte aux mêmes tests de casse que les duels.
+        </P>
+        <H3>Calcul du chrono</H3>
+        <Formula>Temps_sec = T_base − ((SP_final / 10) × K_circuit) + Aléa</Formula>
+        <List
+          items={[
+            <>{b("T_base :")} temps de référence du circuit, affiché dans le défi du jour.</>,
+            <>{b("K_circuit :")} coefficient de sensibilité du tracé au Score de Performance.</>,
+            <>{b("Aléa :")} bruit de pilotage uniforme entre −0,150 s et +0,150 s.</>,
+            <>Le chrono ne peut jamais descendre sous {b("15 secondes")}, et il est affiché au format course MM&apos;SS.mmm&quot;.</>,
+          ]}
+        />
+        <H3>Médailles et récompenses</H3>
+        <Table
+          head={["Médaille", "Condition", "Pièces"]}
+          rows={[
+            ["Or", "SP final ≥ 290", "+150"],
+            ["Argent", "SP final ≥ 200", "+70"],
+            ["Bronze", "SP final ≥ 110", "+30"],
+          ]}
+        />
+        <List
+          items={[
+            <>Chaque médaille ne peut être remportée qu&apos;une fois par jour sur le circuit actif.</>,
+            <>{b("Cascade :")} décrocher l&apos;Or verse automatiquement l&apos;Or, l&apos;Argent et le Bronze encore disponibles. Décrocher l&apos;Argent verse l&apos;Argent et le Bronze.</>,
+            <>Le premier tour bouclé du jour rapporte une {b("prime de participation de 10 pièces")}, quel que soit le chrono.</>,
+            <>Le classement du circuit ne conserve que le {b("meilleur temps personnel (Personal Best)")} du pilote.</>,
           ]}
         />
       </Section>
