@@ -6,6 +6,7 @@ import { BarChart3, Coins, Gift, House, ShoppingBag, Swords, Tag } from "lucide-
 import { Logo } from "@/components/Logo";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { formatWalletCoins } from "@/lib/format";
 import type { NotificationFeed } from "@/lib/types";
 
 const LINKS = [
@@ -62,7 +63,7 @@ export function Nav({
           <div className="ml-auto flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1 font-display text-amber-400" title="Pièces">
               <Coins size={16} strokeWidth={2.25} />
-              <b className="text-lg tabular-nums">{coins.toLocaleString("fr-FR")}</b>
+              <b className="text-lg tabular-nums">{formatWalletCoins(coins)}</b>
             </span>
             <Link
               href="/garage/tirages"
@@ -113,9 +114,9 @@ export function Nav({
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 min-[380px]:gap-1.5">
-            <span className="inline-flex h-10 w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1 font-display text-amber-400 min-[380px]:w-20 min-[380px]:gap-1.5" title="Pièces" aria-label={`${coins.toLocaleString("fr-FR")} pièces`}>
+            <span className="inline-flex h-10 w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1 font-display text-amber-400 min-[380px]:w-20 min-[380px]:gap-1.5" title="Pièces" aria-label={`${formatWalletCoins(coins)} pièces`}>
               <Coins size={13} strokeWidth={2.25} className="shrink-0 min-[380px]:h-4 min-[380px]:w-4" />
-              <b className="truncate text-[10px] tabular-nums min-[380px]:text-xs">{coins.toLocaleString("fr-FR")}</b>
+              <b className="truncate text-[10px] tabular-nums min-[380px]:text-xs">{formatWalletCoins(coins)}</b>
             </span>
             <Link
               href="/garage/tirages"

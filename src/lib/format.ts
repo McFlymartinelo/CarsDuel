@@ -81,6 +81,13 @@ export function cardSummary(t: CardTemplate, c?: Pick<UserCard, "runs_count" | "
 export const formatDateTime = (iso: string) =>
   new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Paris" }).format(new Date(iso));
 
+/**
+ * Solde du wallet : toujours 2 décimales, y compris pour un montant entier
+ * (ex. « 1 234,00 »). Réservé au wallet : les autres écrans restent en entiers.
+ */
+export const formatWalletCoins = (n: number) =>
+  n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 /** Jour calendaire courant à Paris (YYYY-MM-DD), pour comparer à profiles.last_daily_pull. */
 export const parisToday = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(new Date());
