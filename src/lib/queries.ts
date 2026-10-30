@@ -136,6 +136,26 @@ export const getLeaderboard = (uid: string, period: "weekly" | "monthly") =>
         order by rank, username limit 100`)).rows,
   );
 
+export interface TrophyStats {
+  attack_wins: number;
+  defense_wins: number;
+  attack_duels: number;
+  weekly_firsts: number;
+  monthly_firsts: number;
+  chrono_gold: number;
+  chrono_silver: number;
+  chrono_bronze: number;
+}
+
+/** Compteurs de la vitrine de trophées (calculés en base). */
+export const loadTrophyStats = (uid: string) =>
+  withUser(uid, async (c) =>
+    (await c.query<{ r: TrophyStats }>("select public.my_trophy_stats($1::uuid) as r", [uid])).rows[0].r,
+  );
+
+/** Modificateurs pneus × météo (performances et usure affichées sur les cartes). */
+export const loadTireModifiers = (uid: string) => withUser(uid, (c) => qModifiers(c));
+
 /** Garage : cartes, decks, annonces en cours et modificateurs pneus. */
 export const loadGaragePage = (uid: string) =>
   withUser(uid, async (c) => ({

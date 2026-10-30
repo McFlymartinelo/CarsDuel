@@ -6,7 +6,7 @@ type Props = {
   href: string;
   title: string;
   text: string;
-  image: string;
+  image?: string;
   imageFit?: "cover" | "contain";
   /** Pastille optionnelle sous le texte (ex. disponibilité des tirages). */
   badge?: ReactNode;

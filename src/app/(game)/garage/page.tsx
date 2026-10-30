@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { Clock3 } from "lucide-react";
 import { GarageTile } from "@/components/GarageTile";
 import { requireUser } from "@/lib/auth";
@@ -11,8 +13,12 @@ export const metadata = { title: "Garage — CarsDuel" };
 
 const ORDER = { moteur: 0, boite: 1, bonus: 2, pneus: 3 } as const;
 
-const TILES: { href: string; title: string; text: string; image: string; imageFit?: "cover" | "contain" }[] = [
+const VITRINE_IMAGE = "/garage/vitrine.webp";
+const hasVitrineImage = existsSync(path.join(process.cwd(), "public", VITRINE_IMAGE));
+
+const TILES: { href: string; title: string; text: string; image?: string; imageFit?: "cover" | "contain" }[] = [
   { href: "/garage/tirages", title: "Mes tirages gratuits", text: "Le quotidien, l'hebdomadaire et l'historique.", image: "/garage/tirages.webp" },
+  { href: "/garage/trophees", title: "Ma vitrine de trophées", text: "Vos victoires, vos titres et vos médailles.", image: hasVitrineImage ? VITRINE_IMAGE : undefined, imageFit: "contain" },
   { href: "/garage/inventaire", title: "Mon inventaire", text: "Moteurs, boîtes, pneus et bonus.", image: "/garage/inventaire.webp" },
   { href: "/garage/collection", title: "Le coin du collectionneur", text: "Toutes les cartes du jeu et votre progression.", image: "/garage/collectionneur.png", imageFit: "contain" },
   { href: "/garage/casse", title: "Musée de la casse", text: "Les pièces détruites, à recycler.", image: "/garage/casse.webp" },

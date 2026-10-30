@@ -1,14 +1,21 @@
 import Image from "next/image";
+import { Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 
 /** Bouton-carte (garage, page Jouer) : cadre orange lumineux, texte à gauche, visuel en fond à droite. Styles : `.garage-tile*`. */
 export const tileClass = () => "garage-tile group w-full text-left disabled:cursor-not-allowed disabled:opacity-50";
 
-export function TileBody({ title, text, image, badge, imageFit = "cover" }: { title: string; text?: string; image: string; badge?: ReactNode; imageFit?: "cover" | "contain" }) {
+export function TileBody({ title, text, image, badge, imageFit = "cover" }: { title: string; text?: string; image?: string; badge?: ReactNode; imageFit?: "cover" | "contain" }) {
   return (
     <>
       <span aria-hidden className={`garage-tile-art ${imageFit === "contain" ? "garage-tile-art-contained" : ""}`}>
-        <Image src={image} alt="" fill sizes="(min-width: 640px) 30vw, 70vw" className="object-cover object-right" />
+        {image ? (
+          <Image src={image} alt="" fill sizes="(min-width: 640px) 30vw, 70vw" className="object-cover object-right" />
+        ) : (
+          <span className="flex h-full items-center justify-center">
+            <Trophy size={96} strokeWidth={1.1} className="text-amber-500/20" />
+          </span>
+        )}
       </span>
       <span aria-hidden className="garage-tile-frame" />
       <span aria-hidden className="garage-tile-corner garage-tile-corner-tl" />
