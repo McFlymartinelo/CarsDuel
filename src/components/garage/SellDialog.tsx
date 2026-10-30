@@ -33,8 +33,8 @@ export function SellDialog({
             <ActionForm action={action} submitLabel="Mettre en vente" onSuccess={() => setOpen(false)} className="mt-4 flex flex-col items-stretch gap-3">
               <input type="hidden" name="card_id" value={cardId} />
               <label className="flex flex-col gap-1 text-sm text-zinc-300">
-                Prix (min. 1)
-                <input name="price" type="number" min={1} placeholder="Pièces" className="w-full" />
+                Prix (min. 10)
+                <input name="price" type="number" min={10} placeholder="Pièces" className="w-full" />
               </label>
               <label className="flex items-center gap-2 text-sm text-zinc-200">
                 <input type="checkbox" name="accepts_offers" className="size-4" />

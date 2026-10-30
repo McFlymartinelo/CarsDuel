@@ -64,6 +64,26 @@ test("séquestre d'offre puis remboursement au retrait et à l'annulation", asyn
   });
 });
 
+test("offre sous 10 pièces refusée, sans séquestre", async () => {
+  const fx = await withAdmin(async (c) => {
+    const seller = await createPlayer(c, 0);
+    const buyer = await createPlayer(c, 100);
+    const card = await giveCard(c, seller, "t_eng");
+    return { seller, buyer, card };
+  });
+  const id = await listing(fx.seller, fx.card, null, true);
+  await expectError(
+    fx.buyer,
+    (c) => c.query("select public.make_offer($1::uuid, $2::uuid, 9)", [fx.buyer, id]),
+    "offer_too_low",
+  );
+  await withAdmin(async (c) => {
+    const offers = await c.query("select id from marketplace_offers where listing_id = $1", [id]);
+    assert.equal(offers.rows.length, 0);
+    assert.equal(Number((await c.query("select coins from profiles where id = $1", [fx.buyer])).rows[0].coins), 100);
+  });
+});
+
 test("achat concurrent : une seule vente réussit", async () => {
   const fx = await withAdmin(async (c) => {
     const seller = await createPlayer(c, 0);
@@ -133,7 +153,7 @@ test("insufficient_funds annule la vente", async () => {
   });
 });
 
-test("prix 0 refusé et 4e vente entre les mêmes comptes refusée", async () => {
+test("prix sous 10 pièces refusé et 4e vente entre les mêmes comptes refusée", async () => {
   const fx = await withAdmin(async (c) => {
     const seller = await createPlayer(c, 0);
     const buyer = await createPlayer(c, 100);
@@ -144,8 +164,8 @@ test("prix 0 refusé et 4e vente entre les mêmes comptes refusée", async () =>
   });
   await expectError(
     fx.seller,
-    (c) => c.query("select public.create_listing($1::uuid, $2::uuid, 0, false)", [fx.seller, fx.card]),
-    "invalid_price",
+    (c) => c.query("select public.create_listing($1::uuid, $2::uuid, 9, false)", [fx.seller, fx.card]),
+    "price_too_low",
   );
   for (let i = 0; i < 3; i++) {
     const id = await listing(fx.seller, fx.cards[i], 10, false);

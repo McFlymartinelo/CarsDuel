@@ -138,7 +138,7 @@ export default async function MarketplacePage({
                 className="mt-2 flex items-end gap-2"
               >
                 <input type="hidden" name="listing_id" value={x.id} />
-                <input name="amount" type="number" min={1} required placeholder="Montant" className="w-28" />
+                <input name="amount" type="number" min={10} required placeholder="Montant (min. 10)" className="w-28" />
               </ActionForm>
             )}
             {myOffer && (
@@ -167,7 +167,7 @@ export default async function MarketplacePage({
             <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Marketplace</h1>
             <CatalogViewToggle />
           </div>
-          <p className="mt-0.5 text-sm text-zinc-400">Achetez et vendez des pièces entre joueurs.</p>
+          <p className="mt-0.5 text-sm text-zinc-400">Achetez et vendez des pièces entre joueurs. Prix et offres à partir de 10 pièces.</p>
         </header>
         <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} preserveCatalogView />
       </section>
