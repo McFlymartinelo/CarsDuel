@@ -156,6 +156,72 @@ export interface DuelReport {
   ghostTireMod: number;
 }
 
+export type ClmMedal = "bronze" | "silver" | "gold";
+
+export interface ClmCircuit {
+  id: string;
+  name: string;
+  distance_km: number;
+  profile: string;
+  t_base: number;
+  k_circuit: number;
+  medals_seconds: Record<ClmMedal, number>;
+}
+
+export interface ClmPersonalBest {
+  seconds: number;
+  sp: number | null;
+  achieved_on: string;
+}
+
+/** Défi du jour du Contre-La-Montre solo. */
+export interface ClmChallenge {
+  day: string;
+  weather: Weather;
+  circuit: ClmCircuit;
+  personal_best: ClmPersonalBest | null;
+  claimed: ClmMedal[];
+  participation_claimed: boolean;
+  attempts: number;
+  /** Prochain minuit à Paris, pour le compte à rebours de rotation. */
+  changes_at: string;
+}
+
+/** Résultat d'une tentative de Contre-La-Montre solo. */
+export interface ClmReport {
+  attemptId: string;
+  day: string;
+  weather: Weather;
+  circuitId: string;
+  circuitName: string;
+  brokenPart: Category | null;
+  spFinal: number | null;
+  lapSeconds: number | null;
+  previousBest: number | null;
+  personalBest: number | null;
+  isNewRecord: boolean;
+  medal: ClmMedal | null;
+  newMedals: ClmMedal[];
+  medalsCoins: number;
+  participationCoins: number;
+  coins: number;
+  claimed: ClmMedal[];
+  participationClaimed: boolean;
+  tireGumBefore: number;
+  tireGumAfter: number | null;
+  tireDestroyed: boolean;
+  engineBreakProb: number | null;
+  gearboxBreakProb: number | null;
+  scoreMeca: number;
+  tireType: string;
+  tireBonusPct: number;
+  tireMalus: number;
+  tireMod: number;
+  engineName: string;
+  gearboxName: string;
+  tireName: string;
+}
+
 /** Carte révélée par un tirage (quotidien ou kit de départ). */
 export interface DrawnCard {
   id: string;
