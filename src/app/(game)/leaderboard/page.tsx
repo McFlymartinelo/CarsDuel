@@ -64,6 +64,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
           ))}
         </ul>
         <p className="mt-2 text-xs leading-snug text-zinc-500">
+          Montants de base, multipliés par le coefficient de rang du pilote (×1 à ×3) selon son XP du mois.
           Versées à la clôture : lundi 00:00 pour la semaine, le 1er à 00:00 pour le mois (heure de Paris).
           Le top 5 % compte le peloton classé, podium exclu.
         </p>

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { rankProgress } from "@/lib/game";
+import { rankMultiplierLabel, rankProgress } from "@/lib/game";
 
 const xp = (n: number) => n.toLocaleString("fr-FR");
 
@@ -61,6 +61,10 @@ export function ProfileMenu({
           <div className="flex items-baseline justify-between gap-3">
             <dt className="text-zinc-400">Mes XP du mois</dt>
             <dd className="font-display text-lg font-bold tabular-nums text-amber-400">{xp(xpMonth)}</dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-zinc-400">Coefficient de primes</dt>
+            <dd className="font-display text-lg font-bold tabular-nums text-amber-400">{rankMultiplierLabel(rank.multiplier)}</dd>
           </div>
         </dl>
 

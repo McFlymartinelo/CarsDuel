@@ -1,16 +1,19 @@
 import type { CardTemplate, UserCard } from "./types";
 
 // ---------- Rang de profil (affichage : dérivé de l'XP du mois, reset naturel) --
-// Bronze 0–250, Argent 251–700, Or 701–1500, Platine 1501–3000, Diamant 3001+.
+// Rookie 0, Amateur 120, Pro 300, Élite 600, Légende 890.
+// Le coefficient multiplie les primes de classement (cf. public.rank_coefficient).
 export const RANKS = [
-  { id: "bronze", tier: "Bronze", name: "Rookie", min: 0, max: 250, dot: "bg-emerald-400", text: "text-emerald-300", bar: "bg-emerald-400", row: "bg-emerald-500/10" },
-  { id: "argent", tier: "Argent", name: "Amateur de Paddock", min: 251, max: 700, dot: "bg-blue-400", text: "text-blue-300", bar: "bg-blue-400", row: "bg-blue-500/10" },
-  { id: "or", tier: "Or", name: "Pro de la Config", min: 701, max: 1500, dot: "bg-fuchsia-400", text: "text-fuchsia-300", bar: "bg-fuchsia-400", row: "bg-fuchsia-500/10" },
-  { id: "platine", tier: "Platine", name: "Pilote d'Élite", min: 1501, max: 3000, dot: "bg-orange-400", text: "text-orange-300", bar: "bg-orange-400", row: "bg-orange-500/10" },
-  { id: "diamant", tier: "Diamant", name: "Légende de la Piste", min: 3001, max: null, dot: "bg-rose-400", text: "text-rose-300", bar: "bg-rose-400", row: "bg-rose-500/10" },
+  { id: "bronze", level: 1, tier: "Bronze", name: "Rookie", min: 0, max: 119, multiplier: 1, dot: "bg-emerald-400", text: "text-emerald-300", bar: "bg-emerald-400", row: "bg-emerald-500/10" },
+  { id: "argent", level: 2, tier: "Argent", name: "Amateur de Paddock", min: 120, max: 299, multiplier: 1.5, dot: "bg-blue-400", text: "text-blue-300", bar: "bg-blue-400", row: "bg-blue-500/10" },
+  { id: "or", level: 3, tier: "Or", name: "Pro de la Config", min: 300, max: 599, multiplier: 2, dot: "bg-fuchsia-400", text: "text-fuchsia-300", bar: "bg-fuchsia-400", row: "bg-fuchsia-500/10" },
+  { id: "platine", level: 4, tier: "Platine", name: "Pilote d'Élite", min: 600, max: 889, multiplier: 2.5, dot: "bg-orange-400", text: "text-orange-300", bar: "bg-orange-400", row: "bg-orange-500/10" },
+  { id: "diamant", level: 5, tier: "Diamant", name: "Légende de la Piste", min: 890, max: null, multiplier: 3, dot: "bg-rose-400", text: "text-rose-300", bar: "bg-rose-400", row: "bg-rose-500/10" },
 ] as const;
 
 export type PaddockRank = (typeof RANKS)[number];
+
+export const rankMultiplierLabel = (multiplier: number) => `×${String(multiplier).replace(".", ",")}`;
 
 export function rankFor(monthlyXp: number): PaddockRank {
   const xp = Math.max(0, Math.floor(Number(monthlyXp) || 0));

@@ -49,13 +49,13 @@ test("primes de classement : podium, top 5 % hors podium, égalités, une seule 
       const paid = Number((await c.query("select public.settle_leaderboard_rewards() as n")).rows[0].n);
       assert.ok(paid >= 4 + 3);
 
-      assert.equal(await coinsOf(c, field[0]), 300);
-      assert.equal(await coinsOf(c, field[1]), 240);
-      assert.equal(await coinsOf(c, field[2]), 180);
-      assert.equal(await coinsOf(c, field[3]), 60);
+      assert.equal(await coinsOf(c, field[0]), 900);
+      assert.equal(await coinsOf(c, field[1]), 720);
+      assert.equal(await coinsOf(c, field[2]), 540);
+      assert.equal(await coinsOf(c, field[3]), 180);
       assert.equal(await coinsOf(c, field[4]), 0);
-      assert.equal(await coinsOf(c, tiedA), 300);
-      assert.equal(await coinsOf(c, tiedB), 300);
+      assert.equal(await coinsOf(c, tiedA), 600);
+      assert.equal(await coinsOf(c, tiedB), 600);
       assert.equal(await coinsOf(c, third), 180);
       assert.equal(await coinsOf(c, tooEarly), 0);
       assert.equal(await coinsOf(c, outsider), 0);
@@ -66,7 +66,7 @@ test("primes de classement : podium, top 5 % hors podium, égalités, une seule 
       );
       assert.deepEqual(
         ties.rows.map((r) => [r.period, Number(r.rank), Number(r.coins)]),
-        [["monthly", 1, 250], ["weekly", 1, 50]],
+        [["monthly", 1, 500], ["weekly", 1, 100]],
       );
 
       const week = await c.query(
@@ -74,11 +74,11 @@ test("primes de classement : podium, top 5 % hors podium, égalités, une seule 
           where period = 'weekly' and period_start = (timestamp '2026-01-05 00:00' at time zone 'Europe/Paris')`,
       );
       assert.equal(Number(week.rows[0].player_count), 80);
-      assert.equal(Number(week.rows[0].paid_coins), 130);
+      assert.equal(Number(week.rows[0].paid_coins), 390);
 
       const again = Number((await c.query("select public.settle_leaderboard_rewards() as n")).rows[0].n);
       assert.equal(again, 0);
-      assert.equal(await coinsOf(c, field[0]), 300);
+      assert.equal(await coinsOf(c, field[0]), 900);
 
       const allowed = await c.query(
         "select has_function_privilege('app_user', 'public.settle_leaderboard_rewards()', 'execute') as ok",
@@ -87,5 +87,35 @@ test("primes de classement : podium, top 5 % hors podium, égalités, une seule 
     } finally {
       await c.query("update app_meta set value = $1 where key = 'leaderboard_rewards_from'", [before]);
     }
+  });
+});
+
+test("coefficient de rang : grille XP et primes multipliées", async () => {
+  await withAdmin(async (c) => {
+    const coeff = async (monthXp) =>
+      Number((await c.query("select public.rank_coefficient($1) as n", [monthXp])).rows[0].n);
+    assert.equal(await coeff(0), 1);
+    assert.equal(await coeff(119), 1);
+    assert.equal(await coeff(120), 1.5);
+    assert.equal(await coeff(299), 1.5);
+    assert.equal(await coeff(300), 2);
+    assert.equal(await coeff(599), 2);
+    assert.equal(await coeff(600), 2.5);
+    assert.equal(await coeff(889), 2.5);
+    assert.equal(await coeff(890), 3);
+
+    const prize = async (period, rank, players, monthXp) =>
+      Number(
+        (await c.query("select public.leaderboard_prize($1, $2, $3, $4) as n", [period, rank, players, monthXp]))
+          .rows[0].n,
+      );
+    assert.equal(await prize("weekly", 1, 10, 0), 50);
+    assert.equal(await prize("weekly", 1, 10, 120), 75);
+    assert.equal(await prize("weekly", 1, 10, 300), 100);
+    assert.equal(await prize("weekly", 1, 10, 600), 125);
+    assert.equal(await prize("weekly", 1, 10, 890), 150);
+    assert.equal(await prize("monthly", 1, 10, 890), 750);
+    assert.equal(await prize("monthly", 4, 80, 120), 75);
+    assert.equal(await prize("weekly", 5, 80, 890), 0);
   });
 });
