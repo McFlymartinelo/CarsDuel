@@ -1,7 +1,8 @@
-import { Cog, Swords } from "lucide-react";
+import { Cog, Flag, ShieldCheck, Trophy } from "lucide-react";
 import { THEME } from "@/components/CardView";
 import { cardImageUrl } from "@/lib/card-images";
 import { CATEGORY_LABEL, RARITY_LABEL, TIRE_LABEL, TIRE_THEME, cardSummary } from "@/lib/format";
+import { warrantyState } from "@/lib/game";
 import type { CardTemplate, UserCard } from "@/lib/types";
 
 /**
@@ -16,7 +17,7 @@ export function CardRow({
   children,
 }: {
   template: CardTemplate;
-  card?: Pick<UserCard, "runs_count" | "tire_wear" | "is_destroyed">;
+  card?: Pick<UserCard, "runs_count" | "runs_total" | "wins_count" | "tire_wear" | "is_destroyed" | "is_listed" | "warranty_used" | "warranty_duels" | "warranty_extended">;
   image?: string | null;
   note?: React.ReactNode;
   children?: React.ReactNode;
@@ -26,6 +27,7 @@ export function CardRow({
   const theme = rarity ? THEME[rarity] : tire ?? THEME.neutre;
   const img = image === undefined ? cardImageUrl(template) : image;
   const tag = rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (TIRE_LABEL[template.tire_type ?? ""] ?? "Pneus") : null;
+  const warranty = warrantyState(template, card);
 
   return (
     <div className={`relative flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border-2 bg-[#0b0d12] p-2 ${theme.frame}`}>
@@ -43,9 +45,34 @@ export function CardRow({
         <p className={`font-display text-xs font-semibold uppercase tracking-wider ${theme.accent}`}>
           {CATEGORY_LABEL[template.category]}{tag ? ` · ${tag}` : ""}
           {card?.is_destroyed && <span className="text-red-500"> · Détruite</span>}
-          {card && template.category !== "pneus" && template.category !== "bonus" && card.runs_count > 0 && (
-            <span className="ml-2 inline-flex items-center gap-1 normal-case tracking-normal text-zinc-400">
-              <Swords size={12} /> {card.runs_count}
+          {card && template.category !== "pneus" && template.category !== "bonus" && card.runs_total > 0 && (
+            <span className="ml-2 inline-flex items-center gap-2 normal-case tracking-normal text-zinc-400">
+              <span title={card.runs_total > 1 ? `${card.runs_total} runs réalisés` : `${card.runs_total} run réalisé`} className="inline-flex items-center gap-1">
+                <Flag size={12} /> <span className="tabular-nums">{card.runs_total}</span>
+              </span>
+              <span title={card.wins_count === 1 ? "1 victoire" : `${card.wins_count} victoires`} className="inline-flex items-center gap-1">
+                <Trophy size={12} className="text-amber-400" /> <span className="tabular-nums">{card.wins_count}</span>
+              </span>
+            </span>
+          )}
+          {warranty && warranty.limit > 0 && (
+            <span
+              title={
+                card
+                  ? warranty.expired
+                    ? `Garantie constructeur expirée : ${warranty.used} run(s) couru(s) sur ${warranty.limit}`
+                    : `Garantie constructeur : ${warranty.remaining} run(s) restant(s) sur ${warranty.limit}`
+                  : `Garantie constructeur : ${warranty.limit} run(s)`
+              }
+              className={`ml-2 inline-flex items-center gap-1 normal-case tracking-normal ${
+                warranty.expired ? "text-red-400" : "text-emerald-300"
+              }`}
+            >
+              <ShieldCheck size={12} />
+              {warranty.expired
+                ? "Garantie expirée"
+                : `${warranty.remaining} run${warranty.remaining === 1 ? "" : "s"} sous garantie restant${warranty.remaining === 1 ? "" : "s"}`}
+              {warranty.repairable && <span className="font-semibold"> · réparable</span>}
             </span>
           )}
         </p>

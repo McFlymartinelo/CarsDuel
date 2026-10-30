@@ -58,9 +58,9 @@ export const WEATHER_LABEL: Record<Weather, string> = {
   rain_cool: "Piste humide et froide",
 };
 
-const duelLabel = (n: number) => `${n} duel${n > 1 ? "s" : ""}`;
+const runLabel = (n: number) => `${n} run${n > 1 ? "s" : ""}`;
 
-export function cardSummary(t: CardTemplate, c?: Pick<UserCard, "runs_count" | "tire_wear">): string {
+export function cardSummary(t: CardTemplate, c?: Pick<UserCard, "runs_count" | "runs_total" | "tire_wear">): string {
   switch (t.category) {
     case "moteur":
     case "boite": {
@@ -68,7 +68,7 @@ export function cardSummary(t: CardTemplate, c?: Pick<UserCard, "runs_count" | "
         ? `${t.architecture} · ${t.power_hp} ch · ${t.weight_kg} kg`
         : `${GEARBOX_LABEL[t.gearbox_type ?? ""] ?? t.gearbox_type} · ${t.shift_time_ms} ms · ${t.weight_kg} kg`;
       const risk = c ? currentBreakRisk(t, c.runs_count) : null;
-      if (c && risk != null) return `${head} · ${duelLabel(c.runs_count)} · risque actuel ${Math.round(risk * 100) / 100} %`;
+      if (c && risk != null) return `${head} · ${runLabel(c.runs_total)} · risque actuel ${Math.round(risk * 100) / 100} %`;
       return `${head} · risque initial ${t.base_break_risk} %`;
     }
     case "pneus":

@@ -6,10 +6,11 @@ import { CardView, type TirePerf } from "@/components/CardView";
 import { ViewToggle, type CardViewMode } from "@/components/ViewToggle";
 import { RecycleDialog } from "@/components/garage/RecycleDialog";
 import { SellDialog } from "@/components/garage/SellDialog";
-import { recycleCard } from "@/app/(game)/garage/actions";
+import { ExtendWarrantyDialog } from "@/components/garage/ExtendWarrantyDialog";
+import { extendWarranty, recycleCard, repairCard } from "@/app/(game)/garage/actions";
 import { cancelListing, listCard } from "@/app/(game)/marketplace/actions";
 import { cardImageUrl } from "@/lib/card-images";
-import { recycleQuote } from "@/lib/game";
+import { recycleQuote, warrantyState } from "@/lib/game";
 import type { Category, UserCard } from "@/lib/types";
 
 export const TABS: { key: string; label: string; category: Category; icon: LucideIcon }[] = [
@@ -102,7 +103,8 @@ export function Inventory({
 
       {museum && (
         <p className="text-sm text-zinc-400">
-          Les moteurs, boîtes et pneus détruits arrivent ici. Chacun se recycle pour 1 pièce.
+          Les moteurs, boîtes et pneus détruits arrivent ici. Un moteur ou une boîte encore couvert par la garantie
+          constructeur peut être réparé ; sinon, chaque pièce se recycle pour 1 pièce.
         </p>
       )}
 
@@ -115,6 +117,7 @@ export function Inventory({
         {rows.map((c) => {
           const t = c.card_templates;
           const quote = recycleQuote(t, c);
+          const warranty = warrantyState(t, c);
           const Card = compact ? CardRow : CardView;
           return (
             <Card key={c.id} template={t} card={c} image={cardImageUrl(t)} tirePerfs={tirePerfs}>
@@ -124,14 +127,34 @@ export function Inventory({
                 </ActionForm>
               )}
               {c.is_listed && !listings[c.id] && <p className="text-xs text-sky-400">Carte en vente</p>}
-              {!c.is_listed && (
-                <div className="flex w-full items-center gap-2">
-                  {quote && (
-                    <RecycleDialog action={recycleCard} cardId={c.id} name={t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} scrap={quote.scrap} />
+              {!c.is_listed && (warranty?.repairable ? (
+                <ActionForm
+                  action={repairCard}
+                  submitLabel="Réparation sous garantie constructeur"
+                  submitClassName="w-full rounded-lg border border-emerald-500/70 px-3 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/10"
+                  className="flex w-full"
+                >
+                  <input type="hidden" name="card_id" value={c.id} />
+                </ActionForm>
+              ) : (
+                <div className="flex w-full flex-col gap-2">
+                  <div className="flex w-full items-center gap-2">
+                    {quote && (
+                      <RecycleDialog action={recycleCard} cardId={c.id} name={t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} scrap={quote.scrap} />
+                    )}
+                    {!c.is_destroyed && t.category !== "bonus" && <SellDialog action={listCard} cardId={c.id} name={t.name} />}
+                  </div>
+                  {!museum && warranty?.extendable && (
+                    <ExtendWarrantyDialog
+                      action={extendWarranty}
+                      cardId={c.id}
+                      name={t.name}
+                      remaining={warranty.remaining}
+                      limit={warranty.limit}
+                    />
                   )}
-                  {!c.is_destroyed && t.category !== "bonus" && <SellDialog action={listCard} cardId={c.id} name={t.name} />}
                 </div>
-              )}
+              ))}
             </Card>
           );
         })}

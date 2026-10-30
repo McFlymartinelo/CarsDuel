@@ -73,6 +73,39 @@ export function currentBreakRisk(
   return Number(t.base_break_risk ?? 0) + runs * Number(t.wear_sensitivity ?? 0);
 }
 
+// ---------- Garantie constructeur (affichage ; la base reste l'autorité) ----
+export interface WarrantyState {
+  used: number; // runs courus sous garantie
+  limit: number; // runs couverts
+  remaining: number; // runs encore couverts
+  expired: boolean; // plus aucun run couvert
+  repairable: boolean; // cassée ET couverte
+  extended: boolean; // prolongation déjà utilisée
+  extendable: boolean; // prolongation encore possible (carte intacte)
+}
+
+export function warrantyState(
+  t: Pick<CardTemplate, "category" | "garantie">,
+  c?: Pick<UserCard, "warranty_used" | "warranty_duels" | "warranty_extended" | "is_destroyed" | "is_listed">,
+): WarrantyState | null {
+  if (t.category !== "moteur" && t.category !== "boite") return null;
+  const limit = Math.max(0, Number(c?.warranty_duels ?? t.garantie ?? 0));
+  const used = Math.max(0, Number(c?.warranty_used ?? 0));
+  const remaining = Math.max(0, limit - used);
+  const extended = Boolean(c?.warranty_extended);
+  const destroyed = Boolean(c?.is_destroyed);
+  const listed = Boolean(c?.is_listed);
+  return {
+    used,
+    limit,
+    remaining,
+    expired: limit <= 0 || remaining === 0,
+    repairable: limit > 0 && used <= limit && destroyed,
+    extended,
+    extendable: Boolean(c) && !destroyed && !listed && !extended && limit > 0 && used < limit,
+  };
+}
+
 // ---------- Recyclage (affichage ; le paiement est dans public.recycle_card) --
 // Pièces = base × pourcentage restant / 100, arrondi à l'entier.
 //   moteur 50, boîte 30, pneus 10. Bonus : 1 pièce fixe.

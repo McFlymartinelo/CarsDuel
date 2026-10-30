@@ -30,6 +30,8 @@ export interface CardTemplate {
   tire_base_wear: number | null;
   bonus_effect: string | null;
   restricted_to_username: string | null;
+  /** Garantie constructeur en runs (moteur / boîte). */
+  garantie: number;
 }
 
 export interface UserCard {
@@ -37,6 +39,11 @@ export interface UserCard {
   owner_id: string;
   template_id: string;
   runs_count: number;
+  runs_total: number; // runs réellement courus (ne se réinitialise pas à la réparation)
+  wins_count: number; // duels gagnés par la carte (moteur/boîte)
+  warranty_duels: number; // garantie constructeur de l'instance (en runs)
+  warranty_used: number; // runs courus sous garantie (jamais remis à zéro)
+  warranty_extended: boolean; // prolongation déjà utilisée (une seule fois)
   tire_wear: number | null; // gomme restante (100 → 0)
   is_destroyed: boolean;
   is_listed: boolean;

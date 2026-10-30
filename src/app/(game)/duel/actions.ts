@@ -2,7 +2,7 @@
 
 import { requireUser } from "@/lib/auth";
 import { withUser } from "@/lib/db";
-import { callRpc, str } from "@/lib/rpc";
+import { callRpc, invalidate, str } from "@/lib/rpc";
 import { rpcErrorMessage } from "@/lib/errors";
 import { weatherEffects } from "@/lib/format";
 import { scoreMecaRaw, tireMalus, tireModifier } from "@/lib/game";
@@ -190,6 +190,9 @@ export async function launchDuel(_prev: ActionState<DuelReport>, fd: FormData): 
     return { ok: false, message: rpcErrorMessage(e) };
   }
   if (!outcome) return { ok: false, message: "Le duel n'a pas renvoyé de résultat." };
+  // Le duel change les runs, la garantie, l'usure, les pièces et l'XP :
+  // on invalide le cache client des pages qui affichent ces données.
+  invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel", "/leaderboard", "/marketplace"]);
   if (!detail) return { ok: true, data: undefined, message: "Duel effectué." };
   return { ok: true, data: buildReport(outcome, detail, "attacker") };
 }
@@ -224,7 +227,7 @@ export async function acceptDuel(_prev: ActionState<ArrangedPlay>, fd: FormData)
   const res = await callRpc<ArrangedOutcome>(
     "select public.accept_duel($1::uuid, $2::uuid) as r",
     (id) => [id, str(fd, "challenge_id")],
-    ["/", "/duel", "/duel/organises", "/garage"],
+    ["/", "/duel", "/duel/organises", "/garage", "/garage/inventaire", "/garage/casse", "/leaderboard", "/marketplace"],
   );
   if (!res?.ok || !res.data) return { ok: false, message: res?.message };
   const o = res.data;

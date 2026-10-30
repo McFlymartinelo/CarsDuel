@@ -66,8 +66,8 @@ export async function clearArena(c) {
 
 export async function giveCard(c, owner, code) {
   const { rows } = await c.query(
-    `insert into user_cards (owner_id, template_id, tire_wear, source)
-     select $1, id, case when category = 'pneus' then 100 end, 'test'
+    `insert into user_cards (owner_id, template_id, tire_wear, source, warranty_duels)
+     select $1, id, case when category = 'pneus' then 100 end, 'test', coalesce(garantie, 0)
        from card_templates where code = $2
      returning id`,
     [owner, code],

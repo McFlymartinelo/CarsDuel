@@ -65,6 +65,7 @@ try {
     if (cmd === "seed") {
       await runFile(path.join(root, "db", "catalog_engines.sql"));
       await runFile(path.join(root, "db", "catalog_gearboxes.sql"));
+      await runFile(path.join(root, "db", "catalog_warranty.sql"));
     }
     console.log(cmd === "seed" ? "Seed appliqué." : "Seed de test appliqué.");
   } else {

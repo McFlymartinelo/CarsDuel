@@ -1,6 +1,6 @@
-import { ArrowUp, CloudDrizzle, CloudRain, CloudSun, Cog, Gauge, Joystick, Shield, Sun, Swords, Timer, TrendingDown, TriangleAlert, Weight, Zap, type LucideIcon } from "lucide-react";
+import { ArrowUp, CloudDrizzle, CloudRain, CloudSun, Cog, Flag, Gauge, Joystick, Shield, ShieldCheck, Sun, Timer, TrendingDown, TriangleAlert, Trophy, Weight, Zap, type LucideIcon } from "lucide-react";
 import { bonusEffectText, CATEGORY_LABEL, GEARBOX_LABEL, RARITY_LABEL, TIRE_THEME, WEATHER_LABEL } from "@/lib/format";
-import { currentBreakRisk } from "@/lib/game";
+import { currentBreakRisk, warrantyState } from "@/lib/game";
 import type { CardTemplate, Rarity, UserCard, Weather } from "@/lib/types";
 
 const TIRE_WEATHERS: { weather: Weather; icon: LucideIcon }[] = [
@@ -143,11 +143,9 @@ function TireBlocks({ template, tirePerfs, accent }: { template: CardTemplate; t
   );
 }
 
-/** "m_9c" → "#9c", "b_5" → "#5" ; codes sans numéro (pneus, bonus) → null. */
-const cardNumber = (code: string | null) => {
-  const m = code?.match(/^[mb]_(.+)$/);
-  return m ? `#${m[1]}` : null;
-};
+/** Code de référence lisible pour les pièces mécaniques : "m_1a" → "M1A", "b_5" → "B5" ; pneus/bonus → null. */
+const cardCode = (code: string | null, category: CardTemplate["category"]) =>
+  code && (category === "moteur" || category === "boite") ? code.replaceAll("_", "").toUpperCase() : null;
 
 /**
  * Carte de collection : n° + catégorie, nom, rareté, stats avec jauges, visuel en filigrane.
@@ -161,7 +159,7 @@ export function CardView({
   children,
 }: {
   template: CardTemplate;
-  card?: Pick<UserCard, "runs_count" | "tire_wear" | "is_listed" | "is_destroyed">;
+  card?: Pick<UserCard, "runs_count" | "runs_total" | "wins_count" | "tire_wear" | "is_listed" | "is_destroyed" | "warranty_used" | "warranty_duels" | "warranty_extended">;
   /** URL déjà résolue côté serveur (les fichiers du disque ne sont pas lisibles dans le navigateur). */
   image?: string | null;
   tirePerfs?: TirePerf[];
@@ -171,7 +169,7 @@ export function CardView({
   const tireTheme = template.category === "pneus" ? TIRE_THEME[template.tire_type ?? ""] : undefined;
   const theme = rarity ? THEME[rarity] : tireTheme ?? THEME.neutre;
   const img = image;
-  const number = cardNumber(template.code);
+  const reference = cardCode(template.code, template.category);
   const stats = statsOf(template);
   const bonus = template.category === "bonus";
   const headline = template.name;
@@ -179,6 +177,7 @@ export function CardView({
 
   const currentRisk = card ? currentBreakRisk(template, card.runs_count) : null;
   const riskTone = currentRisk !== null ? riskStyle(currentRisk) : null;
+  const warranty = warrantyState(template, card);
 
   return (
     <div className={`relative h-full rounded-2xl border-2 bg-[#0b0d12] p-1.5 ${theme.frame}`}>
@@ -194,21 +193,63 @@ export function CardView({
         )}
 
         <div className="relative flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider">
-          <span className={`rounded-md border px-2.5 py-1 text-zinc-300 ${theme.inner}`}>{number ?? "—"}</span>
+          <span className={`rounded-md border px-2.5 py-1 normal-case text-zinc-300 ${theme.inner}`}>{reference ?? "—"}</span>
           <span className={`min-w-0 flex-1 truncate rounded-md border px-2.5 py-1 text-center ${theme.inner} ${theme.accent}`}>{CATEGORY_LABEL[template.category]}</span>
-          {card && currentRisk !== null && (
-            <span
-              title={card.runs_count === 1 ? "1 duel réalisé" : `${card.runs_count} duels réalisés`}
-              className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs normal-case tracking-normal text-zinc-200 ${theme.inner}`}
-            >
-              <Swords size={13} className={theme.accent} />
-              <span className="tabular-nums">{card.runs_count}</span>
-              <span className="text-zinc-400">{card.runs_count === 1 ? "duel" : "duels"}</span>
-            </span>
-          )}
         </div>
 
         <h3 className="relative mt-4 line-clamp-3 min-h-[4.95rem] font-display text-2xl font-bold uppercase leading-[1.1] tracking-wide text-white">{headline}</h3>
+
+        {card && currentRisk !== null && (
+          <div className="relative mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+            <span
+              title={card.runs_total > 1 ? `${card.runs_total} runs réalisés` : `${card.runs_total} run réalisé`}
+              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-zinc-200 ${theme.inner}`}
+            >
+              <Flag size={13} className={theme.accent} />
+              <span className="tabular-nums">{card.runs_total}</span>
+              <span className="text-zinc-400">{card.runs_total > 1 ? "runs" : "run"}</span>
+            </span>
+            <span
+              title={card.wins_count === 1 ? "1 victoire" : `${card.wins_count} victoires`}
+              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-zinc-200 ${theme.inner}`}
+            >
+              <Trophy size={13} className="text-amber-400" />
+              <span className="tabular-nums">{card.wins_count}</span>
+              <span className="text-zinc-400">{card.wins_count === 1 ? "victoire" : "victoires"}</span>
+            </span>
+          </div>
+        )}
+
+        {warranty && warranty.limit > 0 && (
+          <div className="relative mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+            <span
+              title={
+                card
+                  ? warranty.expired
+                    ? `Garantie constructeur expirée : ${warranty.used} run${warranty.used === 1 ? "" : "s"} couru${warranty.used === 1 ? "" : "s"} sur ${warranty.limit}`
+                    : `Garantie constructeur : ${warranty.remaining} run${warranty.remaining === 1 ? "" : "s"} restant${warranty.remaining === 1 ? "" : "s"} sur ${warranty.limit}`
+                  : `Garantie constructeur : ${warranty.limit} run${warranty.limit === 1 ? "" : "s"}`
+              }
+              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 ${
+                warranty.expired ? "border-red-500/40 text-red-300" : "border-emerald-500/40 text-emerald-300"
+              }`}
+            >
+              <ShieldCheck size={13} />
+              {warranty.expired ? (
+                <span className="font-semibold">Garantie expirée</span>
+              ) : (
+                <span className="font-semibold">
+                  {warranty.remaining} run{warranty.remaining === 1 ? "" : "s"} sous garantie restant{warranty.remaining === 1 ? "" : "s"}
+                </span>
+              )}
+            </span>
+            {warranty.repairable && (
+              <span className="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-2 py-1 font-semibold text-emerald-300">
+                Réparable sous garantie
+              </span>
+            )}
+          </div>
+        )}
 
         {badge && (
           <div className={`relative mt-3 flex items-center gap-2 font-display text-lg font-semibold uppercase tracking-wider ${theme.accent}`}>

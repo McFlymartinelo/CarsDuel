@@ -24,6 +24,42 @@ test("égalité de SP : le défenseur gagne", async () => {
   assert.equal(Number(r.attacker_sp), Number(r.defender_sp));
 });
 
+test("victoires : le moteur et la boîte du vainqueur sont crédités, pas ceux du perdant", async () => {
+  const win = await withAdmin(async (c) => {
+    await clearArena(c);
+    const attacker = await createPlayer(c);
+    const defender = await createPlayer(c);
+    const deck = await makeDeck(c, attacker, "t_eng_far");
+    await makeDeck(c, defender, "t_eng");
+    return { attacker, deck };
+  });
+  assert.equal((await duel(win.attacker, win.deck.deckId)).result, "attacker_win");
+  await withAdmin(async (c) => {
+    for (const id of [win.deck.engine, win.deck.gearbox]) {
+      const row = (await c.query("select runs_count, wins_count from user_cards where id = $1", [id])).rows[0];
+      assert.equal(row.runs_count, 1);
+      assert.equal(row.wins_count, 1);
+    }
+  });
+
+  const loss = await withAdmin(async (c) => {
+    await clearArena(c);
+    const attacker = await createPlayer(c);
+    const defender = await createPlayer(c);
+    const deck = await makeDeck(c, attacker, "t_eng");
+    await makeDeck(c, defender, "t_eng_far");
+    return { attacker, deck };
+  });
+  assert.equal((await duel(loss.attacker, loss.deck.deckId)).result, "defender_win");
+  await withAdmin(async (c) => {
+    for (const id of [loss.deck.engine, loss.deck.gearbox]) {
+      const row = (await c.query("select runs_count, wins_count from user_cards where id = $1", [id])).rows[0];
+      assert.equal(row.runs_count, 1);
+      assert.equal(row.wins_count, 0);
+    }
+  });
+});
+
 test("casse : fin immédiate, pas d'usure, bonus consommé", async () => {
   const fx = await withAdmin(async (c) => {
     await clearArena(c);

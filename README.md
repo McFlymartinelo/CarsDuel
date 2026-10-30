@@ -21,12 +21,13 @@ Jeu de cartes automobile asynchrone. Next.js 15 (App Router) + PostgreSQL **pur*
 - **Sécurité des données** : chaque requête joueur s'exécute dans une transaction `SET LOCAL ROLE app_user` + `app.user_id` ⇒ la RLS PostgreSQL s'applique. Les écritures de jeu passent par des fonctions `SECURITY DEFINER` qui revérifient l'identité.
 - **Kit de départ** : à l'inscription, le garage n'a pas de configuration. Le joueur reçoit 1 moteur commun, 1 boîte commune, 5 cartes bonus et 1 pneu de chaque type (si l'e-mail est unique).
 - **Tirages gratuits** : 3 bonus par jour calendaire (Europe/Paris), et 1 moteur ou 1 boîte par semaine ISO (reset le lundi, même fuseau).
+- **Garantie constructeur** : moteurs et boîtes sont garantis un nombre de runs (export JSON). Une pièce cassée peut être réparée gratuitement au Musée de la casse tant qu'elle n'a pas dépassé sa garantie ; le risque repart de R0 mais la garantie continue son cours. Prolongation de 2 runs, une seule fois par carte et depuis l'inventaire, contre une carte bonus « Révision complète » + 5 pièces, tant que la garantie n'a pas expiré et que la pièce n'est pas cassée.
 - Migrations : `db/migrations/*.sql` (appliquées une fois, suivies dans `schema_migrations`, verrou `pg_advisory_lock` pour éviter deux migrate en parallèle).
 
 ## Limites
 - **Connexion** : 5 échecs par e-mail sur 15 min, et 20 tentatives par IP sur 15 min. **Inscription** : 5 par heure et par IP. L'IP client est résolue depuis `x-forwarded-for` selon `TRUSTED_PROXY_COUNT` (nombre de reverse proxies de confiance) : le premier maillon n'est jamais utilisé, car il est forgeable. Derrière un seul proxy, définir `TRUSTED_PROXY_COUNT=1` (le dernier maillon est retenu). Sans configuration (`0` ou absent), l'en-tête est ignoré et l'IP vaut `unknown` : toutes les requêtes partagent alors le même compteur, donc configurez cette variable en production. Message unique en cas de blocage : « Trop de tentatives, réessayez plus tard. » Un login réussi efface les échecs de cet e-mail. L'inscription ne révèle pas si l'e-mail existe déjà.
 - **Duels** : attaques illimitées. Le fantôme est tiré au hasard parmi les configs éligibles. Défense : 5 récompenses par jour (Europe/Paris).
-- **Marketplace** : prix minimum 1 pièce (ou offres seules). Taxe `floor(prix × 0,90)`. Au plus 3 ventes entre les deux mêmes comptes sur 24 h glissantes.
+- **Marketplace** : prix minimum 10 pièces (ou offres seules, offres à partir de 10 pièces). Taxe `floor(prix × 0,90)`. Au plus 3 ventes entre les deux mêmes comptes sur 24 h glissantes.
 
 ## Tests et CI
 `npm test` crée la base jetable `carsduel_test` (le rôle doit pouvoir `CREATE DATABASE`), applique les migrations et le seed, puis lance les tests `node:test` dans `tests/unit` et `tests/db`. Ne pas pointer ces tests vers la base de développement.

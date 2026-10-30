@@ -138,6 +138,27 @@ test("accept_duel enregistre un duel arrangé et verse les récompenses du duel"
   assert.equal(after.get(fx.defender), Number(duel.defender_coins));
 });
 
+test("accept_duel crédite aussi les victoires du demandeur", async () => {
+  const fx = await withAdmin(async (c) => {
+    const attacker = await createPlayer(c);
+    const defender = await createPlayer(c);
+    const deck = await makeDeck(c, attacker, "t_eng_far");
+    await makeDeck(c, defender, "t_eng");
+    return { attacker, defender, deck };
+  });
+  const created = await propose(fx.attacker, await usernameOf(fx.defender));
+  const outcome = (await asUser(fx.defender, (c) =>
+    c.query("select public.accept_duel($1::uuid, $2::uuid) as r", [fx.defender, created.challenge_id]))).rows[0].r;
+  assert.equal(outcome.result, "attacker_win");
+  await withAdmin(async (c) => {
+    for (const id of [fx.deck.engine, fx.deck.gearbox]) {
+      const row = (await c.query("select runs_count, wins_count from user_cards where id = $1", [id])).rows[0];
+      assert.equal(row.runs_count, 1);
+      assert.equal(row.wins_count, 1);
+    }
+  });
+});
+
 test("forfait : demandeur sans deck valide, récompenses réellement versées", async () => {
   const fx = await withAdmin(async (c) => {
     const attacker = await createPlayer(c);
