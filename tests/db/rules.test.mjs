@@ -31,7 +31,7 @@ test("grant_starter_kit : commun, 5 bonus, un pneu de chaque type, sans config",
   });
 });
 
-test("recycle_card : base × état restant, et la config est retirée", async () => {
+test("recycle_card : base × état restant, et seul l'emplacement recyclé est retiré de la config", async () => {
   const fx = await withAdmin(async (c) => {
     const user = await createPlayer(c, 0);
     const deck = await makeDeck(c, user, "t_eng");
@@ -61,25 +61,69 @@ test("recycle_card : base × état restant, et la config est retirée", async ()
   await withAdmin(async (c) => {
     const left = await c.query("select id from user_cards where id = any($1::uuid[])", [[fx.engine, fx.worn, fx.tire]]);
     assert.equal(left.rows.length, 0);
-    const decks = await c.query("select id from user_decks where owner_id = $1", [fx.user]);
-    assert.equal(decks.rows.length, 0);
+    const decks = await c.query("select engine_card_id, gearbox_card_id, tire_card_id from user_decks where owner_id = $1", [fx.user]);
+    assert.equal(decks.rows.length, 1);
+    assert.equal(decks.rows[0].engine_card_id, null);
+    assert.equal(decks.rows[0].gearbox_card_id, fx.gearbox);
+    assert.equal(decks.rows[0].tire_card_id, null);
     const coins = await c.query("select coins from profiles where id = $1", [fx.user]);
     assert.equal(coins.rows[0].coins, 74);
   });
+
+  await asUser(fx.user, (c) =>
+    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.gearbox]));
+  await withAdmin(async (c) => {
+    const decks = await c.query("select id from user_decks where owner_id = $1", [fx.user]);
+    assert.equal(decks.rows.length, 0);
+  });
 });
 
-test("create_listing retire la carte de la config", async () => {
+test("create_listing retire uniquement la carte vendue de la config", async () => {
   const fx = await withAdmin(async (c) => {
     const user = await createPlayer(c, 0);
     return { user, ...(await makeDeck(c, user, "t_eng")) };
   });
   await asUser(fx.user, (c) =>
-    c.query("select public.create_listing($1::uuid, $2::uuid, 5, false)", [fx.user, fx.engine]));
+    c.query("select public.create_listing($1::uuid, $2::uuid, 10, false)", [fx.user, fx.engine]));
   await withAdmin(async (c) => {
-    const decks = await c.query("select id from user_decks where owner_id = $1", [fx.user]);
-    assert.equal(decks.rows.length, 0);
+    const decks = await c.query("select engine_card_id, gearbox_card_id, tire_card_id from user_decks where owner_id = $1", [fx.user]);
+    assert.equal(decks.rows.length, 1);
+    assert.equal(decks.rows[0].engine_card_id, null);
+    assert.equal(decks.rows[0].gearbox_card_id, fx.gearbox);
+    assert.equal(decks.rows[0].tire_card_id, fx.tire);
     const listed = await c.query("select is_listed from user_cards where id = $1", [fx.engine]);
     assert.equal(listed.rows[0].is_listed, true);
+  });
+});
+
+test("user_decks autorise une config partielle (1 ou 2 emplacements) et refuse un deck entièrement vide", async () => {
+  const fx = await withAdmin(async (c) => {
+    const user = await createPlayer(c, 0);
+    const engine = await giveCard(c, user, "t_eng");
+    const gearbox = await giveCard(c, user, "t_gb");
+    return { user, engine, gearbox };
+  });
+
+  await expectError(
+    fx.user,
+    (c) => c.query("insert into user_decks (owner_id, name) values ($1, 'Vide')", [fx.user]),
+    "invalid_deck_card",
+  );
+
+  await asUser(fx.user, async (c) => {
+    const { rows } = await c.query(
+      "insert into user_decks (owner_id, name, engine_card_id) values ($1, 'Deck principal', $2::uuid) returning id, engine_card_id, gearbox_card_id, tire_card_id",
+      [fx.user, fx.engine],
+    );
+    assert.equal(rows[0].engine_card_id, fx.engine);
+    assert.equal(rows[0].gearbox_card_id, null);
+    assert.equal(rows[0].tire_card_id, null);
+
+    await c.query("update user_decks set gearbox_card_id = $2::uuid where id = $1::uuid", [rows[0].id, fx.gearbox]);
+    const updated = await c.query("select engine_card_id, gearbox_card_id, tire_card_id from user_decks where id = $1::uuid", [rows[0].id]);
+    assert.equal(updated.rows[0].engine_card_id, fx.engine);
+    assert.equal(updated.rows[0].gearbox_card_id, fx.gearbox);
+    assert.equal(updated.rows[0].tire_card_id, null);
   });
 });
 
@@ -95,7 +139,7 @@ test("bonus : recyclage à 1 pièce, vente refusée", async () => {
   assert.equal(Number(r.coins), 1);
   await expectError(
     fx.user,
-    (c) => c.query("select public.create_listing($1::uuid, $2::uuid, 5, false)", [fx.user, fx.sell]),
+    (c) => c.query("select public.create_listing($1::uuid, $2::uuid, 10, false)", [fx.user, fx.sell]),
     "bonus_not_sellable",
   );
   await withAdmin(async (c) => {
@@ -226,11 +270,11 @@ test("RLS : A ne lit ni les cartes non listées, ni les duels, ni les offres de 
   });
 
   const listed = (await asUser(fx.b, (c) =>
-    c.query("select public.create_listing($1::uuid, $2::uuid, 5, false) as id", [fx.b, fx.visible]))).rows[0].id;
+    c.query("select public.create_listing($1::uuid, $2::uuid, 10, false) as id", [fx.b, fx.visible]))).rows[0].id;
   const sale = (await asUser(fx.seller, (c) =>
-    c.query("select public.create_listing($1::uuid, $2::uuid, $3::int, true) as id", [fx.seller, fx.forSale, 8]))).rows[0].id;
+    c.query("select public.create_listing($1::uuid, $2::uuid, $3::int, true) as id", [fx.seller, fx.forSale, 10]))).rows[0].id;
   const offer = (await asUser(fx.b, (c) =>
-    c.query("select public.make_offer($1::uuid, $2::uuid, 4) as id", [fx.b, sale]))).rows[0].id;
+    c.query("select public.make_offer($1::uuid, $2::uuid, 10) as id", [fx.b, sale]))).rows[0].id;
   const duel = (await asUser(fx.b, (c) =>
     c.query("select public.execute_duel($1::uuid, $2::uuid, null) as r", [fx.b, fx.deckB]))).rows[0].r;
 
@@ -269,7 +313,7 @@ test("validate_deck refuse une carte d'un autre joueur, une carte en vente ou un
   );
 
   await asUser(fx.owner, (c) =>
-    c.query("select public.create_listing($1::uuid, $2::uuid, 5, false)", [fx.owner, fx.engine]));
+    c.query("select public.create_listing($1::uuid, $2::uuid, 10, false)", [fx.owner, fx.engine]));
   await expectError(
     fx.owner,
     (c) => c.query(insert, [fx.owner, fx.engine, fx.gearbox, fx.tire]),

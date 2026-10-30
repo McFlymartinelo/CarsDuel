@@ -56,9 +56,9 @@ export interface UserDeck {
   id: string;
   owner_id: string;
   name: string;
-  engine_card_id: string;
-  gearbox_card_id: string;
-  tire_card_id: string;
+  engine_card_id: string | null;
+  gearbox_card_id: string | null;
+  tire_card_id: string | null;
 }
 
 export interface DuelRow {

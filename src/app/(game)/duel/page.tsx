@@ -40,9 +40,9 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
     .map((x) => ({ ...x, image: cardImageUrl(x.card_templates) }));
   const slot: SlotKey = SLOTS.includes(slotParam as SlotKey) ? (slotParam as SlotKey) : "moteur";
   const byId = new Map(allCards.map((c) => [c.id, c]));
-  const engine = config ? byId.get(config.engine_card_id) : undefined;
-  const gearbox = config ? byId.get(config.gearbox_card_id) : undefined;
-  const tire = config ? byId.get(config.tire_card_id) : undefined;
+  const engine = config?.engine_card_id ? byId.get(config.engine_card_id) : undefined;
+  const gearbox = config?.gearbox_card_id ? byId.get(config.gearbox_card_id) : undefined;
+  const tire = config?.tire_card_id ? byId.get(config.tire_card_id) : undefined;
   const playable = Boolean(config && engine && gearbox && tire && alive.has(engine.id) && alive.has(gearbox.id) && alive.has(tire.id));
 
   const href = (over: Record<string, string>) => {

@@ -92,8 +92,8 @@ const SLOT_COLUMN = { moteur: "engine_card_id", boite: "gearbox_card_id", pneus:
 type Slot = keyof typeof SLOT_COLUMN;
 
 /**
- * Équipe une carte dans le deck indiqué (remplace l'emplacement de sa catégorie).
- * Sans deck : en crée un avec cette carte + la première carte disponible des deux autres catégories.
+ * Équipe une carte dans le deck indiqué (remplace uniquement l'emplacement de sa catégorie).
+ * Sans deck : en crée un avec uniquement cette carte, les deux autres emplacements restent vides.
  */
 export async function equipCard(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const cardId = str(fd, "card_id");
@@ -108,27 +108,25 @@ export async function equipCard(_prev: ActionState, fd: FormData): Promise<Actio
     const category = rows[0]?.category as Slot | undefined;
     if (!category || !(category in SLOT_COLUMN)) throw new Error("invalid_deck_card");
 
+    const column = SLOT_COLUMN[category];
     if (deckId) {
-      const r = await c.query(`update user_decks set ${SLOT_COLUMN[category]} = $3::uuid where owner_id = $1 and id = $2::uuid`, [uid, deckId, cardId]);
+      const r = await c.query(`update user_decks set ${column} = $3::uuid where owner_id = $1 and id = $2::uuid`, [uid, deckId, cardId]);
       if (r.rowCount === 0) throw new Error("deck_not_found");
       return;
     }
 
-    const pick: Record<Slot, string | undefined> = { moteur: undefined, boite: undefined, pneus: undefined };
-    for (const slot of Object.keys(SLOT_COLUMN) as Slot[]) {
-      if (slot === category) { pick[slot] = cardId; continue; }
-      const found = await c.query<{ id: string }>(
-        `select uc.id from user_cards uc join card_templates t on t.id = uc.template_id
-          where uc.owner_id = $1 and t.category = $2 and not uc.is_destroyed and not uc.is_listed
-          order by uc.acquired_at limit 1`,
-        [uid, slot],
-      );
-      pick[slot] = found.rows[0]?.id;
+    const existing = await c.query<{ id: string }>(
+      "select id from user_decks where owner_id = $1 order by created_at limit 1",
+      [uid],
+    );
+    if (existing.rows[0]) {
+      await c.query(`update user_decks set ${column} = $3::uuid where owner_id = $1 and id = $2::uuid`, [uid, existing.rows[0].id, cardId]);
+      return;
     }
-    if (!pick.moteur || !pick.boite || !pick.pneus) throw new Error("incomplete_collection");
+
     await c.query(
-      "insert into user_decks (owner_id, name, engine_card_id, gearbox_card_id, tire_card_id) values ($1, 'Deck principal', $2, $3, $4)",
-      [uid, pick.moteur, pick.boite, pick.pneus],
+      `insert into user_decks (owner_id, name, ${column}) values ($1, 'Deck principal', $2::uuid)`,
+      [uid, cardId],
     );
   }, "Carte équipée.", ["/garage", "/garage/inventaire", "/duel", "/duel/organises"]);
 }
