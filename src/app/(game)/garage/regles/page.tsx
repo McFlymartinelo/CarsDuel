@@ -158,6 +158,12 @@ export default function RulesPage() {
             <>
               La pièce endommagée n&apos;est pas détruite : elle est automatiquement envoyée dans votre {b("« Musée de la casse »")}. Elle ne peut plus être équipée ni vendue, mais peut être conservée pour l&apos;honneur ou {b("recyclée contre 1 pièce")}.
             </>,
+            <>
+              {b("Garantie constructeur :")} chaque moteur et chaque boîte est garanti pendant un nombre de runs affiché sur sa carte. Tant que la pièce cassée n&apos;a pas dépassé cette garantie, elle peut être {b("réparée gratuitement")} depuis le musée de la casse : elle redevient utilisable et son risque de casse repart de R0. La garantie, elle, ne repart pas et continue de se consommer.
+            </>,
+            <>
+              {b("Prolonger la garantie :")} depuis l&apos;inventaire, une seule fois par carte et tant que la garantie n&apos;a pas expiré, il est possible de la prolonger de {b("2 runs")} en échange d&apos;une carte bonus {b("« Révision complète »")} et de {b("5 pièces")}. Une pièce cassée ne peut pas être prolongée.
+            </>,
             <>Si la carte bonus {b("« Assistance plateau »")} était engagée, le duel est perdu mais la pièce réintègre directement l&apos;inventaire actif sans passer par le musée de la casse.</>,
           ]}
         />
@@ -294,6 +300,7 @@ export default function RulesPage() {
         <List
           items={[
             <>Marché d&apos;occasion libre entre pilotes : vente de moteurs, boîtes et pneus (neufs ou usagés). Les cartes bonus ne peuvent pas y être proposées.</>,
+            <>{b("Prix minimum :")} une annonce comme une offre doit être d&apos;au moins 10 pièces.</>,
             <>{b("Séquestre automatique :")} la pièce mise en vente est immobilisée et ne peut pas être engagée en duel tant qu&apos;elle est en vente.</>,
             <>
               {b("Frais de vente de 10 % :")} une retenue de 10 % est prélevée sur le montant encaissé par le vendeur (gain net = floor(Prix × 0,90)). Cette commission freine la spéculation artificielle et l&apos;achat/revente immédiat.
@@ -325,15 +332,19 @@ export default function RulesPage() {
       <Section id="rangs" title="7. Classements et rangs">
         <P>Les compteurs de rang sont réinitialisés le premier jour de chaque mois à 00:00:00 (heure de Paris).</P>
         <Table
-          head={["Rang", "XP mensuel requis"]}
+          head={["Rang", "XP mensuel requis", "Coefficient de primes"]}
           rows={[
-            ["Rookie", "0 - 250 XP"],
-            ["Amateur de Paddock", "251 - 700 XP"],
-            ["Pro de la Config", "701 - 1 500 XP"],
-            ["Pilote d'Élite", "1 501 - 3 000 XP"],
-            ["Légende de la Piste", "3 001+ XP"],
+            ["Niveau 1 · Rookie", "0 - 119 XP", "×1"],
+            ["Niveau 2 · Amateur de Paddock", "120 - 299 XP", "×1,5"],
+            ["Niveau 3 · Pro de la Config", "300 - 599 XP", "×2"],
+            ["Niveau 4 · Pilote d'Élite", "600 - 889 XP", "×2,5"],
+            ["Niveau 5 · Légende de la Piste", "890 XP et +", "×3"],
           ]}
         />
+        <P>
+          Le coefficient du rang atteint sur l&apos;XP du mois multiplie les {b("primes de classement")} hebdomadaires et mensuelles
+          (montant arrondi à la pièce). Il est figé sur l&apos;XP du mois où la période se termine, au moment du versement.
+        </P>
         <H3>Classements calendaires (fuseau Europe/Paris)</H3>
         <List
           items={[
