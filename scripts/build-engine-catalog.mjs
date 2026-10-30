@@ -88,12 +88,12 @@ function sqlStr(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-/** M1a dans la feuille et 1a dans l'ancien export désignent le même moteur : m_1a. */
+/** M1a dans la feuille et 1a dans l'ancien export désignent le même moteur : M1A. */
 function engineCode(sheetId) {
   let id = sheetId.trim();
   if (/^m/i.test(id)) id = id.slice(1);
   if (!id) throw new Error(`Identifiant vide (${sheetId})`);
-  return `m_${id.toLowerCase()}`;
+  return `M${id.replaceAll("_", "").toUpperCase()}`;
 }
 
 function loadPrevious(file) {
@@ -177,7 +177,7 @@ function loadPreviousPrices(file) {
   if (!fs.existsSync(file)) return new Map();
   const text = fs.readFileSync(file, "utf8");
   const map = new Map();
-  for (const match of text.matchAll(/\('(m_[^']+)',\s*(\d+)\)/g)) map.set(match[1], Number(match[2]));
+  for (const match of text.matchAll(/\('([MB][^']*)',\s*(\d+)\)/g)) map.set(match[1], Number(match[2]));
   return map;
 }
 

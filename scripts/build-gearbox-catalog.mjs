@@ -72,12 +72,12 @@ function sqlStr(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-/** B12 dans la feuille désigne b_12. */
+/** B12 dans la feuille désigne B12. */
 function gearboxCode(sheetId) {
   let id = sheetId.trim();
   if (/^b/i.test(id)) id = id.slice(1);
   if (!id) throw new Error(`Identifiant vide (${sheetId})`);
-  return `b_${id.toLowerCase()}`;
+  return `B${id.replaceAll("_", "").toUpperCase()}`;
 }
 
 const rows = parseCSV(fs.readFileSync(csvPath, "utf8"));

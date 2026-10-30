@@ -7,7 +7,7 @@ import type { CardTemplate } from "./types";
  * Banque d'images des cartes : fichiers déposés dans public/cards/<catégorie>/.
  * Ordre de résolution (le premier qui existe gagne) :
  *   1. card_templates.image_url (URL ou chemin explicite en base)
- *   2. <code>.webp|png|jpg|jpeg|avif        image propre à la carte      (ex. moteur/m_1a.webp)
+ *   2. <code>.webp|png|jpg|jpeg|avif        image propre à la carte      (ex. boite/b10.webp)
  *   3. _<famille>.webp ...                  image générique de la famille (ex. moteur/_v8.webp)
  *   4. _<famille de base>.webp ...          repli moins précis           (ex. moteur/_6-cylindres.webp)
  *   5. _default.webp ...                    image par défaut de la catégorie
