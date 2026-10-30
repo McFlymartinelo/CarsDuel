@@ -5,8 +5,20 @@ import type { CatalogQuery } from "@/lib/catalog-filters";
 import { LISTING_ORDER_SQL } from "@/lib/catalog-sort";
 import { parsePage } from "@/lib/pagination";
 import { cleanSearch, isReferenceSearch } from "@/lib/search";
+import { nextParisMidnight } from "@/lib/format";
 import type { DailyQuestState } from "@/lib/quests";
-import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, PriceRef, UserCard, UserDeck, CardTemplate } from "@/lib/types";
+import type {
+  CardTemplate,
+  ClmChallenge,
+  DuelRow,
+  Listing,
+  MarketHistoryRow,
+  NotificationFeed,
+  Offer,
+  PriceRef,
+  UserCard,
+  UserDeck,
+} from "@/lib/types";
 
 // Toutes les lectures passent par withUser : la RLS s'applique (rôle app_user).
 // Les chargeurs de page enchaînent leurs requêtes sur le MÊME client (une transaction).
@@ -236,6 +248,14 @@ export const loadDuelPage = (uid: string, page = 1) =>
     const modifiers = await qModifiers(c);
     const ids = [...new Set(history.map((x) => (x.attacker_id === uid ? x.defender_id : x.attacker_id)))];
     return { cards, decks, modifiers, history, names: await qNames(c, ids), page: p };
+  });
+
+/** Contre-La-Montre solo : défi du jour, record personnel et récompenses déjà validées. */
+export const loadClmChallenge = (uid: string) =>
+  withUser(uid, async (c) => {
+    const row = (await c.query<{ r: ClmChallenge }>("select public.my_clm_today($1::uuid) as r", [uid])).rows[0]?.r;
+    if (!row) return null;
+    return { ...row, changes_at: nextParisMidnight() };
   });
 
 /** Marketplace : annonces filtrées (page), offres, inventaire et pseudos des vendeurs. */

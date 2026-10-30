@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { DailyQuests } from "@/components/DailyQuests";
 import { DuelForm } from "@/components/DuelForm";
+import { ClmForm } from "@/components/ClmForm";
 import { ChallengeList, ProposeDuel } from "@/components/OrganizedDuels";
 import { ConfigBoard } from "@/components/garage/ConfigBoard";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
@@ -9,8 +10,8 @@ import { type SlotKey } from "@/components/garage/SlotTabs";
 import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
 import { parsePage } from "@/lib/pagination";
-import { DUEL_PAGE_SIZE, getDailyQuests, loadDuelPage, loadOrganizedChallenges } from "@/lib/queries";
-import { launchDuel } from "./actions";
+import { DUEL_PAGE_SIZE, getDailyQuests, loadClmChallenge, loadDuelPage, loadOrganizedChallenges } from "@/lib/queries";
+import { launchClm, launchDuel } from "./actions";
 
 export const metadata = { title: "Jouer — CarsDuel" };
 
@@ -21,7 +22,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
   const page = parsePage(pageParam);
   const nextPage = parsePage(page + 1);
   const { user } = await requireUser();
-  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized] = await Promise.all([
+  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized, clm] = await Promise.all([
     loadDuelPage(user.id, page),
     getDailyQuests(user.id).catch((e) => {
       console.error("défis indisponibles :", e);
@@ -29,6 +30,10 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
     }),
     loadOrganizedChallenges(user.id).catch((e) => {
       console.error("demandes de duel indisponibles :", e);
+      return null;
+    }),
+    loadClmChallenge(user.id).catch((e) => {
+      console.error("contre-la-montre indisponible :", e);
       return null;
     }),
   ]);
@@ -70,11 +75,28 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
         modifiers={modifiers}
       />
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <DuelForm action={launchDuel} deckId={playable ? config?.id : undefined} bonuses={bonuses} tirePerfs={modifiers}>
           <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
         </DuelForm>
         <ProposeDuel />
+        {clm && (
+          <ClmForm
+            action={launchClm}
+            deckId={playable ? config?.id : undefined}
+            challenge={clm}
+            config={
+              engine && gearbox && tire
+                ? {
+                    engine: engine.card_templates.name,
+                    gearbox: gearbox.card_templates.name,
+                    tire: tire.card_templates.name,
+                    tireGum: tire.tire_wear,
+                  }
+                : undefined
+            }
+          />
+        )}
         <DailyQuests state={quests} />
       </div>
       {!playable && <p className="text-sm text-zinc-500">Complétez Ma config avec un moteur, une boîte et des pneus disponibles.</p>}

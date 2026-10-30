@@ -6,7 +6,15 @@ import { callRpc, invalidate, str } from "@/lib/rpc";
 import { rpcErrorMessage } from "@/lib/errors";
 import { weatherEffects } from "@/lib/format";
 import { scoreMecaRaw, tireMalus, tireModifier } from "@/lib/game";
-import type { ActionState, DuelOutcome, DuelReport, Weather } from "@/lib/types";
+import type {
+  ActionState,
+  Category,
+  ClmMedal,
+  ClmReport,
+  DuelOutcome,
+  DuelReport,
+  Weather,
+} from "@/lib/types";
 
 interface DetailRow {
   attacker_name: string;
@@ -195,6 +203,131 @@ export async function launchDuel(_prev: ActionState<DuelReport>, fd: FormData): 
   invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel", "/leaderboard", "/marketplace"]);
   if (!detail) return { ok: true, data: undefined, message: "Duel effectué." };
   return { ok: true, data: buildReport(outcome, detail, "attacker") };
+}
+
+interface ClmOutcome {
+  attempt_id: string;
+  day: string;
+  weather: Weather;
+  circuit_id: string;
+  circuit_name: string;
+  broken_part: Category | null;
+  sp_final: number | null;
+  lap_seconds: number | null;
+  previous_best: number | null;
+  personal_best: number | null;
+  is_new_record: boolean;
+  medal: ClmMedal | null;
+  new_medals: ClmMedal[];
+  medals_coins: number;
+  participation_coins: number;
+  coins: number;
+  claimed: ClmMedal[];
+  participation_claimed: boolean;
+  tire_gum_before: number;
+  tire_gum_after: number | null;
+  tire_destroyed: boolean;
+  engine_break_prob: number | null;
+  gearbox_break_prob: number | null;
+  score_meca: number;
+  tire_type: string;
+  tire_bonus_pct: number;
+  tire_malus: number;
+  tire_mod: number;
+  engine_name: string;
+  gearbox_name: string;
+  tire_name: string;
+}
+
+function buildClmReport(o: ClmOutcome): ClmReport {
+  return {
+    attemptId: o.attempt_id,
+    day: o.day,
+    weather: o.weather,
+    circuitId: o.circuit_id,
+    circuitName: o.circuit_name,
+    brokenPart: o.broken_part,
+    spFinal: o.sp_final,
+    lapSeconds: o.lap_seconds,
+    previousBest: o.previous_best,
+    personalBest: o.personal_best,
+    isNewRecord: o.is_new_record,
+    medal: o.medal,
+    newMedals: o.new_medals ?? [],
+    medalsCoins: o.medals_coins,
+    participationCoins: o.participation_coins,
+    coins: o.coins,
+    claimed: o.claimed ?? [],
+    participationClaimed: o.participation_claimed,
+    tireGumBefore: o.tire_gum_before,
+    tireGumAfter: o.tire_gum_after,
+    tireDestroyed: o.tire_destroyed,
+    engineBreakProb: o.engine_break_prob,
+    gearboxBreakProb: o.gearbox_break_prob,
+    scoreMeca: o.score_meca,
+    tireType: o.tire_type,
+    tireBonusPct: o.tire_bonus_pct,
+    tireMalus: o.tire_malus,
+    tireMod: o.tire_mod,
+    engineName: o.engine_name,
+    gearboxName: o.gearbox_name,
+    tireName: o.tire_name,
+  };
+}
+
+/** Lance un tour de Contre-La-Montre solo. Mêmes règles d'usure / casse que les duels. */
+export async function launchClm(_prev: ActionState<ClmReport>, fd: FormData): Promise<ActionState<ClmReport>> {
+  const deckId = str(fd, "deck_id");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deckId)) {
+    return { ok: false, message: "Votre configuration n'est plus disponible. Équipez un moteur, une boîte et des pneus avant de relancer." };
+  }
+  const { user } = await requireUser();
+  const { rows: configs } = await withUser(user.id, (c) =>
+    c.query<{
+      engine_missing: boolean;
+      gearbox_missing: boolean;
+      tire_missing: boolean;
+      engine_destroyed: boolean;
+      gearbox_destroyed: boolean;
+      tire_destroyed: boolean;
+    }>(
+      `select d.engine_card_id is null as engine_missing,
+              d.gearbox_card_id is null as gearbox_missing,
+              d.tire_card_id is null as tire_missing,
+              coalesce(ce.is_destroyed, false) as engine_destroyed,
+              coalesce(cg.is_destroyed, false) as gearbox_destroyed,
+              coalesce(ct.is_destroyed, false) as tire_destroyed
+         from user_decks d
+         left join user_cards ce on ce.id = d.engine_card_id
+         left join user_cards cg on cg.id = d.gearbox_card_id
+         left join user_cards ct on ct.id = d.tire_card_id
+        where d.id = $1::uuid and d.owner_id = $2`,
+      [deckId, user.id],
+    ),
+  );
+  const config = configs[0];
+  if (!config) return { ok: false, message: "Configuration introuvable. Vérifiez votre garage avant de relancer." };
+  if (config.engine_missing || config.gearbox_missing || config.tire_missing) {
+    return { ok: false, message: "Configuration incomplète : équipez un moteur, une boîte et des pneus." };
+  }
+  if (config.engine_destroyed) return { ok: false, message: "Votre moteur est détruit. Équipez-en un autre avant de lancer un tour." };
+  if (config.gearbox_destroyed) return { ok: false, message: "Votre boîte est détruite. Équipez-en une autre avant de lancer un tour." };
+  if (config.tire_destroyed) return { ok: false, message: "Vos pneus sont détruits. Équipez-en d'autres avant de lancer un tour." };
+
+  let outcome: ClmOutcome | undefined;
+  try {
+    const { rows } = await withUser(user.id, (c) =>
+      c.query<{ r: ClmOutcome }>("select public.execute_clm($1::uuid, $2::uuid) as r", [user.id, deckId]),
+    );
+    outcome = rows[0]?.r;
+  } catch (e) {
+    return { ok: false, message: rpcErrorMessage(e) };
+  }
+  if (!outcome) return { ok: false, message: "Le contre-la-montre n'a pas renvoyé de résultat." };
+
+  // Pièces, usure, casse, record et médailles ont changé : on rafraîchit l'UI.
+  invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/garage/trophees", "/duel"]);
+  return { ok: true, data: buildClmReport(outcome) };
 }
 
 export async function proposeDuel(_prev: ActionState<{ username: string }>, fd: FormData): Promise<ActionState<{ username: string }>> {

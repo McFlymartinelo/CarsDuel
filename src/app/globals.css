@@ -109,6 +109,23 @@ html {
   100% { opacity: 1; transform: scale(1); }
 }
 
+/* Contre-la-montre : le chrono se fige avec une pulsation, les médailles apparaissent. */
+.clm-chrono-locked { animation: clm-chrono-locked 0.7s cubic-bezier(0.22, 0.9, 0.3, 1) both; text-shadow: 0 0 24px rgba(245, 158, 11, 0.45); }
+.clm-medal-pop { animation: clm-medal-pop 0.6s cubic-bezier(0.22, 0.9, 0.3, 1) both; }
+
+@keyframes clm-chrono-locked {
+  0% { transform: scale(1.12); opacity: 0.75; }
+  45% { transform: scale(0.97); opacity: 1; }
+  75% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes clm-medal-pop {
+  0% { opacity: 0; transform: translateY(12px) scale(0.92); }
+  60% { opacity: 1; transform: translateY(0) scale(1.02); }
+  100% { opacity: 1; transform: none; }
+}
+
 /* Tirage : aura pulsante au dos (couleur de la rareté), onde et étincelles à la révélation. */
 .draw-aura { animation: draw-aura 0.8s ease-in-out infinite alternate; }
 .draw-shake { animation: draw-aura 0.8s ease-in-out infinite alternate, draw-shake 0.3s linear 3; }
@@ -186,6 +203,7 @@ html {
   .draw-aura, .draw-shake, .draw-burst, .draw-spark { animation: none; }
   .card-flip { transition: none; }
   .duel-rise, .duel-from-left, .duel-from-right, .duel-verdict { animation: none; }
+  .clm-chrono-locked, .clm-medal-pop { animation: none; }
   .filter-sheet-in, .filter-backdrop-in { animation: none; }
 }
 
