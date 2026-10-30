@@ -1,11 +1,47 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { asUser, createPlayer, expectError, withAdmin } from "./helpers.mjs";
+import { asUser, createPlayer, ensureTemplates, expectError, giveCard, withAdmin } from "./helpers.mjs";
 
 async function claim(user, challenge) {
   return (await asUser(user, (c) =>
     c.query("select public.claim_collector_challenge($1::uuid, $2::text) as r", [user, challenge]))).rows[0].r;
 }
+
+test("collection publique d'un pilote : cartes possédées, pseudo insensible à la casse", async () => {
+  const { owner, visitor, ownerName } = await withAdmin(async (c) => {
+    await ensureTemplates(c);
+    const owner = await createPlayer(c);
+    const visitor = await createPlayer(c);
+    await giveCard(c, owner, "t_eng");
+    await giveCard(c, owner, "t_gb");
+    await giveCard(c, visitor, "t_eng_far");
+    const { rows } = await c.query("select username from profiles where id = $1", [owner]);
+    return { owner, visitor, ownerName: rows[0].username };
+  });
+
+  const result = (await asUser(visitor, (c) =>
+    c.query("select public.collector_collection($1::uuid, $2::text) as r", [visitor, ownerName.toUpperCase()])))
+    .rows[0].r;
+
+  assert.equal(result.username, ownerName);
+  assert.deepEqual(result.cards.map((card) => card.card_templates.code).sort(), ["t_eng", "t_gb"]);
+});
+
+test("collection publique d'un pilote : pseudo inconnu et appelant usurpé", async () => {
+  const [visitor, other] = await withAdmin(async (c) => [await createPlayer(c), await createPlayer(c)]);
+
+  await expectError(
+    visitor,
+    (c) => c.query("select public.collector_collection($1::uuid, 'pseudo-inexistant-42')", [visitor]),
+    "user_not_found",
+  );
+
+  await expectError(
+    visitor,
+    (c) => c.query("select public.collector_collection($1::uuid, 'pseudo-inexistant-42')", [other]),
+    "forbidden",
+  );
+});
 
 test("défi du collectionneur inconnu", async () => {
   const user = await withAdmin((c) => createPlayer(c));

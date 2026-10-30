@@ -3,7 +3,7 @@ import { before, test } from "node:test";
 import { asUser, createPlayer, expectError, withAdmin } from "./helpers.mjs";
 
 const SECRET = "alexmartinelo";
-const CODES = ["b_51", "f1_16"];
+const CODES = ["B51", "F116"];
 
 async function createNamedPlayer(c, username) {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -32,8 +32,8 @@ test("pack F1 privé : actif, visible et offert à alexmartinelo uniquement", as
       [CODES],
     );
     assert.deepEqual(templates.rows, [
-      { code: "b_51", is_active: true, restricted_to_username: SECRET },
-      { code: "f1_16", is_active: true, restricted_to_username: SECRET },
+      { code: "B51", is_active: true, restricted_to_username: SECRET },
+      { code: "F116", is_active: true, restricted_to_username: SECRET },
     ]);
 
     const owned = await c.query(
@@ -71,6 +71,18 @@ test("pack F1 privé : actif, visible et offert à alexmartinelo uniquement", as
   });
 });
 
+test("pack F1 privé : masqué dans la collection publique vue par les autres", async () => {
+  const fromOther = (await asUser(other, (c) =>
+    c.query("select public.collector_collection($1::uuid, $2::text) as r", [other, SECRET]))).rows[0].r;
+  const otherCodes = fromOther.cards.map((card) => card.card_templates.code);
+  for (const code of CODES) assert.equal(otherCodes.includes(code), false);
+
+  const fromSelf = (await asUser(owner, (c) =>
+    c.query("select public.collector_collection($1::uuid, $2::text) as r", [owner, SECRET]))).rows[0].r;
+  const selfCodes = fromSelf.cards.map((card) => card.card_templates.code);
+  for (const code of CODES) assert.equal(selfCodes.includes(code), true);
+});
+
 test("pack F1 privé : tirage exclu pour les autres joueurs", async () => {
   const result = await asUser(other, (c) =>
     c.query("select public.claim_weekly_pull($1::uuid, 'moteur') as r", [other]));
@@ -83,8 +95,8 @@ test("pack F1 privé : tirage exclu pour les autres joueurs", async () => {
         where uc.id = $1`,
       [cardId],
     );
-    assert.notEqual(rows[0].code, "f1_16");
-    assert.notEqual(rows[0].code, "b_51");
+    assert.notEqual(rows[0].code, "F116");
+    assert.notEqual(rows[0].code, "B51");
   });
 });
 
@@ -93,7 +105,7 @@ test("pack F1 privé : impossible à revendre sur le marché", async () => {
     const { rows } = await c.query(
       `select uc.id
          from user_cards uc join card_templates t on t.id = uc.template_id
-        where uc.owner_id = $1 and t.code = 'f1_16'`,
+        where uc.owner_id = $1 and t.code = 'F116'`,
       [owner],
     );
     return rows[0].id;
