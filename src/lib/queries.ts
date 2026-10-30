@@ -4,6 +4,7 @@ import { withUser } from "@/lib/db";
 import type { CatalogQuery } from "@/lib/catalog-filters";
 import { LISTING_ORDER_SQL } from "@/lib/catalog-sort";
 import { parsePage } from "@/lib/pagination";
+import { cleanSearch, isReferenceSearch } from "@/lib/search";
 import type { DailyQuestState } from "@/lib/quests";
 import type { DuelRow, Listing, MarketHistoryRow, NotificationFeed, Offer, PriceRef, UserCard, UserDeck, CardTemplate } from "@/lib/types";
 
@@ -21,6 +22,27 @@ const LISTING_SELECT = `select l.*, (to_jsonb(uc) || jsonb_build_object('card_te
   from marketplace_listings l
   join user_cards uc on uc.id = l.card_id
   join card_templates t on t.id = uc.template_id`;
+
+/** Clause de recherche nom / code / référence, ajoutée aux paramètres fournis. */
+function searchClause(params: unknown[], q: string | undefined): string | null {
+  const term = cleanSearch(q);
+  if (!term) return null;
+  const like = `%${term.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+  if (isReferenceSearch(term)) {
+    // Référence : « 1 » → #1, #1A, #1B mais pas #10 ; « 1A » → #1A, pas #21A.
+    params.push(term);
+    const reference = `$${params.length}`;
+    const code = `t.code ~* ('^[mb]_?' || ${reference} || '[a-z]*$')`;
+    if (/[a-z]/i.test(term)) {
+      params.push(like);
+      return `(${code} or t.name ilike $${params.length} escape '\\')`;
+    }
+    return `(${code})`;
+  }
+  params.push(like);
+  const p = `$${params.length}`;
+  return `(t.name ilike ${p} escape '\\' or t.code ilike ${p} escape '\\')`;
+}
 
 async function qCards(c: PoolClient, uid: string) {
   return (await c.query<UserCard>(`${CARD_SELECT} where uc.owner_id = $1 order by uc.acquired_at desc`, [uid])).rows;
@@ -78,6 +100,8 @@ async function qCatalog(c: PoolClient, filter?: CatalogQuery) {
       params.push(filter.max);
       where.push(`s.price <= $${params.length}`);
     }
+    const search = searchClause(params, filter.q);
+    if (search) where.push(search);
   }
   return (await c.query<CatalogRow>(
     `select s.id, s.price, s.stock, to_jsonb(t) as card_templates
@@ -219,6 +243,8 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery
         params.push(filter.risk);
         where.push(`(coalesce(t.base_break_risk, 0) + uc.runs_count * coalesce(t.wear_sensitivity, 0)) <= $${params.length}`);
       }
+      const search = searchClause(params, filter.q);
+      if (search) where.push(search);
     }
     const order = filter?.sort ? LISTING_ORDER_SQL[filter.sort] : "l.created_at desc";
     const listings = (await c.query<Listing>(

@@ -38,7 +38,7 @@ function PriceHint({ price, reference }: { price: number | null; reference: Pric
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; tab?: string; rarity?: string; sort?: string; min?: string; max?: string; risk?: string; vue?: string }>;
+  searchParams: Promise<{ page?: string; tab?: string; rarity?: string; sort?: string; min?: string; max?: string; risk?: string; q?: string; vue?: string }>;
 }) {
   const sp = await searchParams;
   const page = parsePage(sp.page);
@@ -61,6 +61,7 @@ export default async function MarketplacePage({
     if (query.min != null) q.set("min", String(query.min));
     if (query.max != null) q.set("max", String(query.max));
     if (query.risk != null) q.set("risk", String(query.risk));
+    if (query.q) q.set("q", query.q);
     if (o.page && o.page > 1) q.set("page", String(o.page));
     if ((o.view ?? view) === "liste") q.set("vue", "liste");
     return `/marketplace?${q.toString()}`;
@@ -185,7 +186,7 @@ export default async function MarketplacePage({
         <h2 className="font-display text-xl font-bold uppercase tracking-wide">Annonces</h2>
         {others.length === 0 && (
           <p className="rounded-xl border border-zinc-800 bg-[#10131a] px-4 py-6 text-center text-sm text-zinc-500">
-            Aucune annonce pour le moment.
+            {query.q ? `Aucune annonce ne correspond à « ${query.q} ».` : "Aucune annonce pour le moment."}
           </p>
         )}
         <CatalogViewPanels cards={othersGrid("cartes")} list={othersGrid("liste")} />

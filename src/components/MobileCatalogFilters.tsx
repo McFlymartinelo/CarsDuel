@@ -89,6 +89,7 @@ export function MobileCatalogFilters({
     min?: number | null;
     max?: number | null;
     risk?: number | null;
+    q?: string | null;
   }) => {
     const tab = over.tab ?? query.tab.key;
     const changed = tab !== query.tab.key;
@@ -99,16 +100,18 @@ export function MobileCatalogFilters({
     const min = over.min === null ? undefined : (over.min ?? query.min);
     const max = over.max === null ? undefined : (over.max ?? query.max);
     const risk = over.risk === null || changed ? undefined : (over.risk ?? query.risk);
+    const q = over.q === null ? undefined : (over.q ?? query.q);
     if (rarity) params.set("rarity", rarity);
     if (sort) params.set("sort", sort);
     if (min != null) params.set("min", String(min));
     if (max != null) params.set("max", String(max));
     if (risk != null) params.set("risk", String(risk));
+    if (q) params.set("q", q);
     for (const [key, value] of Object.entries(extra ?? {})) if (value) params.set(key, value);
     return `${path}?${params.toString()}`;
   };
 
-  const resetHref = href({ tab: FILTER_TABS[0].key, rarity: null, sort: null, min: null, max: null, risk: null });
+  const resetHref = href({ tab: FILTER_TABS[0].key, rarity: null, sort: null, min: null, max: null, risk: null, q: null });
   const sorts = sortsFor(query.tab.category);
   const rarityTotal = Object.values(rarityCounts).reduce((sum, n) => sum + (n ?? 0), 0);
 
@@ -181,6 +184,7 @@ export function MobileCatalogFilters({
           <input type="hidden" name="tab" value={query.tab.key} />
           {query.rarity && <input type="hidden" name="rarity" value={query.rarity} />}
           {query.sort && <input type="hidden" name="sort" value={query.sort} />}
+          {query.q && <input type="hidden" name="q" value={query.q} />}
           {Object.entries(extra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
 
           <div className={FILTER_BODY_CLASS}>

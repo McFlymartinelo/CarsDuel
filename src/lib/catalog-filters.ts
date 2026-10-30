@@ -1,4 +1,5 @@
 import { ENGINE_SORTS, GEARBOX_SORTS, PRICE_SORT, type CardSort } from "@/lib/catalog-sort";
+import { cleanSearch } from "@/lib/search";
 import type { Category, Rarity } from "@/lib/types";
 
 export const FILTER_TABS: { key: string; label: string; category: Category }[] = [
@@ -23,6 +24,8 @@ export interface CatalogQuery {
   min?: number;
   max?: number;
   risk?: number;
+  /** Recherche libre sur le nom ou la référence de la carte. */
+  q?: string;
 }
 
 function bound(v: string | undefined): number | undefined {
@@ -39,11 +42,12 @@ export function readCatalogQuery(sp: {
   min?: string;
   max?: string;
   risk?: string;
+  q?: string;
 }): CatalogQuery {
   const tab = FILTER_TABS.find((t) => t.key === sp.tab) ?? FILTER_TABS[0];
   const mechanical = tab.category === "moteur" || tab.category === "boite";
   const rarity = mechanical && RARITIES.includes(sp.rarity as Rarity) ? (sp.rarity as Rarity) : undefined;
   const allowed = new Set(sortsFor(tab.category).map((s) => s.key));
   const sort = sp.sort && allowed.has(sp.sort as CardSort) ? (sp.sort as CardSort) : undefined;
-  return { tab, rarity, sort, min: bound(sp.min), max: bound(sp.max), risk: mechanical ? bound(sp.risk) : undefined };
+  return { tab, rarity, sort, min: bound(sp.min), max: bound(sp.max), risk: mechanical ? bound(sp.risk) : undefined, q: cleanSearch(sp.q) };
 }

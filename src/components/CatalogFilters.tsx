@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Cog, Coins, Disc, Settings2, TriangleAlert, Zap, type LucideIcon } from "lucide-react";
 import { SortLinks } from "@/components/SortLinks";
 import { MobileCatalogFilters } from "@/components/MobileCatalogFilters";
+import { SearchNav } from "@/components/SearchBox";
 import { FILTER_TABS, sortsFor, type CatalogQuery } from "@/lib/catalog-filters";
 import { RARITY_LABEL } from "@/lib/format";
 import type { Rarity } from "@/lib/types";
@@ -59,6 +60,7 @@ export function CatalogFilters({
     min?: number | null;
     max?: number | null;
     risk?: number | null;
+    q?: string | null;
   }) => {
     const tab = over.tab ?? query.tab.key;
     const changed = tab !== query.tab.key;
@@ -74,13 +76,30 @@ export function CatalogFilters({
     if (min != null) q.set("min", String(min));
     if (max != null) q.set("max", String(max));
     if (risk != null) q.set("risk", String(risk));
+    const search = over.q === null ? undefined : (over.q ?? query.q);
+    if (search) q.set("q", search);
     for (const [key, value] of Object.entries(effectiveExtra ?? {})) if (value) q.set(key, value);
     return `${path}?${q.toString()}`;
   };
   const bounds = query.min != null || query.max != null || query.risk != null;
+  const searchParams: Record<string, string | undefined> = {
+    tab: query.tab.key,
+    rarity: query.rarity,
+    sort: query.sort,
+    min: query.min != null ? String(query.min) : undefined,
+    max: query.max != null ? String(query.max) : undefined,
+    risk: query.risk != null ? String(query.risk) : undefined,
+    ...effectiveExtra,
+  };
 
   return (
     <>
+    <SearchNav
+      path={path}
+      q={query.q}
+      params={searchParams}
+      placeholder="Rechercher une pièce, un nom, une référence…"
+    />
     <div className="hidden space-y-3 md:block">
       <div className={row}>
         <span className={label}>Type</span>
@@ -126,6 +145,7 @@ export function CatalogFilters({
         <input type="hidden" name="tab" value={query.tab.key} />
         {query.rarity && <input type="hidden" name="rarity" value={query.rarity} />}
         {query.sort && <input type="hidden" name="sort" value={query.sort} />}
+        {query.q && <input type="hidden" name="q" value={query.q} />}
         {Object.entries(effectiveExtra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
         <span className={label}>{showRisk && mechanical ? "Limites" : "Prix"}</span>
         <div className="inline-flex max-w-full flex-wrap items-center justify-self-start gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1">

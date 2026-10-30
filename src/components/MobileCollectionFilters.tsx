@@ -58,7 +58,6 @@ export function MobileCollectionFilters({
   const mechanical = category === "tout" || category === "moteur" || category === "boite";
   const activeCount = Number(category !== "tout") + Number(Boolean(rarity)) + Number(ownedOnly);
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-  const sortOptions = [{ key: "name", label: "Nom A–Z" }, ...sorts];
 
   const reset = () => {
     setCategory("tout");
@@ -92,7 +91,7 @@ export function MobileCollectionFilters({
         activeCount={activeCount}
         open={open}
         onOpen={() => setOpen(true)}
-        sorts={sortOptions}
+        sorts={sorts}
         sort={sort}
         onSortChange={(key) => setSort(key ?? "")}
       />

@@ -65,7 +65,7 @@ export function FilterTrigger({
         onClick={onOpen}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 px-3.5 text-sm font-semibold text-black shadow-[0_6px_18px_-8px_rgba(245,158,11,0.95)] transition active:scale-[0.98]"
+        className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 px-3.5 text-sm font-semibold text-black shadow-[0_6px_18px_-8px_rgba(245,158,11,0.95)] transition active:scale-[0.98] ${sorts.length === 0 ? "w-full justify-center" : "shrink-0"}`}
       >
         <SlidersHorizontal size={16} strokeWidth={2.25} />
         Filtres
@@ -73,19 +73,21 @@ export function FilterTrigger({
           <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/20 px-1 text-[11px] font-bold tabular-nums">{activeCount}</span>
         )}
       </button>
-      <div className="relative flex min-w-0 flex-1 items-center">
-        <ArrowUpDown size={14} strokeWidth={2} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
-        <ChevronDown size={14} strokeWidth={2.25} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500" />
-        <select
-          aria-label="Trier les résultats"
-          value={sort}
-          onChange={(event) => onSortChange(event.target.value || null)}
-          className="!h-11 !w-full appearance-none truncate rounded-xl border border-white/[0.06] !bg-[#0a0d12] !py-0 !pl-9 !pr-8 text-zinc-200"
-        >
-          <option value="">Par défaut</option>
-          {sorts.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
-        </select>
-      </div>
+      {sorts.length > 0 && (
+        <div className="relative flex min-w-0 flex-1 items-center">
+          <ArrowUpDown size={14} strokeWidth={2} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <ChevronDown size={14} strokeWidth={2.25} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <select
+            aria-label="Trier les résultats"
+            value={sort}
+            onChange={(event) => onSortChange(event.target.value || null)}
+            className="!h-11 !w-full appearance-none truncate rounded-xl border border-white/[0.06] !bg-[#0a0d12] !py-0 !pl-9 !pr-8 text-zinc-200"
+          >
+            <option value="">Par défaut</option>
+            {sorts.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

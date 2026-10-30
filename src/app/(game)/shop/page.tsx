@@ -18,7 +18,7 @@ export const metadata = { title: "Boutique — CarsDuel" };
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; rarity?: string; sort?: string; min?: string; max?: string; vue?: string }>;
+  searchParams: Promise<{ tab?: string; rarity?: string; sort?: string; min?: string; max?: string; q?: string; vue?: string }>;
 }) {
   const sp = await searchParams;
   const query = readCatalogQuery({ ...sp, risk: undefined });
@@ -67,7 +67,9 @@ export default async function ShopPage({
           preserveCatalogView
         />
         {shown.length === 0 ? (
-          <p className="text-sm text-zinc-400">Aucune pièce dans cette sélection pour le moment.</p>
+          <p className="text-sm text-zinc-400">
+            {query.q ? `Aucune pièce ne correspond à « ${query.q} » dans cette sélection.` : "Aucune pièce dans cette sélection pour le moment."}
+          </p>
         ) : (
           <CatalogViewPanels
             cards={(
