@@ -1,6 +1,7 @@
 import { Logo } from "@/components/Logo";
 import { AuthPanel } from "@/components/auth/AuthPanel";
 import { getCurrentUser } from "@/lib/session";
+import { otpEnabled } from "@/lib/otp";
 import { resendOtp, signIn, signUp, verifyOtp } from "../actions";
 
 export const metadata = { title: "Connexion — CarsDuel" };
@@ -25,6 +26,7 @@ export default async function LoginPage() {
         resendOtp={resendOtp}
         verifyOtp={verifyOtp}
         signedIn={signedIn}
+        otpEnabled={otpEnabled()}
       />
     </main>
   );

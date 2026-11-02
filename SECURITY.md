@@ -30,6 +30,9 @@
   code est affiché dans la console du serveur.
 - **`devOtp`** : uniquement si `NODE_ENV !== "production"` et (`NODE_ENV =
   "test"` ou `AUTH_OTP_ECHO=1`). Jamais en production.
+- **Pause** : `AUTH_OTP_ENABLED=0` court-circuite la vérification (connexion
+  directe après le mot de passe). Le compte est alors marqué vérifié et reçoit
+  son kit immédiatement. À réserver aux incidents SMTP, puis repasser à `1`.
 - **Rate limiting** : `auth_attempts`, IP résolue par `resolveClientIp` +
   `TRUSTED_PROXY_COUNT` (le premier maillon de `x-forwarded-for` n'est jamais
   utilisé). 20 connexions/IP/15 min, 5 échecs/e-mail/15 min, 5 inscriptions/IP/h,

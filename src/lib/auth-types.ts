@@ -25,3 +25,11 @@ export interface OtpResendData {
 export interface OtpVerifyData {
   redirectTo: string;
 }
+
+/** Connexion directe, sans code : renvoyée quand `AUTH_OTP_ENABLED=0`. */
+export interface SignedInData {
+  redirectTo: string;
+}
+
+/** Réponse des actions de connexion / inscription : défi OTP ou session directe. */
+export type CredentialsData = OtpChallenge | SignedInData;

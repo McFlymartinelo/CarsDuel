@@ -10,6 +10,7 @@ import {
   hashOtpCode,
   maskEmail,
   otpEchoEnabled,
+  otpEnabled,
   otpMatches,
   resendCooldownRemaining,
   resolveOtpPepper,
@@ -119,4 +120,14 @@ test("pepper : obligatoire, long et non démo en production ; repli dev sinon", 
   const strong = "p".repeat(40);
   assert.equal(resolveOtpPepper({ NODE_ENV: "production", AUTH_OTP_PEPPER: strong }), strong);
   assert.equal(resolveOtpPepper({ NODE_ENV: "development" }), DEV_OTP_PEPPER);
+});
+
+test("pause OTP : actif par défaut, désactivé par 0/false/off/no", () => {
+  assert.equal(otpEnabled({}), true);
+  assert.equal(otpEnabled({ AUTH_OTP_ENABLED: "1" }), true);
+  assert.equal(otpEnabled({ AUTH_OTP_ENABLED: "true" }), true);
+  assert.equal(otpEnabled({ AUTH_OTP_ENABLED: " YES " }), true);
+  for (const value of ["0", "false", "off", "no", " FALSE "]) {
+    assert.equal(otpEnabled({ AUTH_OTP_ENABLED: value }), false, value);
+  }
 });

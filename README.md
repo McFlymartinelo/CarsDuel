@@ -32,6 +32,8 @@ Jeu de cartes automobile asynchrone. Next.js 15 (App Router) + PostgreSQL **pur*
 5. **Renvoi** : cooldown serveur de 30 secondes. Le JWT OTP est gardé en mémoire côté client, jamais dans le stockage navigateur ni dans l'URL.
 6. **Changement de mot de passe** : mot de passe actuel obligatoire, puis toutes les autres sessions sont invalidées (la session courante est conservée).
 
+> **Pause temporaire** : `AUTH_OTP_ENABLED=0` désactive la vérification par code (connexion directe après le mot de passe, comptes marqués vérifiés). Défaut `1` — à rétablir dès que le SMTP est opérationnel.
+
 Limites assumées de ce lot :
 - le **changement d'e-mail** ne déclenche pas encore de nouvelle vérification OTP ;
 - pas de réinitialisation publique du mot de passe, pas d'OAuth, pas de 2FA TOTP.
@@ -44,6 +46,7 @@ Limites assumées de ce lot :
 | `AUTH_OTP_RESEND_MS` | `30000` | Cooldown de renvoi |
 | `AUTH_OTP_TTL_MS` | `600000` | Durée de vie d'un code (10 minutes) |
 | `AUTH_OTP_ECHO` | `0` | `1` pour exposer `devOtp` hors production |
+| `AUTH_OTP_ENABLED` | `1` | `0` pour mettre la vérification par code en pause (connexion directe, comptes marqués vérifiés) |
 | `AUTH_RATE_LIMIT_MAX` | `20` | Tentatives auth / IP / 15 min |
 | `AUTH_LOGIN_FAIL_MAX` | `5` | Échecs de connexion / e-mail / 15 min |
 | `AUTH_SIGNUP_RATE_LIMIT_MAX` | `5` | Inscriptions / IP / 1 h |

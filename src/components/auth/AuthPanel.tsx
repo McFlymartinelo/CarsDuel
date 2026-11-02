@@ -35,18 +35,27 @@ function challengeFrom(state: ActionState): OtpChallenge | null {
   return null;
 }
 
+/** Session créée sans OTP (pause de la vérification) : redirection interne. */
+function redirectFrom(state: ActionState): string | null {
+  const data = state?.data as { redirectTo?: unknown } | undefined;
+  return state?.ok && typeof data?.redirectTo === "string" ? data.redirectTo : null;
+}
+
 export function AuthPanel({
   signIn,
   signUp,
   resendOtp,
   verifyOtp,
   signedIn = false,
+  otpEnabled = true,
 }: {
   signIn: CredentialsAction;
   signUp: CredentialsAction;
   resendOtp: ResendAction;
   verifyOtp: VerifyAction;
   signedIn?: boolean;
+  /** Faux quand `AUTH_OTP_ENABLED=0` : pas d'écran de code. */
+  otpEnabled?: boolean;
 }) {
   const router = useRouter();
   // Redirection uniquement si l'utilisateur était déjà connecté en arrivant :
@@ -85,6 +94,12 @@ export function AuthPanel({
           submitLabel="Se connecter"
           className="flex flex-col gap-3"
           onResult={(result) => {
+            const target = redirectFrom(result);
+            if (target) {
+              router.replace(target);
+              router.refresh();
+              return;
+            }
             const next = challengeFrom(result);
             if (next) {
               setFlow("login");
@@ -102,7 +117,9 @@ export function AuthPanel({
           />
         </ActionForm>
         <p className="mt-3 text-xs text-zinc-500">
-          Un code à 6 chiffres vous sera envoyé pour confirmer la connexion.
+          {otpEnabled
+            ? "Un code à 6 chiffres vous sera envoyé pour confirmer la connexion."
+            : "Vérification par code temporairement en pause : connexion directe après le mot de passe."}
         </p>
       </section>
 
@@ -110,7 +127,10 @@ export function AuthPanel({
         <h2 className="mb-1 font-display text-xl font-bold uppercase tracking-wide">Créer un compte</h2>
         <p className="mb-3 text-sm text-zinc-400">
           Le garage démarre vide. Vous tirez ensuite un moteur commun, une boîte commune, 5 cartes
-          bonus, et vous recevez un jeu de chaque pneu. Un code à 6 chiffres vérifie votre e-mail.
+          bonus, et vous recevez un jeu de chaque pneu.
+          {otpEnabled
+            ? " Un code à 6 chiffres vérifie votre e-mail."
+            : " La vérification par e-mail est temporairement en pause."}
         </p>
         <ActionForm
           action={signUp}
@@ -118,6 +138,12 @@ export function AuthPanel({
           variant="ghost"
           className="flex flex-col gap-3"
           onResult={(result) => {
+            const target = redirectFrom(result);
+            if (target) {
+              router.replace(target);
+              router.refresh();
+              return;
+            }
             const next = challengeFrom(result);
             if (next) {
               setFlow("register");

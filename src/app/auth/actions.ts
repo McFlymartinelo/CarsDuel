@@ -21,6 +21,7 @@ import {
   isOtpCodeFormat,
   maskEmail,
   otpEchoEnabled,
+  otpEnabled,
   resolveOtpPepper,
   resendCooldownRemaining,
 } from "@/lib/otp";
@@ -29,7 +30,7 @@ import { OTP_TOKEN_ERROR, readOtpToken, signOtpToken } from "@/lib/otp-token";
 import { MailerError, sendOtpEmail } from "@/lib/mailer";
 import { normalizeEmail, validateEmail, validatePassword, validateUsername } from "@/lib/validation";
 import type { ActionState } from "@/lib/types";
-import type { OtpChallenge, OtpFlow, OtpPurpose, OtpResendData, OtpVerifyData } from "@/lib/auth-types";
+import type { OtpChallenge, OtpFlow, OtpPurpose, OtpResendData, OtpVerifyData, CredentialsData } from "@/lib/auth-types";
 
 const BLOCKED = "Trop de tentatives, réessayez plus tard.";
 const SIGNUP_GENERIC = "Impossible de créer le compte avec ces informations.";
@@ -53,6 +54,25 @@ function optionalDevOtp(code: string): string | undefined {
 
 function retryAfterSeconds(ms: number): number {
   return Math.max(1, Math.ceil(ms / 1000));
+}
+
+/**
+ * Marque l'e-mail vérifié et attribue le kit de départ, une seule fois.
+ * Idempotent : `returning id` garantit une seule attribution même en cas de
+ * double soumission concurrente.
+ */
+async function markVerified(c: PoolClient, userId: string): Promise<void> {
+  const { rowCount } = await c.query(
+    "update users set email_verified = true where id = $1 and email_verified = false returning id",
+    [userId],
+  );
+  if ((rowCount ?? 0) > 0) {
+    await c.query("select private.grant_starter_kit($1)", [userId]);
+  }
+}
+
+async function activateAccount(userId: string): Promise<void> {
+  await withAdmin((c) => markVerified(c, userId));
 }
 
 /**
@@ -133,7 +153,7 @@ async function issueChallenge(
   };
 }
 
-export async function signIn(_prev: ActionState, formData: FormData): Promise<ActionState<OtpChallenge>> {
+export async function signIn(_prev: ActionState, formData: FormData): Promise<ActionState<CredentialsData>> {
   const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "");
   const ip = await clientIp();
@@ -166,17 +186,26 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
 
   await withAdmin((c) => clearAuthAttempts(c, "login_fail_email", email));
 
+  // Pause de la vérification : mot de passe validé = session immédiate. Le
+  // compte est marqué vérifié (et reçoit son kit s'il ne l'avait pas encore).
+  if (!otpEnabled()) {
+    await activateAccount(user.id);
+    await createSession(user.id);
+    return { ok: true, data: { redirectTo: "/garage" } };
+  }
+
   // Compte non vérifié : l'OTP d'inscription finalise la création du compte.
   const purpose: OtpPurpose = user.email_verified ? "login" : "register";
   return issueChallenge(user.id, user.email, purpose, ip);
 }
 
-export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState<OtpChallenge>> {
+export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState<CredentialsData>> {
   const username = String(formData.get("username") ?? "").trim();
   const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "");
   const ip = await clientIp();
   const limits = authLimits();
+  const otpOn = otpEnabled();
 
   const emailError = validateEmail(email);
   if (emailError) return { ok: false, message: emailError };
@@ -208,6 +237,11 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     if (!existing.email_verified && matches) {
       // Récupération d'une inscription interrompue avant validation de l'OTP :
       // le pseudo fourni n'a pas à correspondre au compte existant.
+      if (!otpOn) {
+        await activateAccount(existing.id);
+        await createSession(existing.id);
+        return { ok: true, data: { redirectTo: "/garage?bienvenue=1" } };
+      }
       return issueChallenge(existing.id, existing.email, "register", ip);
     }
     return { ok: false, message: SIGNUP_GENERIC };
@@ -224,11 +258,15 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     userId = await withAdmin(async (c: PoolClient) => {
       const { rows } = await c.query<{ id: string }>(
         `insert into users (email, password_hash, email_verified)
-         values ($1, $2, false) returning id`,
-        [email, hash],
+         values ($1, $2, $3) returning id`,
+        [email, hash, !otpOn],
       );
       await c.query("insert into profiles (id, username) values ($1, $2)", [rows[0].id, username]);
-      // Pas de kit de départ ni de session tant que l'e-mail n'est pas vérifié.
+      // Sans OTP, le compte est actif tout de suite : le kit part dans la même
+      // transaction. Avec OTP, pas de kit tant que l'e-mail n'est pas vérifié.
+      if (!otpOn) {
+        await c.query("select private.grant_starter_kit($1)", [rows[0].id]);
+      }
       return rows[0].id;
     });
   } catch (e) {
@@ -248,12 +286,23 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
         )
       ).rows[0];
       if (raced && !raced.email_verified && (await verifyPassword(password, raced.password_hash))) {
+        if (!otpOn) {
+          await activateAccount(raced.id);
+          await createSession(raced.id);
+          return { ok: true, data: { redirectTo: "/garage?bienvenue=1" } };
+        }
         return issueChallenge(raced.id, raced.email, "register", ip);
       }
       return { ok: false, message: SIGNUP_GENERIC };
     }
     if (err.code !== "23505") console.error("[signUp]", err.message ?? "", err.code ?? "", err.stack ?? "");
     return { ok: false, message: SIGNUP_GENERIC };
+  }
+
+  if (!otpOn) {
+    // Compte déjà activé et kit versé dans la transaction d'inscription.
+    await createSession(userId);
+    return { ok: true, data: { redirectTo: "/garage?bienvenue=1" } };
   }
 
   return issueChallenge(userId, email, "register", ip);
@@ -408,16 +457,7 @@ export async function verifyOtp(
     }
 
     await deleteOtp(c, parsed.userId, parsed.otpPurpose);
-
-    // `returning id` garantit une seule attribution du kit, même en cas de
-    // double soumission concurrente.
-    const { rowCount } = await c.query(
-      "update users set email_verified = true where id = $1 and email_verified = false returning id",
-      [parsed.userId],
-    );
-    if ((rowCount ?? 0) > 0) {
-      await c.query("select private.grant_starter_kit($1)", [parsed.userId]);
-    }
+    await markVerified(c, parsed.userId);
     return true;
   });
 

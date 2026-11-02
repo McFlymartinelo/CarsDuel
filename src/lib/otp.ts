@@ -139,6 +139,22 @@ export function otpEchoEnabled(env: OtpEchoEnv = process.env): boolean {
   return env.NODE_ENV !== "production" && (env.NODE_ENV === "test" || env.AUTH_OTP_ECHO === "1");
 }
 
+export type OtpFlagEnv = {
+  /** Présent uniquement pour rendre `process.env` structurellement compatible. */
+  NODE_ENV?: string;
+  AUTH_OTP_ENABLED?: string;
+};
+
+/**
+ * Interrupteur de pause : `AUTH_OTP_ENABLED=0` (ou false/off/no) désactive la
+ * vérification par code et reconnecte directement après le mot de passe.
+ * Actif par défaut, y compris en production, pour ne jamais l'oublier.
+ */
+export function otpEnabled(env: OtpFlagEnv = process.env): boolean {
+  const value = env.AUTH_OTP_ENABLED?.trim().toLowerCase();
+  return value !== "0" && value !== "false" && value !== "off" && value !== "no";
+}
+
 export type OtpSecretEnv = {
   NODE_ENV?: string;
   AUTH_OTP_PEPPER?: string;
