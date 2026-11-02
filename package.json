@@ -14,6 +14,8 @@
     "db:dev-seed": "node scripts/db.mjs dev-seed",
     "db:setup": "node scripts/db.mjs migrate && node scripts/db.mjs seed",
     "coins:add": "node scripts/grant-coins.mjs",
+    "users:list": "node scripts/list-users.mjs",
+    "users:set-password": "node scripts/set-password.mjs",
     "images:missing": "node scripts/images-missing.mjs",
     "images:optimize": "node scripts/images-optimize.mjs"
   },
