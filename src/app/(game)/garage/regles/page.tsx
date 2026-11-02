@@ -370,7 +370,7 @@ export default function RulesPage() {
           items={[
             <>{b("T_base :")} temps de référence du circuit, affiché dans le défi du jour.</>,
             <>{b("K_circuit :")} coefficient de sensibilité du tracé au Score de Performance.</>,
-            <>{b("Aléa :")} bruit de pilotage uniforme entre −0,150 s et +0,150 s.</>,
+            <>{b("Aléa :")} bruit de pilotage uniforme entre −0,750 s et +0,750 s.</>,
             <>Le chrono ne peut jamais descendre sous {b("15 secondes")}, et il est affiché au format course MM&apos;SS.mmm&quot;.</>,
           ]}
         />
