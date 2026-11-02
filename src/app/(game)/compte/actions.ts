@@ -3,11 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { withAdmin } from "@/lib/db";
-import { hashPassword, invalidateOtherSessions, verifyPassword } from "@/lib/session";
+import { hashPassword, verifyPassword } from "@/lib/password";
+import { invalidateOtherSessions } from "@/lib/session";
+import { normalizeEmail, validateEmail, validatePassword, validateUsername } from "@/lib/validation";
 import type { ActionState } from "@/lib/types";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_RE = /^[A-Za-z0-9_.-]{3,24}$/;
 
 function unique(e: unknown, needle: string) {
   const err = e as { code?: string; constraint?: string };
@@ -24,9 +23,8 @@ async function passwordHash(userId: string) {
 export async function updateUsername(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { user } = await requireUser();
   const username = String(formData.get("username") ?? "").trim();
-  if (!USERNAME_RE.test(username)) {
-    return { ok: false, message: "Pseudo : 3 à 24 caractères (lettres, chiffres, _ . -)." };
-  }
+  const usernameError = validateUsername(username);
+  if (usernameError) return { ok: false, message: usernameError };
   if (username === user.username) return { ok: true, message: "Pseudo inchangé." };
 
   try {
@@ -43,9 +41,10 @@ export async function updateUsername(_prev: ActionState, formData: FormData): Pr
 
 export async function updateEmail(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { user } = await requireUser();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = normalizeEmail(formData.get("email"));
   const current = String(formData.get("current_password") ?? "");
-  if (!EMAIL_RE.test(email)) return { ok: false, message: "Email invalide." };
+  const emailError = validateEmail(email);
+  if (emailError) return { ok: false, message: emailError };
 
   const stored = await passwordHash(user.id);
   if (!stored || !(await verifyPassword(current, stored))) {
@@ -70,7 +69,8 @@ export async function updatePassword(_prev: ActionState, formData: FormData): Pr
   const current = String(formData.get("current_password") ?? "");
   const next = String(formData.get("password") ?? "");
   const again = String(formData.get("password_confirm") ?? "");
-  if (next.length < 8) return { ok: false, message: "Mot de passe : 8 caractères minimum." };
+  const passwordError = validatePassword(next);
+  if (passwordError) return { ok: false, message: passwordError };
   if (next !== again) return { ok: false, message: "Les deux mots de passe ne correspondent pas." };
 
   const stored = await passwordHash(user.id);

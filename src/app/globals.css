@@ -197,6 +197,56 @@ html {
   to { opacity: 1; }
 }
 
+/* Roue OTP : arrivée, secousse d'erreur, validation émeraude. */
+.otp-wheel-arrive { animation: otp-wheel-arrive 0.6s cubic-bezier(0.22, 0.9, 0.3, 1) both; }
+.otp-wheel-shake { animation: otp-wheel-shake 0.45s ease-in-out; }
+.otp-wheel-success { animation: otp-wheel-success 0.5s cubic-bezier(0.22, 0.9, 0.3, 1); }
+.otp-success-burst {
+  width: 15rem;
+  height: 15rem;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.55), rgba(52, 211, 153, 0.22) 38%, rgba(245, 158, 11, 0.18) 58%, transparent 72%);
+  animation: otp-success-burst 1.15s ease-out forwards;
+}
+
+.otp-success-halo {
+  width: 13rem;
+  height: 13rem;
+  border: 2px solid rgba(52, 211, 153, 0.7);
+  box-shadow: 0 0 46px rgba(52, 211, 153, 0.4), inset 0 0 32px rgba(52, 211, 153, 0.14);
+  animation: otp-success-halo 1.15s ease-out both;
+}
+
+@keyframes otp-wheel-arrive {
+  from { opacity: 0; transform: rotate(-70deg) scale(0.86); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes otp-wheel-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-1deg); }
+  45% { transform: translateX(5px) rotate(1deg); }
+  70% { transform: translateX(-3px); }
+  85% { transform: translateX(2px); }
+}
+
+@keyframes otp-wheel-success {
+  0% { transform: scale(0.97); }
+  55% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes otp-success-burst {
+  from { opacity: 0.95; transform: translate(-50%, -50%) scale(0.3); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+
+@keyframes otp-success-halo {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
+  35% { opacity: 1; }
+  100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1.06); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .weather-rain, .weather-sun { animation: none; }
   .race-lane { transition: none; }
@@ -205,6 +255,7 @@ html {
   .duel-rise, .duel-from-left, .duel-from-right, .duel-verdict { animation: none; }
   .clm-chrono-locked, .clm-medal-pop { animation: none; }
   .filter-sheet-in, .filter-backdrop-in { animation: none; }
+  .otp-wheel-arrive, .otp-wheel-shake, .otp-wheel-success, .otp-success-burst, .otp-success-halo { animation: none; }
 }
 
 /* Boutons du garage : même langage visuel que les cartes (pierre sombre, filets orange lumineux, coins marqués). */

@@ -26,6 +26,7 @@ export function ActionForm({
   variant = "primary",
   confirmText,
   onSuccess,
+  onResult,
   submitClassName,
 }: {
   action: Action;
@@ -38,6 +39,8 @@ export function ActionForm({
   /** Texte de confirmation ; `{champ}` est remplacé par la valeur saisie (une fonction ne peut pas venir d'un Server Component). */
   confirmText?: string;
   onSuccess?: () => void;
+  /** Reçoit l'état complet, y compris `data` (ex. défi OTP). */
+  onResult?: (state: ActionState) => void;
 }) {
   // Fermeture pilotée depuis la promesse de l'action, pas depuis l'état : après un
   // rafraîchissement RSC, ce formulaire peut être démonté (la carte équipée sort de la
@@ -45,6 +48,7 @@ export function ActionForm({
   const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
     const result = await action(prev, formData);
     if (result?.ok) onSuccess?.();
+    onResult?.(result);
     return result;
   }, null);
   const formRef = useRef<HTMLFormElement>(null);

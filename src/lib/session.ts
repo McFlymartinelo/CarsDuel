@@ -1,58 +1,65 @@
 import "server-only";
-import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { withAdmin } from "@/lib/db";
-import { invalidateOtherSessionsForHash } from "@/lib/session-tokens";
+import {
+  SESSION_COOKIE,
+  deleteSessionByHash,
+  generateSessionToken,
+  hashSessionToken,
+  invalidateOtherSessionsForHash,
+  purgeExpiredSessions,
+  rotateSessionForHash,
+  sessionExpiresAt,
+} from "@/lib/session-tokens";
 import type { Profile } from "@/lib/types";
+
+// Ré-export pratique pour les actions historiques (AccountForms).
+export { hashPassword, verifyPassword } from "@/lib/password";
+export { SESSION_COOKIE };
 
 /** Session + profil : une seule lecture (le Nav et les pages partagent ce cache de requête). */
 export type CurrentUser = Profile & { email: string; xp_week: number; xp_month: number };
 
-export const SESSION_COOKIE = "gb_session";
-const SESSION_DAYS = 30;
-
-// ---------- Mots de passe (scrypt, sel aléatoire) ----------------------------
-const scryptAsync = (pw: string, salt: Buffer) =>
-  new Promise<Buffer>((resolve, reject) => scrypt(pw, salt, 64, (e, k) => (e ? reject(e) : resolve(k))));
-
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16);
-  return `${salt.toString("hex")}:${(await scryptAsync(password, salt)).toString("hex")}`;
-}
-
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [saltHex, hashHex] = stored.split(":");
-  if (!saltHex || !hashHex) return false;
-  const expected = Buffer.from(hashHex, "hex");
-  const actual = await scryptAsync(password, Buffer.from(saltHex, "hex"));
-  return expected.length === actual.length && timingSafeEqual(expected, actual);
-}
-
-// ---------- Sessions (jeton opaque en cookie, hash SHA-256 en base) ----------
-const hashToken = (t: string) => createHash("sha256").update(t).digest("hex");
-
+/**
+ * Crée une session opaque et pose le cookie.
+ * Une éventuelle session courante (même cookie) est supprimée avant l'insertion :
+ * la rotation évite l'accumulation de jetons après plusieurs connexions.
+ */
 export async function createSession(userId: string) {
-  const token = randomBytes(32).toString("base64url");
-  const expires = new Date(Date.now() + SESSION_DAYS * 864e5);
-  await withAdmin(async (c) => {
-    // Purge opportuniste : une session créée sur vingt nettoie les jetons expirés.
-    if (Math.random() < 1 / 20) await c.query("delete from sessions where expires_at < now()");
-    await c.query("insert into sessions (token_hash, user_id, expires_at) values ($1, $2, $3)", [hashToken(token), userId, expires]);
-  });
-  (await cookies()).set(SESSION_COOKIE, token, {
+  const store = await cookies();
+  const previousToken = store.get(SESSION_COOKIE)?.value;
+  const token = generateSessionToken();
+  const expires = sessionExpiresAt();
+
+  await withAdmin((c) =>
+    rotateSessionForHash(
+      c,
+      userId,
+      hashSessionToken(token),
+      expires,
+      previousToken ? hashSessionToken(previousToken) : undefined,
+    ),
+  );
+
+  store.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     expires,
   });
+
+  // Purge opportuniste, volontairement non bloquante pour la requête.
+  if (Math.random() < 1 / 20) {
+    void withAdmin((c) => purgeExpiredSessions(c)).catch(() => {});
+  }
 }
 
 export async function destroySession() {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
-  if (token) await withAdmin((c) => c.query("delete from sessions where token_hash = $1", [hashToken(token)]));
+  if (token) await withAdmin((c) => deleteSessionByHash(c, hashSessionToken(token)));
   store.delete(SESSION_COOKIE);
 }
 
@@ -70,7 +77,7 @@ export async function invalidateOtherSessions(userId: string, currentTokenHash?:
 
 async function currentSessionHash(): Promise<string | undefined> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  return token ? hashToken(token) : undefined;
+  return token ? hashSessionToken(token) : undefined;
 }
 
 /** Utilisateur de la requête courante, profil inclus (mis en cache pour la durée du rendu). */
@@ -102,7 +109,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
             and e.created_at < greatest(b.week_end, b.month_end)
          ) x on true
         where s.token_hash = $1 and s.expires_at > now()`,
-      [hashToken(token)],
+      [hashSessionToken(token)],
     ),
   );
   return rows[0] ?? null;

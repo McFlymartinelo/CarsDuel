@@ -5,12 +5,36 @@ import { redirect } from "next/navigation";
 import type { PoolClient } from "pg";
 import { withAdmin } from "@/lib/db";
 import { resolveClientIp } from "@/lib/client-ip";
-import { createSession, destroySession, hashPassword, verifyPassword } from "@/lib/session";
+import { createSession, destroySession } from "@/lib/session";
+import { fakePasswordHash, hashPassword, verifyPassword } from "@/lib/password";
+import { authLimits } from "@/lib/auth-limits";
+import {
+  clearAuthAttempts,
+  countAuthAttempts,
+  maybePurgeAuthAttempts,
+  recordAuthAttempt,
+} from "@/lib/auth-attempts";
+import {
+  checkOtp,
+  generateOtpCode,
+  hashOtpCode,
+  isOtpCodeFormat,
+  maskEmail,
+  otpEchoEnabled,
+  resolveOtpPepper,
+  resendCooldownRemaining,
+} from "@/lib/otp";
+import { deleteOtp, getOtp, issueOtp, purgeExpiredOtps, setOtpAttempts } from "@/lib/otp-store";
+import { OTP_TOKEN_ERROR, readOtpToken, signOtpToken } from "@/lib/otp-token";
+import { MailerError, sendOtpEmail } from "@/lib/mailer";
+import { normalizeEmail, validateEmail, validatePassword, validateUsername } from "@/lib/validation";
 import type { ActionState } from "@/lib/types";
+import type { OtpChallenge, OtpFlow, OtpPurpose, OtpResendData, OtpVerifyData } from "@/lib/auth-types";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BLOCKED = "Trop de tentatives, réessayez plus tard.";
 const SIGNUP_GENERIC = "Impossible de créer le compte avec ces informations.";
+const BAD_CREDENTIALS = "Email ou mot de passe incorrect.";
+const INVALID_OTP = "Code incorrect ou expiré. Demandez un nouveau code.";
 
 /** IP client fiable selon TRUSTED_PROXY_COUNT (cf. src/lib/client-ip.ts), sinon "unknown". */
 async function clientIp(): Promise<string> {
@@ -18,82 +42,193 @@ async function clientIp(): Promise<string> {
   return resolveClientIp(fwd, process.env.TRUSTED_PROXY_COUNT);
 }
 
-async function countRecent(c: PoolClient, kind: string, key: string, window: string): Promise<number> {
-  const { rows } = await c.query<{ n: number }>(
-    `select count(*)::int as n from auth_attempts
-      where kind = $1 and key = $2 and created_at > now() - $3::interval`,
-    [kind, key, window],
-  );
-  return rows[0]?.n ?? 0;
+function mailErrorMessage(error: unknown): string {
+  if (error instanceof MailerError) return error.userMessage;
+  return "Impossible d'envoyer le code de vérification. Réessayez dans un instant.";
 }
 
-/** 1 chance sur 50 : retire les tentatives de plus de 24 h. */
-async function maybePurgeAttempts(c: PoolClient) {
-  if (Math.random() < 1 / 50) {
-    await c.query("delete from auth_attempts where created_at < now() - interval '24 hours'");
+function optionalDevOtp(code: string): string | undefined {
+  return otpEchoEnabled() ? code : undefined;
+}
+
+function retryAfterSeconds(ms: number): number {
+  return Math.max(1, Math.ceil(ms / 1000));
+}
+
+/**
+ * Émet un OTP et l'envoie. Compte systématiquement un envoi `otp_send_ip`.
+ * Aucune session n'est créée à ce stade.
+ */
+async function issueChallenge(
+  userId: string,
+  email: string,
+  purpose: OtpPurpose,
+  ip: string,
+): Promise<ActionState<OtpChallenge>> {
+  const limits = authLimits();
+
+  const limited = await withAdmin(async (c) => {
+    await maybePurgeAuthAttempts(c);
+    if (await countAuthAttempts(c, "otp_send_ip", ip, limits.otpWindow) >= limits.otpSendIp) {
+      return true;
+    }
+    await recordAuthAttempt(c, "otp_send_ip", ip);
+    return false;
+  });
+  if (limited) return { ok: false, message: BLOCKED };
+
+  const code = generateOtpCode();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + limits.otpTtlMs);
+
+  let otpToken: string;
+  let pepper: string;
+  try {
+    // Valider les secrets avant tout envoi : une configuration incomplète ne
+    // doit ni créer de session ni expédier un code inutilisable.
+    otpToken = signOtpToken(userId, purpose);
+    pepper = resolveOtpPepper();
+  } catch (error) {
+    console.error("[auth] configuration OTP invalide", error instanceof Error ? error.message : "");
+    return { ok: false, message: "La vérification est indisponible. Réessayez plus tard." };
   }
+
+  try {
+    await withAdmin((c) =>
+      issueOtp(c, {
+        userId,
+        email,
+        purpose,
+        codeHash: hashOtpCode(code, pepper),
+        expiresAt,
+        createdAt: now,
+      }),
+    );
+  } catch (error) {
+    console.error("[auth] émission OTP impossible", error instanceof Error ? error.message : "");
+    return { ok: false, message: "La vérification est indisponible. Réessayez plus tard." };
+  }
+
+  if (Math.random() < 1 / 50) {
+    void withAdmin((c) => purgeExpiredOtps(c)).catch(() => {});
+  }
+
+  try {
+    await sendOtpEmail(email, code, purpose);
+  } catch (error) {
+    // Le compte reste non vérifié : la connexion ou le renvoi permettent de reprendre.
+    return { ok: false, message: mailErrorMessage(error) };
+  }
+
+  return {
+    ok: true,
+    data: {
+      needsOtp: true,
+      otpToken,
+      emailMasked: maskEmail(email),
+      purpose,
+      retryAfter: retryAfterSeconds(limits.otpResendMs),
+      devOtp: optionalDevOtp(code),
+    },
+  };
 }
 
-export async function signIn(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+export async function signIn(_prev: ActionState, formData: FormData): Promise<ActionState<OtpChallenge>> {
+  const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "");
   const ip = await clientIp();
+  const limits = authLimits();
 
   const allowed = await withAdmin(async (c) => {
-    await maybePurgeAttempts(c);
-    const ipCount = await countRecent(c, "login_ip", ip, "15 minutes");
-    if (ipCount >= 20) return false;
-    await c.query("insert into auth_attempts (kind, key) values ('login_ip', $1)", [ip]);
-    const emailFails = await countRecent(c, "login_fail_email", email, "15 minutes");
-    return emailFails < 5;
+    await maybePurgeAuthAttempts(c);
+    if (await countAuthAttempts(c, "login_ip", ip, limits.loginWindow) >= limits.loginIp) return false;
+    await recordAuthAttempt(c, "login_ip", ip);
+    const emailFails = await countAuthAttempts(c, "login_fail_email", email, limits.loginWindow);
+    return emailFails < limits.loginFailEmail;
   });
   if (!allowed) return { ok: false, message: BLOCKED };
 
   const { rows } = await withAdmin((c) =>
-    c.query<{ id: string; password_hash: string }>("select id, password_hash from users where lower(email) = lower($1)", [email]),
+    c.query<{ id: string; email: string; password_hash: string; email_verified: boolean }>(
+      `select id, email, password_hash, email_verified
+         from users where lower(email) = lower($1) limit 1`,
+      [email],
+    ),
   );
-  // Même message (et même coût de hachage) que l'e-mail existe ou non.
   const user = rows[0];
-  const ok = await verifyPassword(password, user?.password_hash ?? "00:00");
+
+  // Même message et même coût scrypt que l'e-mail existe ou non.
+  const ok = await verifyPassword(password, user?.password_hash ?? fakePasswordHash());
   if (!user || !ok) {
-    await withAdmin((c) => c.query("insert into auth_attempts (kind, key) values ('login_fail_email', $1)", [email]));
-    return { ok: false, message: "Email ou mot de passe incorrect." };
+    await withAdmin((c) => recordAuthAttempt(c, "login_fail_email", email));
+    return { ok: false, message: BAD_CREDENTIALS };
   }
 
-  await withAdmin((c) => c.query("delete from auth_attempts where kind = 'login_fail_email' and key = $1", [email]));
-  await createSession(user.id);
-  redirect("/garage");
+  await withAdmin((c) => clearAuthAttempts(c, "login_fail_email", email));
+
+  // Compte non vérifié : l'OTP d'inscription finalise la création du compte.
+  const purpose: OtpPurpose = user.email_verified ? "login" : "register";
+  return issueChallenge(user.id, user.email, purpose, ip);
 }
 
-export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState> {
+export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState<OtpChallenge>> {
   const username = String(formData.get("username") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "");
-
-  if (!/^[A-Za-z0-9_.-]{3,24}$/.test(username)) {
-    return { ok: false, message: "Pseudo : 3 à 24 caractères (lettres, chiffres, _ . -)." };
-  }
-  if (!EMAIL_RE.test(email)) return { ok: false, message: "Email invalide." };
-  if (password.length < 8) return { ok: false, message: "Mot de passe : 8 caractères minimum." };
-
   const ip = await clientIp();
-  const allowed = await withAdmin(async (c) => {
-    await maybePurgeAttempts(c);
-    const n = await countRecent(c, "signup_ip", ip, "1 hour");
-    if (n >= 5) return false;
-    await c.query("insert into auth_attempts (kind, key) values ('signup_ip', $1)", [ip]);
-    return true;
+  const limits = authLimits();
+
+  const emailError = validateEmail(email);
+  if (emailError) return { ok: false, message: emailError };
+  const passwordError = validatePassword(password);
+  if (passwordError) return { ok: false, message: passwordError };
+
+  const limited = await withAdmin(async (c) => {
+    await maybePurgeAuthAttempts(c);
+    if (await countAuthAttempts(c, "signup_ip", ip, limits.signupWindow) >= limits.signupIp) {
+      return true;
+    }
+    await recordAuthAttempt(c, "signup_ip", ip);
+    return false;
   });
-  if (!allowed) return { ok: false, message: BLOCKED };
+  if (limited) return { ok: false, message: BLOCKED };
+
+  const existing = (
+    await withAdmin((c) =>
+      c.query<{ id: string; email: string; password_hash: string; email_verified: boolean }>(
+        `select id, email, password_hash, email_verified
+           from users where lower(email) = lower($1) limit 1`,
+        [email],
+      ),
+    )
+  ).rows[0];
+
+  if (existing) {
+    const matches = await verifyPassword(password, existing.password_hash);
+    if (!existing.email_verified && matches) {
+      // Récupération d'une inscription interrompue avant validation de l'OTP :
+      // le pseudo fourni n'a pas à correspondre au compte existant.
+      return issueChallenge(existing.id, existing.email, "register", ip);
+    }
+    return { ok: false, message: SIGNUP_GENERIC };
+  }
+
+  // Le pseudo n'est vérifié que pour une création réelle : une reprise de
+  // compte non vérifié ne doit pas être bloquée par un pseudo déjà pris.
+  const usernameError = validateUsername(username);
+  if (usernameError) return { ok: false, message: usernameError };
 
   const hash = await hashPassword(password);
   let userId: string;
   try {
-    userId = await withAdmin(async (c) => {
+    userId = await withAdmin(async (c: PoolClient) => {
       const { rows } = await c.query<{ id: string }>(
-        "insert into users (email, password_hash) values ($1, $2) returning id", [email, hash]);
+        `insert into users (email, password_hash, email_verified)
+         values ($1, $2, false) returning id`,
+        [email, hash],
+      );
       await c.query("insert into profiles (id, username) values ($1, $2)", [rows[0].id, username]);
-      await c.query("select private.grant_starter_kit($1)", [rows[0].id]);
+      // Pas de kit de départ ni de session tant que l'e-mail n'est pas vérifié.
       return rows[0].id;
     });
   } catch (e) {
@@ -101,12 +236,198 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     if (err.code === "23505" && err.constraint?.includes("username")) {
       return { ok: false, message: "Ce pseudo est déjà pris." };
     }
+    if (err.code === "23505" && err.constraint?.includes("email")) {
+      // Course entre deux inscriptions : on tente de reprendre le compte non vérifié.
+      const raced = (
+        await withAdmin((c) =>
+          c.query<{ id: string; email: string; password_hash: string; email_verified: boolean }>(
+            `select id, email, password_hash, email_verified
+               from users where lower(email) = lower($1) limit 1`,
+            [email],
+          ),
+        )
+      ).rows[0];
+      if (raced && !raced.email_verified && (await verifyPassword(password, raced.password_hash))) {
+        return issueChallenge(raced.id, raced.email, "register", ip);
+      }
+      return { ok: false, message: SIGNUP_GENERIC };
+    }
     if (err.code !== "23505") console.error("[signUp]", err.message ?? "", err.code ?? "", err.stack ?? "");
     return { ok: false, message: SIGNUP_GENERIC };
   }
 
-  await createSession(userId);
-  redirect("/garage?bienvenue=1");
+  return issueChallenge(userId, email, "register", ip);
+}
+
+/** Renvoi d'un code : cooldown de 30 s pour le même (userId, purpose). */
+export async function resendOtp(otpToken: string): Promise<ActionState<OtpResendData>> {
+  const parsed = readOtpToken(otpToken);
+  if (!parsed.ok) return { ok: false, message: parsed.message };
+
+  const ip = await clientIp();
+  const limits = authLimits();
+
+  const user = (
+    await withAdmin((c) =>
+      c.query<{ email: string }>("select email from users where id = $1", [parsed.userId]),
+    )
+  ).rows[0];
+  if (!user) return { ok: false, message: OTP_TOKEN_ERROR };
+
+  const existing = await withAdmin((c) => getOtp(c, parsed.userId, parsed.otpPurpose));
+  if (existing) {
+    const remaining = resendCooldownRemaining(existing.created_at, Date.now(), limits.otpResendMs);
+    if (remaining > 0) {
+      const retryAfter = retryAfterSeconds(remaining);
+      return {
+        ok: false,
+        message: `Patientez encore ${retryAfter} s avant de demander un nouveau code.`,
+        data: {
+          retryAfter,
+          otpToken,
+          emailMasked: maskEmail(user.email),
+          purpose: parsed.otpPurpose,
+        },
+      };
+    }
+  }
+
+  const code = generateOtpCode();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + limits.otpTtlMs);
+
+  let nextToken: string;
+  let pepper: string;
+  try {
+    nextToken = signOtpToken(parsed.userId, parsed.otpPurpose);
+    pepper = resolveOtpPepper();
+  } catch (error) {
+    console.error("[auth] configuration OTP invalide", error instanceof Error ? error.message : "");
+    return { ok: false, message: "La vérification est indisponible. Réessayez plus tard." };
+  }
+  const codeHash = hashOtpCode(code, pepper);
+
+  const limited = await withAdmin(async (c) => {
+    await maybePurgeAuthAttempts(c);
+    if (await countAuthAttempts(c, "otp_send_ip", ip, limits.otpWindow) >= limits.otpSendIp) {
+      return true;
+    }
+    await recordAuthAttempt(c, "otp_send_ip", ip);
+    await issueOtp(c, {
+      userId: parsed.userId,
+      email: user.email,
+      purpose: parsed.otpPurpose,
+      codeHash,
+      expiresAt,
+      createdAt: now,
+    });
+    return false;
+  });
+  if (limited) return { ok: false, message: BLOCKED };
+
+  if (Math.random() < 1 / 50) {
+    void withAdmin((c) => purgeExpiredOtps(c)).catch(() => {});
+  }
+
+  try {
+    await sendOtpEmail(user.email, code, parsed.otpPurpose);
+  } catch (error) {
+    return { ok: false, message: mailErrorMessage(error) };
+  }
+
+  return {
+    ok: true,
+    data: {
+      otpToken: nextToken,
+      emailMasked: maskEmail(user.email),
+      purpose: parsed.otpPurpose,
+      retryAfter: retryAfterSeconds(limits.otpResendMs),
+      devOtp: optionalDevOtp(code),
+    },
+  };
+}
+
+/**
+ * Vérifie le code, marque le compte vérifié (une seule fois), attribue le kit
+ * de départ (une seule fois) puis crée la session opaque.
+ *
+ * `flow` vient du parcours UI (inscription ou connexion) et ne sert qu'à choisir
+ * une redirection interne fixe ; aucune URL client n'est acceptée.
+ */
+export async function verifyOtp(
+  otpToken: string,
+  code: string,
+  flow: OtpFlow,
+): Promise<ActionState<OtpVerifyData>> {
+  if (flow !== "register" && flow !== "login") {
+    return { ok: false, message: OTP_TOKEN_ERROR };
+  }
+
+  const parsed = readOtpToken(otpToken);
+  if (!parsed.ok) return { ok: false, message: parsed.message };
+  if (flow === "register" && parsed.otpPurpose !== "register") {
+    return { ok: false, message: OTP_TOKEN_ERROR };
+  }
+
+  const ip = await clientIp();
+  const limits = authLimits();
+  const limited = await withAdmin(async (c) => {
+    await maybePurgeAuthAttempts(c);
+    if (await countAuthAttempts(c, "otp_verify_ip", ip, limits.otpWindow) >= limits.otpVerifyIp) {
+      return true;
+    }
+    await recordAuthAttempt(c, "otp_verify_ip", ip);
+    return false;
+  });
+  if (limited) return { ok: false, message: BLOCKED };
+
+  const normalized = String(code ?? "").replace(/\D/g, "");
+  if (!isOtpCodeFormat(normalized)) {
+    return { ok: false, message: "Saisissez les 6 chiffres du code." };
+  }
+
+  let pepper: string;
+  try {
+    pepper = resolveOtpPepper();
+  } catch (error) {
+    console.error("[auth] pepper OTP indisponible", error instanceof Error ? error.message : "");
+    return { ok: false, message: "La vérification est indisponible. Réessayez plus tard." };
+  }
+
+  const verified = await withAdmin(async (c) => {
+    const record = await getOtp(c, parsed.userId, parsed.otpPurpose);
+    const check = checkOtp(record, normalized, pepper);
+
+    if (check.status !== "ok") {
+      if (check.deleteCode) {
+        await deleteOtp(c, parsed.userId, parsed.otpPurpose);
+      } else if (check.status === "invalid") {
+        await setOtpAttempts(c, parsed.userId, parsed.otpPurpose, check.attempts);
+      }
+      return false;
+    }
+
+    await deleteOtp(c, parsed.userId, parsed.otpPurpose);
+
+    // `returning id` garantit une seule attribution du kit, même en cas de
+    // double soumission concurrente.
+    const { rowCount } = await c.query(
+      "update users set email_verified = true where id = $1 and email_verified = false returning id",
+      [parsed.userId],
+    );
+    if ((rowCount ?? 0) > 0) {
+      await c.query("select private.grant_starter_kit($1)", [parsed.userId]);
+    }
+    return true;
+  });
+
+  if (!verified) return { ok: false, message: INVALID_OTP };
+
+  await createSession(parsed.userId);
+
+  // Redirection interne fixe, choisie côté serveur.
+  const redirectTo = flow === "register" ? "/garage?bienvenue=1" : "/garage";
+  return { ok: true, data: { redirectTo } };
 }
 
 export async function signOut() {

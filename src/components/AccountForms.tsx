@@ -84,11 +84,11 @@ export function AccountForms({
         </label>
         <label className={field}>
           <span className={label}>Nouveau mot de passe</span>
-          <input name="password" type="password" value={nextPw} onChange={(e) => setNextPw(e.target.value)} required minLength={8} autoComplete="new-password" />
+          <input name="password" type="password" value={nextPw} onChange={(e) => setNextPw(e.target.value)} required minLength={8} maxLength={128} autoComplete="new-password" />
         </label>
         <label className={field}>
           <span className={label}>Confirmer le nouveau mot de passe</span>
-          <input name="password_confirm" type="password" value={againPw} onChange={(e) => setAgainPw(e.target.value)} required minLength={8} autoComplete="new-password" />
+          <input name="password_confirm" type="password" value={againPw} onChange={(e) => setAgainPw(e.target.value)} required minLength={8} maxLength={128} autoComplete="new-password" />
         </label>
         <button disabled={pwPending} className={save}>{pwPending ? "…" : "Enregistrer"}</button>
         <Status state={pwState} />

@@ -1,41 +1,31 @@
-import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
-import { ActionForm } from "@/components/ActionForm";
+import { AuthPanel } from "@/components/auth/AuthPanel";
 import { getCurrentUser } from "@/lib/session";
-import { signIn, signUp } from "../actions";
+import { resendOtp, signIn, signUp, verifyOtp } from "../actions";
 
 export const metadata = { title: "Connexion — CarsDuel" };
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  if (await getCurrentUser()) redirect("/garage");
+  // Pas de redirect ici : après la validation OTP, Next relance ce composant
+  // serveur (cookie de session créé). Un redirect immédiat court-circuiterait
+  // l'animation de succès côté client. AuthPanel ne redirige que sur le montage
+  // initial, quand l'utilisateur est déjà connecté avant d'arriver ici.
+  const signedIn = Boolean(await getCurrentUser());
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-4 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-      <h1 className="flex flex-col items-center gap-3 text-center text-3xl font-bold text-amber-400">
+      <h1 className="flex flex-col items-center gap-3 text-center font-display text-3xl font-bold text-amber-400">
         <Logo size={120} />
         CarsDuel
       </h1>
-      <div className="grid gap-6 sm:grid-cols-2">
-        <section className="rounded-lg border border-zinc-800 p-5">
-          <h2 className="mb-3 font-semibold">Connexion</h2>
-          <ActionForm action={signIn} submitLabel="Se connecter" className="flex flex-col gap-3">
-            <input name="email" type="email" placeholder="Email" required autoComplete="email" />
-            <input name="password" type="password" placeholder="Mot de passe" required autoComplete="current-password" />
-          </ActionForm>
-        </section>
-        <section className="rounded-lg border border-zinc-800 p-5">
-          <h2 className="mb-1 font-semibold">Créer un compte</h2>
-          <p className="mb-3 text-sm text-zinc-400">
-            Le garage démarre vide. Vous tirez ensuite un moteur commun, une boîte commune, 5 cartes bonus, et vous recevez un jeu de chaque pneu.
-          </p>
-          <ActionForm action={signUp} submitLabel="S'inscrire" variant="ghost" className="flex flex-col gap-3">
-            <input name="username" type="text" placeholder="Pseudo" required minLength={3} maxLength={24} />
-            <input name="email" type="email" placeholder="Email" required autoComplete="email" />
-            <input name="password" type="password" placeholder="Mot de passe (8+)" required minLength={8} autoComplete="new-password" />
-          </ActionForm>
-        </section>
-      </div>
+      <AuthPanel
+        signIn={signIn}
+        signUp={signUp}
+        resendOtp={resendOtp}
+        verifyOtp={verifyOtp}
+        signedIn={signedIn}
+      />
     </main>
   );
 }
