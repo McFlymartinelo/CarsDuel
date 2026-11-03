@@ -180,7 +180,7 @@ export const BONUS_EFFECT: Record<string, string> = {
   revision_complete: "Gèle simultanément l'usure du moteur et de la boîte de vitesses.",
   huile_moteur_competition: "Multiplie par 0,5 le risque de casse calculé du moteur sur ce run (risque divisé par deux).",
   huile_boite_competition: "Multiplie par 0,5 le risque de casse calculé de la boîte sur ce run (risque divisé par deux).",
-  assistance_plateau: "En cas d'échec au test de casse mécanique, le duel est perdu mais le composant cassé réintègre directement l'inventaire au lieu d'être envoyé au Musée de la casse.",
+  assistance_plateau: "En cas d'échec au test de casse mécanique, le duel est perdu mais le composant cassé réintègre directement l'inventaire au lieu d'être détruit.",
 };
 
 export function bonusEffectText(effect: string | null | undefined, description?: string | null): string {

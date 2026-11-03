@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Wrench } from "lucide-react";
 import { CLM_MEDALS, clmMedalModel, formatLapDelta, formatLapTime } from "@/lib/clm";
 import { TIRE_LABEL, TIRE_THEME, WEATHER_LABEL } from "@/lib/format";
-import type { ClmReport } from "@/lib/types";
+import type { ClmCircuit, ClmReport } from "@/lib/types";
 
 const n = (v: number, d = 1) => v.toLocaleString("fr-FR", { maximumFractionDigits: d });
 
@@ -62,12 +62,15 @@ function Stat({ label, value, hint, tone = "text-zinc-100" }: { label: string; v
 
 export function ClmResult({
   r,
+  medalTargets,
   busy = false,
   onReplay,
   onReplaceBrokenPart,
   onClose,
 }: {
   r: ClmReport;
+  /** Chronos cibles des trois médailles sur le circuit du jour. */
+  medalTargets: ClmCircuit["medals_seconds"];
   /** Nouvelle tentative en cours : on garde le résultat affiché et on désactive les relances. */
   busy?: boolean;
   onReplay?: () => void;
@@ -159,6 +162,34 @@ export function ClmResult({
         </div>
       )}
 
+      {!broken && (
+        <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-3">
+          <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Objectifs des médailles</p>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {CLM_MEDALS.map((m) => {
+              const won = r.claimed.includes(m.key) || r.newMedals.includes(m.key);
+              return (
+                <div
+                  key={m.key}
+                  className={`rounded-lg border px-2 py-1.5 text-center ${
+                    won ? "border-emerald-500/40 bg-emerald-500/5" : "border-zinc-800 bg-black/20"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <Image src={m.image} alt="" width={18} height={18} className="h-[18px] w-[18px] object-contain" />
+                    <span className={`font-display text-xs font-bold uppercase ${m.text}`}>{m.label}</span>
+                  </div>
+                  <p className="mt-1 font-display text-sm font-bold tabular-nums">{formatLapTime(medalTargets[m.key])}</p>
+                  <p className="text-[11px] font-semibold text-amber-300">+{m.coins} 🪙</p>
+                  <p className="text-[10px] text-zinc-500">SP ≥ {m.threshold}</p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-center text-[10px] text-zinc-500">Les médailles déjà validées aujourd&apos;hui sont surlignées en vert.</p>
+        </div>
+      )}
+
       <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-4 text-center">
         <p className={`font-display text-2xl font-bold ${r.coins > 0 ? "text-amber-300" : "text-zinc-500"}`}>
           +{n(r.coins, 0)} pièces
@@ -199,7 +230,7 @@ export function ClmResult({
         {broken && (
           <p className="mt-2 flex items-center gap-1.5 text-red-300">
             <Wrench size={14} aria-hidden />
-            La pièce cassée part au musée de la casse.
+            La pièce cassée reste dans votre inventaire.
           </p>
         )}
         {r.tireDestroyed && <p className="mt-2 text-red-300">Vos pneus sont morts : changez-les avant de relancer.</p>}

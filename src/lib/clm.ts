@@ -16,7 +16,7 @@ export const CLM_MEDALS: ClmMedalModel[] = [
   {
     key: "gold",
     label: "Or",
-    coins: 150,
+    coins: 100,
     threshold: 290,
     image: "/trophees/medaille_chrono_or.png",
     text: "text-yellow-300",
@@ -26,7 +26,7 @@ export const CLM_MEDALS: ClmMedalModel[] = [
   {
     key: "silver",
     label: "Argent",
-    coins: 70,
+    coins: 50,
     threshold: 200,
     image: "/trophees/medaille_chrono_argent.png",
     text: "text-zinc-200",
@@ -36,7 +36,7 @@ export const CLM_MEDALS: ClmMedalModel[] = [
   {
     key: "bronze",
     label: "Bronze",
-    coins: 30,
+    coins: 20,
     threshold: 110,
     image: "/trophees/medaille_chrono_bronze.png",
     text: "text-orange-300",

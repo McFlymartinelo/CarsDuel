@@ -32,6 +32,29 @@ test("taxe floor(prix * 0.90)", async () => {
   });
 });
 
+test("une carte détruite reste vendable et recyclable après achat", async () => {
+  const fx = await withAdmin(async (c) => {
+    const seller = await createPlayer(c, 0);
+    const buyer = await createPlayer(c, 100);
+    const card = await giveCard(c, seller, "t_eng");
+    await c.query("update user_cards set is_destroyed = true where id = $1", [card]);
+    return { seller, buyer, card };
+  });
+  const id = await listing(fx.seller, fx.card, 10, false);
+  assert.ok(id);
+  await asUser(fx.buyer, (c) => c.query("select public.buy_marketplace_item($1::uuid, $2::uuid)", [fx.buyer, id]));
+  await withAdmin(async (c) => {
+    const row = (await c.query("select owner_id, is_destroyed from user_cards where id = $1", [fx.card])).rows[0];
+    assert.equal(row.owner_id, fx.buyer);
+    assert.equal(row.is_destroyed, true);
+  });
+
+  // Une carte détruite rachetée peut être déposée dans la benne du centre de recyclage.
+  const added = (await asUser(fx.buyer, (c) =>
+    c.query("select public.recycle_bin_add($1::uuid, $2::uuid) as r", [fx.buyer, fx.card]))).rows[0].r;
+  assert.equal(added.card_id, fx.card);
+});
+
 test("séquestre d'offre puis remboursement au retrait et à l'annulation", async () => {
   const fx = await withAdmin(async (c) => {
     const seller = await createPlayer(c, 0);

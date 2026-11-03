@@ -12,7 +12,7 @@ export async function listCard(_p: ActionState, fd: FormData): Promise<ActionSta
     await callRpc(
       "select public.create_listing($1::uuid, $2::uuid, $3::int, $4::boolean) as r",
       (id) => [id, str(fd, "card_id"), int(fd, "price", "invalid_price"), offers],
-      ["/marketplace", "/garage"],
+      ["/marketplace", "/garage", "/garage/inventaire"],
     ),
   );
 }

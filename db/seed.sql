@@ -36,7 +36,7 @@ insert into public.card_templates (code, category, name, description, bonus_effe
   ('bonus_revision_complete', 'bonus', 'Révision complète',           'Gèle simultanément l''usure du moteur et de la boîte de vitesses.', 'revision_complete'),
   ('bonus_huile_moteur',      'bonus', 'Huile moteur de compétition', 'Multiplie par 0,5 le risque de casse calculé du moteur sur ce run (risque divisé par deux).', 'huile_moteur_competition'),
   ('bonus_huile_boite',       'bonus', 'Huile de boîte compétition',  'Multiplie par 0,5 le risque de casse calculé de la boîte sur ce run (risque divisé par deux).', 'huile_boite_competition'),
-  ('bonus_assistance',        'bonus', 'Assistance plateau',          'En cas d''échec au test de casse mécanique, le duel est perdu mais le composant cassé réintègre directement l''inventaire au lieu d''être envoyé au Musée de la casse.', 'assistance_plateau')
+  ('bonus_assistance',        'bonus', 'Assistance plateau',          'En cas d''échec au test de casse mécanique, le duel est perdu mais le composant cassé réintègre directement l''inventaire au lieu d''être détruit.', 'assistance_plateau')
 on conflict (code) do update set description = excluded.description, name = excluded.name;
 
 update public.weather_conditions set label = case weather

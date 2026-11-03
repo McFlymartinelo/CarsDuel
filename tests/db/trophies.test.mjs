@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { asUser, createPlayer, expectError, withAdmin } from "./helpers.mjs";
 
-test("vitrine : victoires en duel, titres de classement et médailles chrono", async () => {
+test("vitrine : victoires en duel, titres de classement et médailles CLM + banc", async () => {
   await withAdmin(async (c) => {
     const player = await createPlayer(c, 0);
     const opponent = await createPlayer(c, 0);
@@ -28,7 +28,8 @@ test("vitrine : victoires en duel, titres de classement et médailles chrono", a
 
     await c.query(
       `insert into trophy_medals (user_id, kind)
-       values ($1, 'chrono_gold'), ($1, 'chrono_gold'), ($1, 'chrono_silver')`,
+       values ($1, 'chrono_gold'), ($1, 'chrono_gold'), ($1, 'chrono_silver'),
+              ($1, 'dyno_gold'), ($1, 'dyno_bronze')`,
       [player],
     );
 
@@ -42,9 +43,9 @@ test("vitrine : victoires en duel, titres de classement et médailles chrono", a
       attack_duels: 2,
       weekly_firsts: 1,
       monthly_firsts: 1,
-      chrono_gold: 2,
+      chrono_gold: 3,
       chrono_silver: 1,
-      chrono_bronze: 0,
+      chrono_bronze: 1,
     });
 
     await expectError(player, (uc) => uc.query("select public.my_trophy_stats($1)", [opponent]), "forbidden");

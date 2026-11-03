@@ -151,6 +151,7 @@ export function ClmForm({
                 <ClmResult
                   key={report.attemptId}
                   r={report}
+                  medalTargets={challenge.circuit.medals_seconds}
                   busy={launching}
                   onReplay={canReplay ? launch : undefined}
                   onReplaceBrokenPart={report.brokenPart === "moteur" || report.brokenPart === "boite" ? replaceBrokenPart : undefined}

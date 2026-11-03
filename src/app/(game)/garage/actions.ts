@@ -49,7 +49,6 @@ const RECYCLE_CENTER_PATHS = [
   "/garage",
   "/garage/recyclage",
   "/garage/inventaire",
-  "/garage/casse",
   "/duel",
   "/duel/organises",
 ];
@@ -118,7 +117,7 @@ export async function repairCard(_prev: ActionState, fd: FormData): Promise<Acti
   const res = await callRpc(
     "select public.repair_card($1::uuid, $2::uuid) as r",
     (id) => [id, str(fd, "card_id")],
-    ["/garage", "/garage/inventaire", "/garage/casse", "/duel", "/duel/organises", "/marketplace"],
+    ["/garage", "/garage/inventaire", "/duel", "/duel/organises", "/marketplace"],
   );
   if (res?.ok) return { ok: true, message: "Réparation effectuée sous garantie constructeur." };
   return res;
@@ -128,7 +127,7 @@ export async function extendWarranty(_prev: ActionState, fd: FormData): Promise<
   const res = await callRpc<{ warranty_duels: number }>(
     "select public.extend_warranty($1::uuid, $2::uuid) as r",
     (id) => [id, str(fd, "card_id")],
-    ["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel", "/duel/organises", "/marketplace"],
+    ["/", "/garage", "/garage/inventaire", "/duel", "/duel/organises", "/marketplace"],
   );
   if (res?.ok) return { ok: true, message: `Garantie prolongée : ${res.data?.warranty_duels ?? 0} duels couverts.` };
   return res;

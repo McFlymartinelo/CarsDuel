@@ -75,7 +75,10 @@ test("Banc d'essai : record du jour, cascade Or + Argent + Bronze et relance san
     assert.equal(first.is_new_record, false);
     assert.equal(first.medal, null);
     assert.deepEqual(first.new_medals, []);
-    assert.equal(first.coins, 0);
+    assert.equal(first.medals_coins, 0);
+    assert.equal(first.participation_coins, 10);
+    assert.equal(first.coins, 10);
+    assert.equal(first.participation_claimed, true);
     assert.equal(first.personal_best, first.sp_final);
 
     const second = await dyno(player, goldDeck.deckId);
@@ -85,18 +88,23 @@ test("Banc d'essai : record du jour, cascade Or + Argent + Bronze et relance san
     assert.equal(second.medal, "gold");
     assert.deepEqual(second.new_medals, ["bronze", "silver", "gold"]);
     assert.equal(second.medals_coins, 170);
+    assert.equal(second.participation_coins, 0);
     assert.equal(second.coins, 170);
     assert.equal(second.personal_best, second.sp_final);
     assert.deepEqual(second.claimed, ["bronze", "silver", "gold"]);
 
     const coins = await c.query("select coins from profiles where id = $1", [player]);
-    assert.equal(coins.rows[0].coins, 170);
+    assert.equal(coins.rows[0].coins, 180);
 
     const third = await dyno(player, goldDeck.deckId);
     assert.equal(third.is_new_record, false);
     assert.deepEqual(third.new_medals, []);
+    assert.equal(third.participation_coins, 0);
     assert.equal(third.coins, 0);
     assert.equal(third.personal_best, second.sp_final);
+
+    const medals = await c.query("select kind from trophy_medals where user_id = $1 order by kind", [player]);
+    assert.deepEqual(medals.rows.map((r) => r.kind), ["dyno_bronze", "dyno_gold", "dyno_silver"]);
 
     const best = await c.query("select best_sp from dyno_daily_bests where user_id = $1", [player]);
     assert.equal(Number(best.rows[0].best_sp), second.sp_final);
@@ -120,7 +128,9 @@ test("Banc d'essai : une médaille déjà validée n'est jamais repayée, même 
     const silver = await dyno(player, silverDeck.deckId);
     assert.equal(silver.medal, "silver");
     assert.deepEqual(silver.new_medals, ["bronze", "silver"]);
-    assert.equal(silver.coins, 70);
+    assert.equal(silver.medals_coins, 70);
+    assert.equal(silver.participation_coins, 10);
+    assert.equal(silver.coins, 80);
 
     const gold = await dyno(player, goldDeck.deckId);
     assert.equal(gold.medal, "gold");
@@ -128,7 +138,7 @@ test("Banc d'essai : une médaille déjà validée n'est jamais repayée, même 
     assert.equal(gold.coins, 100);
 
     const coins = await c.query("select coins from profiles where id = $1", [player]);
-    assert.equal(coins.rows[0].coins, 170);
+    assert.equal(coins.rows[0].coins, 180);
   });
 });
 

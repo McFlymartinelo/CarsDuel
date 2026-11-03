@@ -42,6 +42,8 @@ export const DYNO_MEDALS: DynoMedalModel[] = [
   },
 ];
 
+export const DYNO_PARTICIPATION_COINS = 10;
+
 export const dynoMedalModel = (key: DynoMedal) => DYNO_MEDALS.find((m) => m.key === key);
 
 /** Médaille la plus haute atteinte pour un SP final donné. */

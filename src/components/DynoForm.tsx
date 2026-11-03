@@ -9,6 +9,7 @@ import { DynoResult } from "@/components/DynoResult";
 import { Modal } from "@/components/Modal";
 import {
   DYNO_MEDALS,
+  DYNO_PARTICIPATION_COINS,
   dynoConstraintChecks,
   dynoConstraintsSatisfied,
   dynoDeckReady,
@@ -307,6 +308,15 @@ export function DynoForm({
                       </div>
                     );
                   })}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-3 py-2 text-sm">
+                  <span className="text-sky-300">Prime de participation</span>
+                  <span className="flex items-center gap-2">
+                    <span className="font-display font-bold text-amber-300">+{DYNO_PARTICIPATION_COINS} 🪙</span>
+                    <span className={challenge.participation_claimed ? "text-emerald-400" : "text-zinc-400"}>
+                      {challenge.participation_claimed ? "Déjà remportée" : "Disponible"}
+                    </span>
+                  </span>
                 </div>
               </div>
 

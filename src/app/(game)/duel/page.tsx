@@ -81,6 +81,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <DailyQuests state={quests} />
         <DuelForm action={launchDuel} deckId={playable ? config?.id : undefined} bonuses={bonuses} tirePerfs={modifiers}>
           <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
         </DuelForm>
@@ -102,7 +103,6 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
             tire={tire}
           />
         )}
-        <DailyQuests state={quests} />
       </div>
       {!playable && <p className="text-sm text-zinc-500">Complétez Ma config avec un moteur, une boîte et des pneus disponibles.</p>}
 

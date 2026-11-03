@@ -22,7 +22,6 @@ const TILES: { href: string; title: string; text: string; image?: string; imageF
   { href: "/garage/inventaire", title: "Mon inventaire", text: "Moteurs, boîtes, pneus et bonus.", image: "/garage/inventaire.webp" },
   { href: "/garage/recyclage", title: "Centre de recyclage", text: "Compactez vos pièces en cubes de ferraille.", image: "/garage/recyclage.webp" },
   { href: "/garage/collection", title: "Le coin du collectionneur", text: "Toutes les cartes du jeu et votre progression.", image: "/garage/collectionneur.png", imageFit: "contain" },
-  { href: "/garage/casse", title: "Musée de la casse", text: "Les pièces détruites et réparables sous garantie.", image: "/garage/casse.webp" },
   { href: "/garage/regles", title: "Règles du jeu", text: "Comment se déroule une course.", image: "/garage/regles.webp" },
 ];
 

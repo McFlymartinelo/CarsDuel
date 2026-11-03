@@ -258,6 +258,8 @@ export interface DynoChallenge {
   config: DynoConfig;
   personal_best: DynoDailyBest | null;
   claimed: DynoMedal[];
+  /** Prime du premier passage du jour déjà récupérée. */
+  participation_claimed: boolean;
   attempts: number;
   /** Prochain minuit UTC, pour le compte à rebours de rotation. */
   changes_at: string;
@@ -278,8 +280,10 @@ export interface DynoReport {
   medal: DynoMedal | null;
   newMedals: DynoMedal[];
   medalsCoins: number;
+  participationCoins: number;
   coins: number;
   claimed: DynoMedal[];
+  participationClaimed: boolean;
   tireType: string;
   tireGum: number;
   tireBonusPct: number;

@@ -46,7 +46,7 @@ export default async function TrophiesPage() {
     {
       value: stats.chrono_gold,
       label: "Médailles d'or",
-      detail: "Contre-la-montre",
+      detail: "Contre-la-montre et banc d'essai",
       image: "/trophees/medaille_chrono_or.png",
       kind: "medal" as const,
       accent: "border-yellow-400/35",
@@ -56,7 +56,7 @@ export default async function TrophiesPage() {
     {
       value: stats.chrono_silver,
       label: "Médailles d'argent",
-      detail: "Contre-la-montre",
+      detail: "Contre-la-montre et banc d'essai",
       image: "/trophees/medaille_chrono_argent.png",
       kind: "medal" as const,
       accent: "border-zinc-300/30",
@@ -66,7 +66,7 @@ export default async function TrophiesPage() {
     {
       value: stats.chrono_bronze,
       label: "Médailles de bronze",
-      detail: "Contre-la-montre",
+      detail: "Contre-la-montre et banc d'essai",
       image: "/trophees/medaille_chrono_bronze.png",
       kind: "medal" as const,
       accent: "border-orange-600/35",
@@ -86,7 +86,7 @@ export default async function TrophiesPage() {
         </Link>
         <h1 className="font-display text-3xl font-bold uppercase sm:text-4xl">Ma vitrine de trophées</h1>
         <p className="text-sm text-zinc-400">
-          Vos victoires, vos titres de meilleur pilote et vos médailles de contre-la-montre, réunis au même endroit.
+          Vos victoires, vos titres de meilleur pilote et vos médailles de contre-la-montre et de banc d&apos;essai, réunis au même endroit.
         </p>
       </header>
 
@@ -126,7 +126,7 @@ export default async function TrophiesPage() {
 
       <p className="text-xs leading-relaxed text-zinc-500">
         Les titres de meilleur pilote sont comptés à la clôture de chaque semaine et de chaque mois (heure de Paris).
-        Les médailles de contre-la-montre sont ajoutées dès qu&apos;une course chronométrée est terminée.
+        Les médailles de contre-la-montre et de banc d&apos;essai sont ajoutées dès qu&apos;un objectif est atteint, dans les mêmes tuiles.
       </p>
     </section>
   );

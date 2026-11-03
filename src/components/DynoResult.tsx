@@ -197,12 +197,40 @@ export function DynoResult({
         )}
       </div>
 
+      <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-3">
+        <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Objectifs des médailles</p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {DYNO_MEDALS.map((m) => {
+            const won = r.claimed.includes(m.key) || r.newMedals.includes(m.key);
+            return (
+              <div
+                key={m.key}
+                className={`rounded-lg border px-2 py-1.5 text-center ${
+                  won ? "border-emerald-500/40 bg-emerald-500/5" : "border-zinc-800 bg-black/20"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <Image src={m.image} alt="" width={18} height={18} className="h-[18px] w-[18px] object-contain" />
+                  <span className={`font-display text-xs font-bold uppercase ${m.text}`}>{m.label}</span>
+                </div>
+                <p className="mt-1 font-display text-sm font-bold tabular-nums">{n(thresholds[m.key], 0)} SP</p>
+                <p className="text-[11px] font-semibold text-amber-300">+{m.coins} 🪙</p>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-center text-[10px] text-zinc-500">Les médailles déjà validées aujourd&apos;hui sont surlignées en vert.</p>
+      </div>
+
       <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-4 text-center">
         <p className={`font-display text-2xl font-bold ${r.coins > 0 ? "text-amber-300" : "text-zinc-500"}`}>
           +{n(r.coins, 0)} pièces
         </p>
         <p className="mt-1 text-xs text-zinc-400">
-          {r.medalsCoins > 0 ? `Médailles : +${n(r.medalsCoins, 0)}` : "Aucune récompense supplémentaire aujourd'hui."}
+          {r.medalsCoins > 0 && <>Médailles : +{n(r.medalsCoins, 0)}</>}
+          {r.medalsCoins > 0 && r.participationCoins > 0 && <span className="mx-1 text-zinc-600">·</span>}
+          {r.participationCoins > 0 && <>Prime de participation : +{n(r.participationCoins, 0)}</>}
+          {r.coins === 0 && "Aucune récompense supplémentaire aujourd'hui."}
         </p>
       </div>
 

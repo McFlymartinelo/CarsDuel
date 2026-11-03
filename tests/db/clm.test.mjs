@@ -66,9 +66,9 @@ test("CLM : cascade des médailles, prime de participation, plafond quotidien et
 
     assert.equal(silver1.medal, "silver");
     assert.deepEqual(silver1.new_medals, ["bronze", "silver"]);
-    assert.equal(silver1.medals_coins, 100);
+    assert.equal(silver1.medals_coins, 70);
     assert.equal(silver1.participation_coins, 10);
-    assert.equal(silver1.coins, 110);
+    assert.equal(silver1.coins, 80);
     assert.equal(silver1.previous_best, null);
     assert.equal(silver1.is_new_record, false);
     assert.ok(silver1.lap_seconds > 0);
@@ -77,7 +77,7 @@ test("CLM : cascade des médailles, prime de participation, plafond quotidien et
     assert.equal(silver1.participation_claimed, true);
 
     const coins1 = await c.query("select coins from profiles where id = $1", [player]);
-    assert.equal(coins1.rows[0].coins, 110);
+    assert.equal(coins1.rows[0].coins, 80);
 
     const silver2 = await clm(player, silverDeck.deckId);
     assert.equal(silver2.medal, "silver");
@@ -91,12 +91,12 @@ test("CLM : cascade des médailles, prime de participation, plafond quotidien et
     const gold = await clm(player, goldDeck.deckId);
     assert.equal(gold.medal, "gold");
     assert.deepEqual(gold.new_medals, ["gold"]);
-    assert.equal(gold.medals_coins, 150);
+    assert.equal(gold.medals_coins, 100);
     assert.equal(gold.participation_coins, 0);
-    assert.equal(gold.coins, 150);
+    assert.equal(gold.coins, 100);
 
     const coins2 = await c.query("select coins from profiles where id = $1", [player]);
-    assert.equal(coins2.rows[0].coins, 260);
+    assert.equal(coins2.rows[0].coins, 180);
 
     const pb = await c.query("select best_seconds from clm_personal_bests where user_id = $1", [player]);
     assert.equal(Number(pb.rows[0].best_seconds), Math.min(silver1.lap_seconds, silver2.lap_seconds, gold.lap_seconds));
@@ -121,15 +121,15 @@ test("CLM : décrocher l'Or d'entrée verse la cascade complète Or + Argent + B
 
     assert.equal(result.medal, "gold");
     assert.deepEqual(result.new_medals, ["bronze", "silver", "gold"]);
-    assert.equal(result.medals_coins, 250);
+    assert.equal(result.medals_coins, 170);
     assert.equal(result.participation_coins, 10);
-    assert.equal(result.coins, 260);
+    assert.equal(result.coins, 180);
     assert.equal(result.claimed.includes("bronze"), true);
     assert.equal(result.claimed.includes("silver"), true);
     assert.equal(result.claimed.includes("gold"), true);
 
     const coins = await c.query("select coins from profiles where id = $1", [player]);
-    assert.equal(coins.rows[0].coins, 260);
+    assert.equal(coins.rows[0].coins, 180);
   });
 });
 

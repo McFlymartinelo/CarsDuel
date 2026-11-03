@@ -160,15 +160,15 @@ export default function RulesPage() {
           items={[
             <>Le duel se termine sur une {b("défaite instantanée")}.</>,
             <>
-              La pièce endommagée n&apos;est pas détruite : elle est automatiquement envoyée dans votre {b("« Musée de la casse »")}. Elle ne peut plus être équipée ni vendue, mais peut être déposée au {b("centre de recyclage")} pour produire des cubes de ferraille.
+              La pièce endommagée reste dans votre {b("inventaire classique")}. Elle ne peut plus être équipée, mais peut être {b("vendue sur la marketplace")} ou déposée au {b("centre de recyclage")} pour produire des cubes de ferraille.
             </>,
             <>
-              {b("Garantie constructeur :")} chaque moteur et chaque boîte est garanti pendant un nombre de runs affiché sur sa carte. Tant que la pièce cassée n&apos;a pas dépassé cette garantie, elle peut être {b("réparée gratuitement")} depuis le musée de la casse : elle redevient utilisable et son risque de casse repart de R0. La garantie, elle, ne repart pas et continue de se consommer.
+              {b("Garantie constructeur :")} chaque moteur et chaque boîte est garanti pendant un nombre de runs affiché sur sa carte. Tant que la pièce cassée n&apos;a pas dépassé cette garantie, elle peut être {b("réparée gratuitement")} depuis l&apos;inventaire : elle redevient utilisable et son risque de casse repart de R0. La garantie, elle, ne repart pas et continue de se consommer.
             </>,
             <>
               {b("Prolonger la garantie :")} depuis l&apos;inventaire, une seule fois par carte et tant que la garantie n&apos;a pas expiré, il est possible de la prolonger de {b("2 runs")} en échange d&apos;une carte bonus {b("« Révision complète »")} et de {b("5 pièces")}. Une pièce cassée ne peut pas être prolongée.
             </>,
-            <>Si la carte bonus {b("« Assistance plateau »")} était engagée, le duel est perdu mais la pièce réintègre directement l&apos;inventaire actif sans passer par le musée de la casse.</>,
+            <>Si la carte bonus {b("« Assistance plateau »")} était engagée, le duel est perdu mais la pièce réintègre directement l&apos;inventaire actif.</>,
           ]}
         />
         <P>
@@ -271,7 +271,7 @@ export default function RulesPage() {
             <>{b("« Révision complète » :")} gèle simultanément l&apos;usure du moteur et de la boîte de vitesses.</>,
             <>{b("« Huile moteur de compétition » :")} multiplie par 0,5 le risque de casse calculé du moteur sur ce run.</>,
             <>{b("« Huile de boîte compétition » :")} multiplie par 0,5 le risque de casse calculé de la boîte sur ce run.</>,
-            <>{b("« Assistance plateau » :")} en cas d&apos;échec au test de casse, le duel est perdu mais le composant cassé réintègre directement l&apos;inventaire au lieu d&apos;être envoyé au Musée de la casse.</>,
+            <>{b("« Assistance plateau » :")} en cas d&apos;échec au test de casse, le duel est perdu mais le composant cassé réintègre directement l&apos;inventaire au lieu d&apos;être détruit.</>,
           ]}
         />
       </Section>
@@ -383,9 +383,9 @@ export default function RulesPage() {
         <Table
           head={["Médaille", "Condition", "Pièces"]}
           rows={[
-            ["Or", "SP final ≥ 290", "+150"],
-            ["Argent", "SP final ≥ 200", "+70"],
-            ["Bronze", "SP final ≥ 110", "+30"],
+            ["Or", "SP final ≥ 290", "+100"],
+            ["Argent", "SP final ≥ 200", "+50"],
+            ["Bronze", "SP final ≥ 110", "+20"],
           ]}
         />
         <List

@@ -19,8 +19,6 @@ export const TABS: { key: string; label: string; category: Category; icon: Lucid
   { key: "bonus", label: "Bonus", category: "bonus", icon: Zap },
 ];
 
-const PARTS: Category[] = ["moteur", "boite", "pneus"];
-
 /** Regroupe les cartes qui partagent un même état (les bonus n'ont pas d'état propre, les pneus sont regroupés à gomme égale). */
 type GroupedEntry = { card: UserCard; count: number };
 
@@ -52,7 +50,6 @@ export function Inventory({
   view,
   hrefForView,
   tirePerfs = [],
-  museum = false,
   listings = {},
 }: {
   cards: UserCard[];
@@ -61,23 +58,20 @@ export function Inventory({
   view: CardViewMode;
   hrefForView: (mode: CardViewMode) => string;
   tirePerfs?: TirePerf[];
-  museum?: boolean;
   listings?: Record<string, string>;
 }) {
   const compact = view === "liste";
   const current = TABS.find((x) => x.key === tab) ?? TABS[0];
-  const scrap = cards.filter((c) => c.is_destroyed && PARTS.includes(c.card_templates.category));
-  const visible = museum
-    ? scrap
-    : cards.filter((c) => c.card_templates.category === current.category && !c.is_destroyed);
+  const visible = cards.filter((c) => c.card_templates.category === current.category);
   // Bonus : mêmes cartes interchangeables. Pneus : même modèle ET même gomme restante.
+  // Les cartes détruites restent dans l'inventaire classique, séparées des exemplaires roulants.
   // Une carte en vente garde sa propre fiche (action « Retirer de la vente » liée à l'annonce).
-  const grouped = !museum && (current.category === "bonus" || current.category === "pneus");
+  const grouped = current.category === "bonus" || current.category === "pneus";
   const entries: GroupedEntry[] = grouped
     ? groupCards(visible, (card) =>
         current.category === "bonus"
-          ? card.template_id
-          : `${card.template_id}|${wearKey(card)}${card.is_listed ? `|${card.id}` : ""}`,
+          ? `${card.template_id}${card.is_destroyed ? "|hs" : ""}`
+          : `${card.template_id}|${wearKey(card)}${card.is_destroyed ? "|hs" : ""}${card.is_listed ? `|${card.id}` : ""}`,
       )
     : visible.map((card) => ({ card, count: 1 }));
 
@@ -96,48 +90,44 @@ export function Inventory({
   return (
     <section className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl font-bold uppercase">{museum ? "Musée de la casse" : "Inventaire"}</h2>
+        <h2 className="font-display text-2xl font-bold uppercase">Inventaire</h2>
         <ViewToggle current={view} hrefFor={hrefForView} />
       </div>
-      {!museum && (
-        <>
-          <nav className="hidden max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:inline-flex" aria-label="Catégories de l'inventaire">
-            {TABS.map((x) => {
-              const on = x.key === current.key;
-              const n = cards.filter((c) => !c.is_destroyed && c.card_templates.category === x.category).length;
-              return (
-                <Link key={x.key} href={hrefForTab(x.key)} scroll={false} aria-current={on ? "true" : undefined} className={seg(on)}>
-                  <x.icon size={15} strokeWidth={2} />
-                  {x.label}
-                  <span className={countClass(on)}>{n}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <nav className="grid grid-cols-4 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:hidden" aria-label="Catégories de l'inventaire">
-            {TABS.map((x) => {
-              const on = x.key === current.key;
-              const n = cards.filter((c) => !c.is_destroyed && c.card_templates.category === x.category).length;
-              return (
-                <Link
-                  key={x.key}
-                  href={hrefForTab(x.key)}
-                  scroll={false}
-                  aria-current={on ? "true" : undefined}
-                  aria-label={`${x.label}, ${n} carte${n === 1 ? "" : "s"}`}
-                  className={`relative inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-1 pt-1 text-[10px] font-semibold ${on ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}
-                >
-                  <x.icon size={14} strokeWidth={2} className="shrink-0" />
-                  <span className="truncate">{x.label}</span>
-                  <span aria-hidden className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#10131a] px-1 text-[10px] font-bold leading-none tabular-nums shadow-sm ${n > 0 ? "bg-amber-500 text-black" : "bg-zinc-700 text-zinc-200"}`}>
-                    {n}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-        </>
-      )}
+      <nav className="hidden max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:inline-flex" aria-label="Catégories de l'inventaire">
+        {TABS.map((x) => {
+          const on = x.key === current.key;
+          const n = cards.filter((c) => c.card_templates.category === x.category).length;
+          return (
+            <Link key={x.key} href={hrefForTab(x.key)} scroll={false} aria-current={on ? "true" : undefined} className={seg(on)}>
+              <x.icon size={15} strokeWidth={2} />
+              {x.label}
+              <span className={countClass(on)}>{n}</span>
+            </Link>
+          );
+        })}
+      </nav>
+      <nav className="grid grid-cols-4 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:hidden" aria-label="Catégories de l'inventaire">
+        {TABS.map((x) => {
+          const on = x.key === current.key;
+          const n = cards.filter((c) => c.card_templates.category === x.category).length;
+          return (
+            <Link
+              key={x.key}
+              href={hrefForTab(x.key)}
+              scroll={false}
+              aria-current={on ? "true" : undefined}
+              aria-label={`${x.label}, ${n} carte${n === 1 ? "" : "s"}`}
+              className={`relative inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-1 pt-1 text-[10px] font-semibold ${on ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}
+            >
+              <x.icon size={14} strokeWidth={2} className="shrink-0" />
+              <span className="truncate">{x.label}</span>
+              <span aria-hidden className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#10131a] px-1 text-[10px] font-bold leading-none tabular-nums shadow-sm ${n > 0 ? "bg-amber-500 text-black" : "bg-zinc-700 text-zinc-200"}`}>
+                {n}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
 
       {grouped && visible.length > 0 && (
         <p className="text-sm text-zinc-400">
@@ -158,20 +148,9 @@ export function Inventory({
         </p>
       )}
 
-      {museum && (
-        <p className="text-sm text-zinc-400">
-          Les moteurs, boîtes et pneus détruits arrivent ici. Un moteur ou une boîte encore couvert par la garantie
-          constructeur peut être réparé ; sinon, déposez la pièce au{" "}
-          <Link href="/garage/recyclage" className="font-semibold text-amber-300 hover:text-amber-200">
-            centre de recyclage
-          </Link>{" "}
-          pour la transformer en cubes de ferraille.
-        </p>
-      )}
-
       {entries.length === 0 && (
         <p className="rounded-xl border border-zinc-800 bg-[#0e1117] p-3 text-sm text-zinc-500">
-          {museum ? "Aucune carte détruite." : "Aucune carte dans cette catégorie."}
+          Aucune carte dans cette catégorie.
         </p>
       )}
       <div className={compact ? "grid gap-2 xl:grid-cols-2" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
@@ -187,23 +166,24 @@ export function Inventory({
                 </ActionForm>
               )}
               {c.is_listed && !listings[c.id] && <p className="text-xs text-sky-400">Carte en vente</p>}
-              {!c.is_listed && (warranty?.repairable ? (
-                <ActionForm
-                  action={repairCard}
-                  submitLabel="Réparation sous garantie constructeur"
-                  submitClassName="w-full rounded-lg border border-emerald-500/70 px-3 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/10"
-                  className="flex w-full"
-                >
-                  <input type="hidden" name="card_id" value={c.id} />
-                </ActionForm>
-              ) : (
+              {!c.is_listed && (
                 <div className="flex w-full flex-col gap-2">
-                  {!c.is_destroyed && t.category !== "bonus" && (
+                  {warranty?.repairable && (
+                    <ActionForm
+                      action={repairCard}
+                      submitLabel="Réparation sous garantie constructeur"
+                      submitClassName="w-full rounded-lg border border-emerald-500/70 px-3 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/10"
+                      className="flex w-full"
+                    >
+                      <input type="hidden" name="card_id" value={c.id} />
+                    </ActionForm>
+                  )}
+                  {t.category !== "bonus" && (
                     <div className="flex w-full items-center gap-2">
                       <SellDialog action={listCard} cardId={c.id} name={t.name} />
                     </div>
                   )}
-                  {!museum && warranty?.extendable && (
+                  {warranty?.extendable && (
                     <ExtendWarrantyDialog
                       action={extendWarranty}
                       cardId={c.id}
@@ -212,16 +192,8 @@ export function Inventory({
                       limit={warranty.limit}
                     />
                   )}
-                  {c.is_destroyed && !warranty?.repairable && (
-                    <Link
-                      href="/garage/recyclage"
-                      className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-orange-500/60 px-3 text-sm font-semibold text-orange-300 hover:bg-orange-500/10"
-                    >
-                      Déposer au centre de recyclage
-                    </Link>
-                  )}
                 </div>
-              ))}
+              )}
             </Card>
           );
         })}

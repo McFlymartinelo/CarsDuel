@@ -202,7 +202,7 @@ export async function launchDuel(_prev: ActionState<DuelReport>, fd: FormData): 
   if (!outcome) return { ok: false, message: "Le duel n'a pas renvoyé de résultat." };
   // Le duel change les runs, la garantie, l'usure, les pièces et l'XP :
   // on invalide le cache client des pages qui affichent ces données.
-  invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel", "/leaderboard", "/marketplace"]);
+  invalidate(["/", "/garage", "/garage/inventaire", "/duel", "/leaderboard", "/marketplace"]);
   if (!detail) return { ok: true, data: undefined, message: "Duel effectué." };
   return { ok: true, data: buildReport(outcome, detail, "attacker") };
 }
@@ -328,7 +328,7 @@ export async function launchClm(_prev: ActionState<ClmReport>, fd: FormData): Pr
   if (!outcome) return { ok: false, message: "Le contre-la-montre n'a pas renvoyé de résultat." };
 
   // Pièces, usure, casse, record et médailles ont changé : on rafraîchit l'UI.
-  invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/garage/trophees", "/duel"]);
+  invalidate(["/", "/garage", "/garage/inventaire", "/garage/trophees", "/duel"]);
   return { ok: true, data: buildClmReport(outcome) };
 }
 
@@ -346,8 +346,10 @@ interface DynoOutcome {
   medal: DynoMedal | null;
   new_medals: DynoMedal[];
   medals_coins: number;
+  participation_coins: number;
   coins: number;
   claimed: DynoMedal[];
+  participation_claimed: boolean;
   tire_type: string;
   tire_gum: number;
   tire_bonus_pct: number;
@@ -377,8 +379,10 @@ function buildDynoReport(o: DynoOutcome): DynoReport {
     medal: o.medal,
     newMedals: o.new_medals ?? [],
     medalsCoins: o.medals_coins,
+    participationCoins: o.participation_coins,
     coins: o.coins,
     claimed: o.claimed ?? [],
+    participationClaimed: o.participation_claimed,
     tireType: o.tire_type,
     tireGum: o.tire_gum,
     tireBonusPct: o.tire_bonus_pct,
@@ -445,7 +449,7 @@ export async function launchDyno(_prev: ActionState<DynoReport>, fd: FormData): 
   if (!outcome) return { ok: false, message: "Le banc d'essai n'a pas renvoyé de résultat." };
 
   // Pièces, record et médailles ont changé : on rafraîchit l'UI.
-  invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel"]);
+  invalidate(["/", "/garage", "/garage/inventaire", "/garage/trophees", "/duel"]);
   return { ok: true, data: buildDynoReport(outcome) };
 }
 
@@ -479,7 +483,7 @@ export async function acceptDuel(_prev: ActionState<ArrangedPlay>, fd: FormData)
   const res = await callRpc<ArrangedOutcome>(
     "select public.accept_duel($1::uuid, $2::uuid) as r",
     (id) => [id, str(fd, "challenge_id")],
-    ["/", "/duel", "/duel/organises", "/garage", "/garage/inventaire", "/garage/casse", "/leaderboard", "/marketplace"],
+    ["/", "/duel", "/duel/organises", "/garage", "/garage/inventaire", "/leaderboard", "/marketplace"],
   );
   if (!res?.ok || !res.data) return { ok: false, message: res?.message };
   const o = res.data;
