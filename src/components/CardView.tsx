@@ -156,6 +156,7 @@ export function CardView({
   card,
   image = null,
   tirePerfs = [],
+  quantity = 1,
   children,
 }: {
   template: CardTemplate;
@@ -163,6 +164,8 @@ export function CardView({
   /** URL déjà résolue côté serveur (les fichiers du disque ne sont pas lisibles dans le navigateur). */
   image?: string | null;
   tirePerfs?: TirePerf[];
+  /** Nombre d'exemplaires identiques représentés par cette carte (badge ×N). */
+  quantity?: number;
   children?: React.ReactNode;
 }) {
   const rarity = template.rarity;
@@ -193,7 +196,16 @@ export function CardView({
         )}
 
         <div className="relative flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider">
-          <span className={`rounded-md border px-2.5 py-1 normal-case text-zinc-300 ${theme.inner}`}>{reference ?? "—"}</span>
+          {quantity > 1 ? (
+            <span
+              title={`${quantity} exemplaires identiques`}
+              className="rounded-md border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 tabular-nums text-amber-300"
+            >
+              ×{quantity}
+            </span>
+          ) : (
+            <span className={`rounded-md border px-2.5 py-1 normal-case text-zinc-300 ${theme.inner}`}>{reference ?? "—"}</span>
+          )}
           <span className={`min-w-0 flex-1 truncate rounded-md border px-2.5 py-1 text-center ${theme.inner} ${theme.accent}`}>{CATEGORY_LABEL[template.category]}</span>
         </div>
 

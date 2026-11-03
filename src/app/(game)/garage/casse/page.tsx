@@ -15,7 +15,7 @@ export default async function ScrapPage({ searchParams }: { searchParams: Promis
     <>
       <Inventory
         museum
-        cards={cards}
+        cards={cards.filter((c) => !c.in_recycle_bin)}
         tab="moteurs"
         hrefForTab={() => "/garage/casse"}
         view={view}

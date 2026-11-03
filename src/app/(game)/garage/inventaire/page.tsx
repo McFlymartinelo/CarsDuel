@@ -11,7 +11,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const view = viewMode(vue);
   const { user } = await requireUser();
   const { cards, modifiers, listings } = await loadGaragePage(user.id);
-  const owned = cards.filter((c) => !c.is_destroyed || c.card_templates.category !== "bonus");
+  const owned = cards.filter((c) => !c.in_recycle_bin && (!c.is_destroyed || c.card_templates.category !== "bonus"));
   const listingOf = Object.fromEntries(listings.map((l) => [l.card_id, l.id]));
   const href = (over: Record<string, string>) =>
     `/garage/inventaire?${new URLSearchParams({ tab, ...(view === "liste" ? { vue: "liste" } : {}), ...over }).toString()}`;

@@ -45,14 +45,73 @@ export async function claimWeeklyPull(_prev: ActionState<{ cards: DrawnCard[] }>
   return { ok: true, data: { cards: await drawnFromIds(res.data?.card_ids ?? []) } };
 }
 
-export async function recycleCard(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const res = await callRpc<{ coins: number }>(
-    "select public.recycle_card($1::uuid, $2::uuid) as r",
+const RECYCLE_CENTER_PATHS = [
+  "/garage",
+  "/garage/recyclage",
+  "/garage/inventaire",
+  "/garage/casse",
+  "/duel",
+  "/duel/organises",
+];
+
+export async function addToRecycleBin(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const res = await callRpc<{ card_id: string; weight_kg: number }>(
+    "select public.recycle_bin_add($1::uuid, $2::uuid) as r",
     (id) => [id, str(fd, "card_id")],
-    ["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel", "/marketplace"],
+    RECYCLE_CENTER_PATHS,
   );
-  if (res?.ok) return { ok: true, message: `Recyclage : +${res.data?.coins ?? 0} pièces.` };
+  if (res?.ok) return { ok: true, message: "Carte placée dans la benne." };
   return res;
+}
+
+export async function removeFromRecycleBin(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const res = await callRpc<{ card_id: string }>(
+    "select public.recycle_bin_remove($1::uuid, $2::uuid) as r",
+    (id) => [id, str(fd, "card_id")],
+    RECYCLE_CENTER_PATHS,
+  );
+  if (res?.ok) return { ok: true, message: "Carte retirée de la benne." };
+  return res;
+}
+
+export async function processRecycleBin(_prev: ActionState, _fd: FormData): Promise<ActionState> {
+  const res = await callRpc<{ cards: number; weight_kg: number; cubes: number }>(
+    "select public.recycle_bin_process($1::uuid) as r",
+    (id) => [id],
+    ["/", ...RECYCLE_CENTER_PATHS],
+  );
+  if (res?.ok) {
+    const cards = res.data?.cards ?? 0;
+    const cubes = res.data?.cubes ?? 0;
+    return {
+      ok: true,
+      message: `Recyclage effectué : ${cards} carte${cards === 1 ? "" : "s"} détruite${cards === 1 ? "" : "s"}, +${cubes} cube${cubes === 1 ? "" : "s"} de ferraille.`,
+    };
+  }
+  return res;
+}
+
+export async function exchangeRecycledCard(
+  _prev: ActionState<{ cards: DrawnCard[] }>,
+  fd: FormData,
+): Promise<ActionState<{ cards: DrawnCard[] }>> {
+  const category = str(fd, "category");
+  if (category !== "moteur" && category !== "boite") return { ok: false, message: "Choisissez un moteur ou une boîte." };
+
+  const res = await callRpc<{ card_id: string; category: string }>(
+    "select public.recycle_exchange($1::uuid, $2::text) as r",
+    (id) => [id, category],
+    ["/", ...RECYCLE_CENTER_PATHS],
+  );
+  if (!res?.ok) return { ok: false, message: res?.message };
+
+  const cardId = res.data?.card_id;
+  const cards = cardId ? await drawnFromIds([cardId]) : [];
+  return {
+    ok: true,
+    message: `Échange effectué : -25 cubes de ferraille.`,
+    data: { cards },
+  };
 }
 
 export async function repairCard(_prev: ActionState, fd: FormData): Promise<ActionState> {

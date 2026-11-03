@@ -6,6 +6,8 @@ export interface Profile {
   id: string;
   username: string;
   coins: number;
+  /** Cubes de ferraille (centre de recyclage). */
+  scrap_cubes: number;
   xp_total: number;
   last_daily_pull: string | null;
   last_weekly_pull: string | null;
@@ -47,6 +49,8 @@ export interface UserCard {
   tire_wear: number | null; // gomme restante (100 → 0)
   is_destroyed: boolean;
   is_listed: boolean;
+  /** Déposée dans la benne du centre de recyclage (inutilisable en deck). */
+  in_recycle_bin: boolean;
   source?: string;
   acquired_at?: string;
   card_templates: CardTemplate;

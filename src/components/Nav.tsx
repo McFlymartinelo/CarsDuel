@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Coins, Gift, House, ShoppingBag, Swords, Tag } from "lucide-react";
+import { BarChart3, Boxes, Coins, Gift, House, ShoppingBag, Swords, Tag } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
@@ -28,6 +28,7 @@ const MOBILE_LINKS = [
 export function Nav({
   username,
   coins,
+  scrapCubes,
   xpWeek,
   xpMonth,
   pullsAvailable,
@@ -36,6 +37,7 @@ export function Nav({
 }: {
   username: string;
   coins: number;
+  scrapCubes: number;
   xpWeek: number;
   xpMonth: number;
   pullsAvailable: boolean;
@@ -64,6 +66,11 @@ export function Nav({
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1 font-display text-amber-400" title="Pièces">
               <Coins size={16} strokeWidth={2.25} />
               <b className="text-lg tabular-nums">{formatWalletCoins(coins)}</b>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1 font-display text-zinc-200" title="Cubes de ferraille">
+              <Boxes size={16} strokeWidth={2.1} className="text-orange-300" />
+              <b className="text-lg tabular-nums">{scrapCubes.toLocaleString("fr-FR")}</b>
+              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Cubes</span>
             </span>
             <Link
               href="/garage/tirages"
@@ -114,9 +121,16 @@ export function Nav({
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 min-[380px]:gap-1.5">
-            <span className="inline-flex h-10 w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1 font-display text-amber-400 min-[380px]:w-20 min-[380px]:gap-1.5" title="Pièces" aria-label={`${formatWalletCoins(coins)} pièces`}>
-              <Coins size={13} strokeWidth={2.25} className="shrink-0 min-[380px]:h-4 min-[380px]:w-4" />
-              <b className="truncate text-[10px] tabular-nums min-[380px]:text-xs">{formatWalletCoins(coins)}</b>
+            <span className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl border border-zinc-700 bg-[#10131a] px-1.5 font-display min-[380px]:gap-1.5" title="Pièces et cubes de ferraille">
+              <span className="inline-flex items-center gap-1 text-amber-400" title="Pièces" aria-label={`${coins.toLocaleString("fr-FR")} pièces`}>
+                <Coins size={13} strokeWidth={2.25} className="shrink-0 min-[380px]:h-4 min-[380px]:w-4" />
+                <b className="text-[10px] tabular-nums min-[380px]:text-xs">{coins.toLocaleString("fr-FR")}</b>
+              </span>
+              <span aria-hidden className="h-4 w-px bg-zinc-700" />
+              <span className="inline-flex items-center gap-1 text-zinc-200" title="Cubes de ferraille" aria-label={`${scrapCubes.toLocaleString("fr-FR")} cubes de ferraille`}>
+                <Boxes size={13} strokeWidth={2.1} className="shrink-0 text-orange-300 min-[380px]:h-4 min-[380px]:w-4" />
+                <b className="text-[10px] tabular-nums min-[380px]:text-xs">{scrapCubes.toLocaleString("fr-FR")}</b>
+              </span>
             </span>
             <Link
               href="/garage/tirages"

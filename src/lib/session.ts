@@ -86,7 +86,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!token) return null;
   const { rows } = await withAdmin((c) =>
     c.query<CurrentUser>(
-      `select u.id, u.email, p.username, p.coins, p.xp_total, p.last_daily_pull, p.last_weekly_pull,
+      `select u.id, u.email, p.username, p.coins, p.scrap_cubes, p.xp_total, p.last_daily_pull, p.last_weekly_pull,
               coalesce(x.xp_week, 0)::integer as xp_week,
               coalesce(x.xp_month, 0)::integer as xp_month
          from sessions s

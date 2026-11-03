@@ -14,12 +14,15 @@ export function CardRow({
   card,
   image,
   note,
+  quantity = 1,
   children,
 }: {
   template: CardTemplate;
   card?: Pick<UserCard, "runs_count" | "runs_total" | "wins_count" | "tire_wear" | "is_destroyed" | "is_listed" | "warranty_used" | "warranty_duels" | "warranty_extended">;
   image?: string | null;
   note?: React.ReactNode;
+  /** Nombre d'exemplaires identiques représentés par cette ligne (badge ×N). */
+  quantity?: number;
   children?: React.ReactNode;
 }) {
   const rarity = template.rarity;
@@ -44,6 +47,14 @@ export function CardRow({
         <p className="truncate font-display text-lg font-bold uppercase leading-tight text-white">{template.name}</p>
         <p className={`font-display text-xs font-semibold uppercase tracking-wider ${theme.accent}`}>
           {CATEGORY_LABEL[template.category]}{tag ? ` · ${tag}` : ""}
+          {quantity > 1 && (
+            <span
+              title={`${quantity} exemplaires identiques`}
+              className="ml-2 inline-flex items-center rounded border border-amber-500/60 bg-amber-500/15 px-1.5 py-0.5 normal-case tracking-normal tabular-nums text-amber-300"
+            >
+              ×{quantity}
+            </span>
+          )}
           {card?.is_destroyed && <span className="text-red-500"> · Détruite</span>}
           {card && template.category !== "pneus" && template.category !== "bonus" && card.runs_total > 0 && (
             <span className="ml-2 inline-flex items-center gap-2 normal-case tracking-normal text-zinc-400">

@@ -9,7 +9,7 @@ export const QUEST_COPY: Record<string, { title: string; detail: string }> = {
   pointage: { title: "Pointage au paddock", detail: "Se connecter." },
   inventaire: { title: "Vérification des niveaux", detail: "Ouvrir son inventaire." },
   boutique: { title: "Coup d'œil sur l'étal", detail: "Visiter la boutique." },
-  recycle_bonus: { title: "Nettoyage de printemps", detail: "Recycler une carte bonus." },
+  recycle_bonus: { title: "Seconde vie", detail: "Placer une carte dans la benne du centre de recyclage." },
   duel: { title: "Échauffement", detail: "Terminer un duel." },
   duels_2: { title: "La routine", detail: "Participer à 2 duels." },
   duels_3: { title: "En mode turbo", detail: "Participer à 3 duels." },

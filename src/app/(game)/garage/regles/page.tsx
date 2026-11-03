@@ -121,7 +121,7 @@ export default function RulesPage() {
               {b("Le Train de pneus :")} défini par sa typologie de gomme, son taux d&apos;usure de base par run et sa jauge de gomme restante (de 100 % à 0 %).
             </>,
             <>
-              {b("La Carte Bonus (optionnelle en mode Actif) :")} consommable à usage unique, activé avant le départ et détruit lors du lancement. Les cartes bonus n&apos;ont aucun niveau de rareté et ne peuvent pas être vendues sur la Marketplace.
+              {b("La Carte Bonus (optionnelle en mode Actif) :")} consommable à usage unique, activé avant le départ et détruit lors du lancement. Les cartes bonus n&apos;ont aucun niveau de rareté et ne peuvent être ni vendues sur la Marketplace, ni déposées dans la benne du centre de recyclage.
             </>,
           ]}
         />
@@ -160,7 +160,7 @@ export default function RulesPage() {
           items={[
             <>Le duel se termine sur une {b("défaite instantanée")}.</>,
             <>
-              La pièce endommagée n&apos;est pas détruite : elle est automatiquement envoyée dans votre {b("« Musée de la casse »")}. Elle ne peut plus être équipée ni vendue, mais peut être conservée pour l&apos;honneur ou {b("recyclée contre 1 pièce")}.
+              La pièce endommagée n&apos;est pas détruite : elle est automatiquement envoyée dans votre {b("« Musée de la casse »")}. Elle ne peut plus être équipée ni vendue, mais peut être déposée au {b("centre de recyclage")} pour produire des cubes de ferraille.
             </>,
             <>
               {b("Garantie constructeur :")} chaque moteur et chaque boîte est garanti pendant un nombre de runs affiché sur sa carte. Tant que la pièce cassée n&apos;a pas dépassé cette garantie, elle peut être {b("réparée gratuitement")} depuis le musée de la casse : elle redevient utilisable et son risque de casse repart de R0. La garantie, elle, ne repart pas et continue de se consommer.
@@ -312,23 +312,28 @@ export default function RulesPage() {
           ]}
         />
 
-        <H3>Le recyclage</H3>
-        <P>Cartes mécaniques en état :</P>
+        <H3>Le centre de recyclage</H3>
+        <P>
+          Depuis le garage, le centre de recyclage transforme les moteurs, boîtes et pneus inutilisés en{" "}
+          {b("cubes de ferraille")}. Les cartes bonus ne peuvent jamais entrer dans la benne.
+        </P>
         <Table
-          head={["Catégorie", "Valeur de base", "Formule de rachat"]}
+          head={["Catégorie", "Poids pris en compte"]}
           rows={[
-            ["Moteur", "50 pièces", "50 × (1 − taux d'usure)"],
-            ["Boîte de vitesses", "30 pièces", "30 × (1 − taux d'usure)"],
-            ["Pneus", "10 pièces", "10 × (1 − taux d'usure)"],
+            ["Moteur", "Poids réel (kg)"],
+            ["Boîte de vitesses", "Poids réel (kg)"],
+            ["Pneus", "4 kg par carte"],
           ]}
         />
+        <P>Le poids total de la benne détermine le nombre de cubes produits :</P>
+        <Formula>Cubes = floor(Poids_total_kg / 10)</Formula>
         <List
           items={[
-            <>Un moteur à 90 % d&apos;état rapporte 50 × 0,90 = {b("45 pièces")}.</>,
-            <>Une boîte à 80 % d&apos;état rapporte 30 × 0,80 = {b("24 pièces")}.</>,
-            <>Un train de pneus à 50 % de gomme restante rapporte 10 × 0,50 = {b("5 pièces")}.</>,
-            <>{b("Cartes bonus :")} tarif fixe de 1 pièce.</>,
-            <>{b("Pièces du Musée de la casse :")} rachat à 1 pièce.</>,
+            <>Moins de 10 kg : {b("0 cube")} ; de 10 à 19 kg : {b("1 cube")} ; de 20 à 29 kg : {b("2 cubes")}, etc.</>,
+            <>L&apos;état d&apos;usure ou de casse ne change pas le poids : 1 kg de métal reste 1 kg de métal.</>,
+            <>Le bouton de recyclage reste désactivé tant que la benne pèse moins de 10 kg.</>,
+            <>Confirmer le recyclage détruit définitivement toutes les cartes de la benne et crédite les cubes sur le profil.</>,
+            <>{b("Échanges :")} 25 cubes de ferraille pour un moteur reconditionné ou 25 cubes pour une boîte reconditionnée. La carte est garantie, de catégorie choisie et démarre à 0 run.</>,
           ]}
         />
       </Section>

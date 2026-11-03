@@ -31,53 +31,6 @@ test("grant_starter_kit : commun, 5 bonus, un pneu de chaque type, sans config",
   });
 });
 
-test("recycle_card : base × état restant, et seul l'emplacement recyclé est retiré de la config", async () => {
-  const fx = await withAdmin(async (c) => {
-    const user = await createPlayer(c, 0);
-    const deck = await makeDeck(c, user, "t_eng");
-    await c.query(
-      `insert into card_templates (code, category, name, rarity, architecture, power_hp, weight_kg, base_break_risk, wear_sensitivity)
-       values ('t_eng_worn', 'moteur', 'Moteur use', 'commune', '4 cylindres', 80, 90, 40, 10)
-       on conflict (code) do update set base_break_risk = 40, wear_sensitivity = 10`,
-    );
-    const worn = await giveCard(c, user, "t_eng_worn");
-    await c.query("update user_cards set runs_count = 2 where id = $1", [worn]);
-    await c.query("update user_cards set tire_wear = 40 where id = $1", [deck.tire]);
-    return { user, ...deck, worn };
-  });
-
-  const fresh = (await asUser(fx.user, (c) =>
-    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.engine]))).rows[0].r;
-  assert.equal(Number(fresh.coins), 50);
-
-  const worn = (await asUser(fx.user, (c) =>
-    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.worn]))).rows[0].r;
-  assert.equal(Number(worn.coins), 20);
-
-  const tire = (await asUser(fx.user, (c) =>
-    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.tire]))).rows[0].r;
-  assert.equal(Number(tire.coins), 4);
-
-  await withAdmin(async (c) => {
-    const left = await c.query("select id from user_cards where id = any($1::uuid[])", [[fx.engine, fx.worn, fx.tire]]);
-    assert.equal(left.rows.length, 0);
-    const decks = await c.query("select engine_card_id, gearbox_card_id, tire_card_id from user_decks where owner_id = $1", [fx.user]);
-    assert.equal(decks.rows.length, 1);
-    assert.equal(decks.rows[0].engine_card_id, null);
-    assert.equal(decks.rows[0].gearbox_card_id, fx.gearbox);
-    assert.equal(decks.rows[0].tire_card_id, null);
-    const coins = await c.query("select coins from profiles where id = $1", [fx.user]);
-    assert.equal(coins.rows[0].coins, 74);
-  });
-
-  await asUser(fx.user, (c) =>
-    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.gearbox]));
-  await withAdmin(async (c) => {
-    const decks = await c.query("select id from user_decks where owner_id = $1", [fx.user]);
-    assert.equal(decks.rows.length, 0);
-  });
-});
-
 test("create_listing retire uniquement la carte vendue de la config", async () => {
   const fx = await withAdmin(async (c) => {
     const user = await createPlayer(c, 0);
@@ -127,50 +80,26 @@ test("user_decks autorise une config partielle (1 ou 2 emplacements) et refuse u
   });
 });
 
-test("bonus : recyclage à 1 pièce, vente refusée", async () => {
+test("bonus : vente refusée et dépôt dans la benne impossible", async () => {
   const fx = await withAdmin(async (c) => {
     const user = await createPlayer(c, 0);
-    const recycle = await giveCard(c, user, "bonus_revision_express");
-    const sell = await giveCard(c, user, "bonus_vidange_boite");
-    return { user, recycle, sell };
+    const bonus = await giveCard(c, user, "bonus_vidange_boite");
+    return { user, bonus };
   });
-  const r = (await asUser(fx.user, (c) =>
-    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.recycle]))).rows[0].r;
-  assert.equal(Number(r.coins), 1);
   await expectError(
     fx.user,
-    (c) => c.query("select public.create_listing($1::uuid, $2::uuid, 10, false)", [fx.user, fx.sell]),
+    (c) => c.query("select public.create_listing($1::uuid, $2::uuid, 10, false)", [fx.user, fx.bonus]),
     "bonus_not_sellable",
   );
+  await expectError(
+    fx.user,
+    (c) => c.query("select public.recycle_bin_add($1::uuid, $2::uuid)", [fx.user, fx.bonus]),
+    "card_not_recyclable",
+  );
   await withAdmin(async (c) => {
-    const gone = await c.query("select id from user_cards where id = $1", [fx.recycle]);
-    assert.equal(gone.rows.length, 0);
-    const coins = await c.query("select coins from profiles where id = $1", [fx.user]);
-    assert.equal(coins.rows[0].coins, 1);
-    const still = await c.query("select is_listed from user_cards where id = $1", [fx.sell]);
+    const still = await c.query("select is_listed, in_recycle_bin from user_cards where id = $1", [fx.bonus]);
     assert.equal(still.rows[0].is_listed, false);
-  });
-});
-
-test("pièce détruite : recyclage à 1 pièce", async () => {
-  const fx = await withAdmin(async (c) => {
-    const user = await createPlayer(c, 0);
-    const engine = await giveCard(c, user, "t_eng");
-    const tire = await giveCard(c, user, "tire_slick");
-    await c.query("update user_cards set is_destroyed = true where id = any($1::uuid[])", [[engine, tire]]);
-    return { user, engine, tire };
-  });
-  const engine = (await asUser(fx.user, (c) =>
-    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.engine]))).rows[0].r;
-  const tire = (await asUser(fx.user, (c) =>
-    c.query("select public.recycle_card($1::uuid, $2::uuid) as r", [fx.user, fx.tire]))).rows[0].r;
-  assert.equal(Number(engine.coins), 1);
-  assert.equal(Number(tire.coins), 1);
-  await withAdmin(async (c) => {
-    const left = await c.query("select id from user_cards where id = any($1::uuid[])", [[fx.engine, fx.tire]]);
-    assert.equal(left.rows.length, 0);
-    const coins = await c.query("select coins from profiles where id = $1", [fx.user]);
-    assert.equal(coins.rows[0].coins, 2);
+    assert.equal(still.rows[0].in_recycle_bin, false);
   });
 });
 

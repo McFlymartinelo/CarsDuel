@@ -4,13 +4,12 @@ import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { ViewToggle, type CardViewMode } from "@/components/ViewToggle";
-import { RecycleDialog } from "@/components/garage/RecycleDialog";
 import { SellDialog } from "@/components/garage/SellDialog";
 import { ExtendWarrantyDialog } from "@/components/garage/ExtendWarrantyDialog";
-import { extendWarranty, recycleCard, repairCard } from "@/app/(game)/garage/actions";
+import { extendWarranty, repairCard } from "@/app/(game)/garage/actions";
 import { cancelListing, listCard } from "@/app/(game)/marketplace/actions";
 import { cardImageUrl } from "@/lib/card-images";
-import { recycleQuote, warrantyState } from "@/lib/game";
+import { warrantyState } from "@/lib/game";
 import type { Category, UserCard } from "@/lib/types";
 
 export const TABS: { key: string; label: string; category: Category; icon: LucideIcon }[] = [
@@ -21,6 +20,23 @@ export const TABS: { key: string; label: string; category: Category; icon: Lucid
 ];
 
 const PARTS: Category[] = ["moteur", "boite", "pneus"];
+
+/** Regroupe les cartes qui partagent un même état (les bonus n'ont pas d'état propre, les pneus sont regroupés à gomme égale). */
+type GroupedEntry = { card: UserCard; count: number };
+
+function groupCards(cards: UserCard[], keyOf: (card: UserCard) => string): GroupedEntry[] {
+  const groups = new Map<string, GroupedEntry>();
+  for (const card of cards) {
+    const key = keyOf(card);
+    const group = groups.get(key);
+    if (group) group.count += 1;
+    else groups.set(key, { card, count: 1 });
+  }
+  return [...groups.values()];
+}
+
+/** Gomme restante comparable : numeric PostgreSQL ("100.00") et number donnent la même clé. */
+const wearKey = (card: UserCard) => (card.tire_wear == null ? "sans-gomme" : Number(card.tire_wear).toFixed(2));
 
 const seg = (active: boolean) =>
   `inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -51,9 +67,31 @@ export function Inventory({
   const compact = view === "liste";
   const current = TABS.find((x) => x.key === tab) ?? TABS[0];
   const scrap = cards.filter((c) => c.is_destroyed && PARTS.includes(c.card_templates.category));
-  const rows = museum
+  const visible = museum
     ? scrap
     : cards.filter((c) => c.card_templates.category === current.category && !c.is_destroyed);
+  // Bonus : mêmes cartes interchangeables. Pneus : même modèle ET même gomme restante.
+  // Une carte en vente garde sa propre fiche (action « Retirer de la vente » liée à l'annonce).
+  const grouped = !museum && (current.category === "bonus" || current.category === "pneus");
+  const entries: GroupedEntry[] = grouped
+    ? groupCards(visible, (card) =>
+        current.category === "bonus"
+          ? card.template_id
+          : `${card.template_id}|${wearKey(card)}${card.is_listed ? `|${card.id}` : ""}`,
+      )
+    : visible.map((card) => ({ card, count: 1 }));
+
+  if (grouped) {
+    entries.sort((a, b) => {
+      if (current.category === "bonus") {
+        return b.count - a.count || a.card.card_templates.name.localeCompare(b.card.card_templates.name, "fr");
+      }
+      return (
+        a.card.card_templates.name.localeCompare(b.card.card_templates.name, "fr") ||
+        Number(b.card.tire_wear ?? 0) - Number(a.card.tire_wear ?? 0)
+      );
+    });
+  }
 
   return (
     <section className="min-w-0 space-y-3">
@@ -101,26 +139,48 @@ export function Inventory({
         </>
       )}
 
-      {museum && (
+      {grouped && visible.length > 0 && (
         <p className="text-sm text-zinc-400">
-          Les moteurs, boîtes et pneus détruits arrivent ici. Un moteur ou une boîte encore couvert par la garantie
-          constructeur peut être réparé ; sinon, chaque pièce se recycle pour 1 pièce.
+          {current.category === "pneus" ? (
+            <>
+              <span className="font-semibold text-zinc-200">{entries.length}</span> groupe{entries.length === 1 ? "" : "s"} ·{" "}
+              <span className="font-semibold text-zinc-200">{visible.length}</span> pneu{visible.length === 1 ? "" : "s"}.
+              Les pneus du même modèle avec la même gomme restante sont regroupés sous un badge{" "}
+              <span className="font-semibold text-amber-300">×N</span>.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-zinc-200">{entries.length}</span> modèle{entries.length === 1 ? "" : "s"} ·{" "}
+              <span className="font-semibold text-zinc-200">{visible.length}</span> carte{visible.length === 1 ? "" : "s"} bonus.
+              Les exemplaires identiques sont regroupés sous un badge <span className="font-semibold text-amber-300">×N</span>.
+            </>
+          )}
         </p>
       )}
 
-      {rows.length === 0 && (
+      {museum && (
+        <p className="text-sm text-zinc-400">
+          Les moteurs, boîtes et pneus détruits arrivent ici. Un moteur ou une boîte encore couvert par la garantie
+          constructeur peut être réparé ; sinon, déposez la pièce au{" "}
+          <Link href="/garage/recyclage" className="font-semibold text-amber-300 hover:text-amber-200">
+            centre de recyclage
+          </Link>{" "}
+          pour la transformer en cubes de ferraille.
+        </p>
+      )}
+
+      {entries.length === 0 && (
         <p className="rounded-xl border border-zinc-800 bg-[#0e1117] p-3 text-sm text-zinc-500">
           {museum ? "Aucune carte détruite." : "Aucune carte dans cette catégorie."}
         </p>
       )}
       <div className={compact ? "grid gap-2 xl:grid-cols-2" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
-        {rows.map((c) => {
+        {entries.map(({ card: c, count }) => {
           const t = c.card_templates;
-          const quote = recycleQuote(t, c);
           const warranty = warrantyState(t, c);
           const Card = compact ? CardRow : CardView;
           return (
-            <Card key={c.id} template={t} card={c} image={cardImageUrl(t)} tirePerfs={tirePerfs}>
+            <Card key={c.id} template={t} card={c} image={cardImageUrl(t)} tirePerfs={tirePerfs} quantity={count}>
               {c.is_listed && listings[c.id] && (
                 <ActionForm action={cancelListing} submitLabel="Retirer de la vente" variant="danger" className="flex">
                   <input type="hidden" name="listing_id" value={listings[c.id]} />
@@ -138,12 +198,11 @@ export function Inventory({
                 </ActionForm>
               ) : (
                 <div className="flex w-full flex-col gap-2">
-                  <div className="flex w-full items-center gap-2">
-                    {quote && (
-                      <RecycleDialog action={recycleCard} cardId={c.id} name={t.name} base={quote.base} pct={quote.pct} coins={quote.coins} kind={t.category} flat={quote.flat} scrap={quote.scrap} />
-                    )}
-                    {!c.is_destroyed && t.category !== "bonus" && <SellDialog action={listCard} cardId={c.id} name={t.name} />}
-                  </div>
+                  {!c.is_destroyed && t.category !== "bonus" && (
+                    <div className="flex w-full items-center gap-2">
+                      <SellDialog action={listCard} cardId={c.id} name={t.name} />
+                    </div>
+                  )}
                   {!museum && warranty?.extendable && (
                     <ExtendWarrantyDialog
                       action={extendWarranty}
@@ -152,6 +211,14 @@ export function Inventory({
                       remaining={warranty.remaining}
                       limit={warranty.limit}
                     />
+                  )}
+                  {c.is_destroyed && !warranty?.repairable && (
+                    <Link
+                      href="/garage/recyclage"
+                      className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-orange-500/60 px-3 text-sm font-semibold text-orange-300 hover:bg-orange-500/10"
+                    >
+                      Déposer au centre de recyclage
+                    </Link>
                   )}
                 </div>
               ))}

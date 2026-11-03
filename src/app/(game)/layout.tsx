@@ -26,6 +26,7 @@ export default async function GameLayout({ children }: { children: React.ReactNo
       <Nav
         username={user.username}
         coins={user.coins}
+        scrapCubes={user.scrap_cubes}
         xpWeek={Number(user.xp_week)}
         xpMonth={Number(user.xp_month)}
         pullsAvailable={user.last_daily_pull !== parisToday() || user.last_weekly_pull !== parisWeekStart()}
