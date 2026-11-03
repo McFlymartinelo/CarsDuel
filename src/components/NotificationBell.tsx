@@ -69,6 +69,13 @@ export function NotificationBell({ feed }: { feed: NotificationFeed }) {
             );
           })}
         </ul>
+        <Link
+          href="/compte#notifications"
+          className="mt-1 flex items-center gap-2 rounded-lg border-t border-zinc-800 px-2 pb-1 pt-2 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+        >
+          <Bell size={14} strokeWidth={1.9} />
+          Recevoir les alertes hors app
+        </Link>
       </div>
     </details>
   );

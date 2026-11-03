@@ -2,12 +2,18 @@ import { requireUser } from "@/lib/auth";
 import { parisToday, parisWeekStart } from "@/lib/format";
 import { getNotifications, touchQuest } from "@/lib/queries";
 import { settleLeaderboardRewards } from "@/lib/rewards";
+import { startPushWorker } from "@/lib/push-worker";
 import { Nav } from "@/components/Nav";
+import { PushSync } from "@/components/PushSync";
 import { signOut } from "@/app/auth/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function GameLayout({ children }: { children: React.ReactNode }) {
+  // Démarre le drain de l'outbox push au premier rendu authentifié (une seule
+  // fois par processus). Sans clés VAPID ou avec PUSH_WORKER=0 : no-op.
+  startPushWorker();
+
   const { user } = await requireUser();
   // Ces deux opérations ne dépendent pas l'une de l'autre : on les lance ensemble.
   // La lecture des notifications reste après le règlement des récompenses pour inclure les primes versées.
@@ -23,6 +29,7 @@ export default async function GameLayout({ children }: { children: React.ReactNo
 
   return (
     <>
+      <PushSync />
       <Nav
         username={user.username}
         coins={user.coins}

@@ -17,7 +17,8 @@
     "users:list": "node scripts/list-users.mjs",
     "users:set-password": "node scripts/set-password.mjs",
     "images:missing": "node scripts/images-missing.mjs",
-    "images:optimize": "node scripts/images-optimize.mjs"
+    "images:optimize": "node scripts/images-optimize.mjs",
+    "push:keys": "node scripts/generate-vapid-keys.mjs"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.3",
@@ -27,7 +28,8 @@
     "pg": "^8.23.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
@@ -36,6 +38,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.28",
     "sharp": "^0.35.5",

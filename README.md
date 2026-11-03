@@ -63,6 +63,22 @@ Limites assumées de ce lot :
 - **Production** : `AUTH_OTP_PEPPER` et `AUTH_OTP_JWT_SECRET` sont obligatoires (32+ caractères, valeurs de démonstration refusées). Si SMTP est absent ou échoue, l'action renvoie une erreur claire et **ne journalise jamais le code**.
 - **Développement** : sans SMTP, le code est affiché dans la console du serveur. Avec Mailpit (`SMTP_HOST=localhost`, `SMTP_PORT=1025`), les mails sont visibles dans son interface. `AUTH_OTP_ECHO=1` permet aussi d'afficher un bouton « Remplir » dans l'UI. `devOtp` n'est jamais renvoyé en production.
 
+## Notifications hors app (Web Push)
+Les alertes du jeu (offres reçues, ventes, offres acceptées/refusées, duels, demandes de duel, primes de classement) peuvent être poussées sur l'écran verrouillé, même application fermée.
+
+1. Générer les clés : `npm run push:keys`, puis reporter `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` et `VAPID_SUBJECT` dans `.env.local` (et en production).
+2. Appliquer la migration : `npm run db:migrate` (`push_subscriptions` + `push_outbox` + triggers métier).
+3. Redémarrer le serveur. Le worker intégré draine l'outbox toutes les 60 s (`PUSH_DISPATCH_INTERVAL_MS`).
+4. Dans **Profil → Notifications hors app**, activer les notifications sur chaque appareil.
+
+Détails :
+- L'outbox est alimentée par des triggers SQL (`offer_received`, `sale`, `offer_accepted`, `offer_rejected`, `duel_won`, `duel_lost`, `duel_request`, `payout`) : aucune action serveur à instrumenter. Seuls les joueurs ayant au moins un abonnement push génèrent une ligne.
+- Le worker intégré démarre au premier rendu authentifié et draine l'outbox toutes les 60 s. Si plusieurs instances tournent, `for update skip locked` évite les doublons.
+- Les abonnements sont stockés dans `push_subscriptions`, jamais exposés à `app_user` ; l'enregistrement passe par les RPC `upsert_push_subscription` / `delete_push_subscription`.
+- **iPhone** : le push n'existe que dans la PWA installée (iOS 16.4+) — Partager → Sur l'écran d'accueil.
+- Si le serveur n'est pas permanent, couper le worker (`PUSH_WORKER=0`) et appeler `POST /api/push/dispatch` depuis un cron avec `Authorization: Bearer $PUSH_DISPATCH_SECRET`.
+- `/api/push/vapid` et `/api/push/dispatch` sont publics vis-à-vis du middleware (le second est protégé par son secret) ; `/sw.js` est servi avec `Cache-Control: max-age=0`.
+
 ## Limites
 - **Connexion** : 20 tentatives par IP sur 15 min, et 5 échecs par e-mail sur 15 min. **Inscription** : 5 par heure et par IP. **OTP** : 8 envois et 20 vérifications par IP sur 15 min, plus un cooldown de 30 s par `(utilisateur, purpose)`. L'IP client est résolue depuis `x-forwarded-for` selon `TRUSTED_PROXY_COUNT` (nombre de reverse proxies de confiance) : le premier maillon n'est jamais utilisé, car il est forgeable. Derrière un seul proxy, définir `TRUSTED_PROXY_COUNT=1` (le dernier maillon est retenu). Sans configuration (`0` ou absent), l'en-tête est ignoré et l'IP vaut `unknown` : toutes les requêtes partagent alors le même compteur, donc configurez cette variable en production. Message unique en cas de blocage : « Trop de tentatives, réessayez plus tard. » Un login réussi efface les échecs de cet e-mail. L'inscription ne révèle pas si l'e-mail existe déjà ; le coût scrypt est constant (hash factice pour un e-mail inconnu).
 - **Duels** : attaques illimitées. Le fantôme est tiré au hasard parmi les configs éligibles. Défense : 5 récompenses par jour (Europe/Paris).
@@ -86,7 +102,7 @@ npx serve tools/dev-preview -l 4173
 Ouvrez ensuite `http://localhost:4173/?base=http://localhost:3000` (le paramètre `base` cible le serveur Next).
 
 ## Production
-`npm run build && npm start`, avec `DATABASE_URL`, `AUTH_OTP_PEPPER`, `AUTH_OTP_JWT_SECRET` et un SMTP (`SMTP_URL` ou `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`) définis, derrière HTTPS (cookie `secure` activé en production) et avec `TRUSTED_PROXY_COUNT` ajusté au nombre de reverse proxies. Les secrets OTP doivent faire 32 caractères minimum et ne jamais être committés.
+`npm run build && npm start`, avec `DATABASE_URL`, `AUTH_OTP_PEPPER`, `AUTH_OTP_JWT_SECRET`, un SMTP (`SMTP_URL` ou `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`) et, pour les notifications hors app, `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`, définis, derrière HTTPS (cookie `secure` activé en production, push uniquement en HTTPS hors localhost) et avec `TRUSTED_PROXY_COUNT` ajusté au nombre de reverse proxies. Les secrets OTP doivent faire 32 caractères minimum et ne jamais être committés.
 
 ## Sécurité des dépendances
 `npm audit --omit=dev` signale encore 2 vulnérabilités `postcss` embarquées par Next 15. La montée vers Next 16.4.3 a été tentée mais reportée (règles React Hooks 7 incompatibles avec des composants existants). Détail, mitigation et version cible : [SECURITY.md](SECURITY.md).

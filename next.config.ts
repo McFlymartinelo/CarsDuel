@@ -12,6 +12,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self'",
+  "worker-src 'self'",
   isProd ? "connect-src 'self'" : "connect-src 'self' ws:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -32,9 +33,18 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
-  serverExternalPackages: ["nodemailer", "jsonwebtoken"],
+  serverExternalPackages: ["nodemailer", "jsonwebtoken", "web-push"],
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      { source: "/:path*", headers: securityHeaders },
+    ];
   },
 };
 
