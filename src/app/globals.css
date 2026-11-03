@@ -170,31 +170,512 @@ html {
   to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
 }
 
-/* Duel : météo animée derrière la carte « conditions de piste » et course. */
-.weather-rain {
-  background-image: repeating-linear-gradient(105deg, transparent 0 14px, rgba(125, 211, 252, 0.22) 14px 15px);
-  background-size: 60px 60px;
-  animation: rain-fall 0.45s linear infinite;
+/* Duel : scène de piste (ciel animé, asphalte) puis course. */
+
+/* --- Ciel de la carte « conditions de piste » --- */
+.track-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.weather-sun {
-  background: radial-gradient(circle at 92% 8%, rgba(251, 191, 36, 0.35), transparent 55%);
-  animation: sun-pulse 2.4s ease-in-out infinite alternate;
+.track-sky.is-sun {
+  background:
+    radial-gradient(ellipse at 85% 0%, rgba(251, 191, 36, 0.2), transparent 55%),
+    linear-gradient(180deg, rgba(61, 42, 14, 0.55), rgba(10, 13, 20, 0.2) 62%, transparent 86%);
+}
+
+.track-sky.is-rain {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.16), transparent 60%),
+    linear-gradient(180deg, rgba(8, 30, 45, 0.85), rgba(9, 16, 24, 0.35) 60%, transparent 88%);
+}
+
+.track-sky.is-hot::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 55%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(251, 146, 60, 0.18), transparent 70%);
+}
+
+.rain-sheet {
+  position: absolute;
+  inset: -25% -8% 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 18%, #000 88%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 18%, #000 88%, transparent);
+}
+
+.rain-sheet-far {
+  background-image: repeating-linear-gradient(101deg, transparent 0 20px, rgba(186, 230, 253, 0.24) 20px 21px);
+  background-size: 64px 68px;
+  animation: rain-drift-far 0.8s linear infinite;
+}
+
+.rain-sheet-near {
+  background-image: repeating-linear-gradient(99deg, transparent 0 44px, rgba(125, 211, 252, 0.4) 44px 46px);
+  background-size: 130px 118px;
+  animation: rain-drift-near 0.36s linear infinite;
+}
+
+.rain-mist {
+  position: absolute;
+  inset: auto -10% 0;
+  height: 55%;
+  background: radial-gradient(120% 90% at 50% 100%, rgba(186, 230, 253, 0.24), transparent 70%);
+  animation: track-mist 5s ease-in-out infinite alternate;
+}
+
+.rain-bolt {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 68% -10%, rgba(224, 242, 254, 0.9), transparent 52%),
+    linear-gradient(180deg, rgba(224, 242, 254, 0.18), transparent 60%);
+  animation: rain-bolt 7.5s steps(1, end) infinite;
+}
+
+.sun-disc {
+  position: absolute;
+  top: -2.5rem;
+  right: 1.5rem;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, #fef3c7 0%, #fbbf24 38%, rgba(245, 158, 11, 0.55) 58%, transparent 72%);
+  filter: blur(1px);
+  animation: sun-breathe 4.5s ease-in-out infinite alternate;
+}
+
+.sun-halo {
+  position: absolute;
+  top: -6rem;
+  right: -5rem;
+  width: 18rem;
+  height: 18rem;
+  background: repeating-conic-gradient(from 0deg, rgba(251, 191, 36, 0.22) 0 3deg, transparent 3deg 15deg);
+  -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 10%, transparent 68%);
+  animation: sun-spin 70s linear infinite;
+}
+
+.heat-wave {
+  position: absolute;
+  inset: 42% 0 0;
+  background: repeating-linear-gradient(0deg, transparent 0 9px, rgba(255, 255, 255, 0.06) 9px 11px);
+  filter: blur(3px);
+  animation: heat-rise 2.8s linear infinite;
+}
+
+.dust {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(253, 230, 138, 0.55);
+}
+
+.dust-a {
+  top: 38%;
+  left: 12%;
+  box-shadow: 26px 8px 0 rgba(253, 230, 138, 0.25), 64px -6px 0 rgba(253, 230, 138, 0.35), 104px 12px 0 rgba(253, 230, 138, 0.2);
+  animation: dust-drift 11s linear infinite;
+}
+
+.dust-b {
+  top: 62%;
+  left: 40%;
+  box-shadow: 34px -10px 0 rgba(253, 230, 138, 0.2), 78px 6px 0 rgba(253, 230, 138, 0.3), 122px -4px 0 rgba(253, 230, 138, 0.18);
+  animation: dust-drift 15s linear infinite reverse;
+}
+
+/* --- Ruban d'asphalte au bas de la carte --- */
+.track-road {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3.5rem;
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #232a33, #0a0d12 72%);
+}
+
+.track-road-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 13px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32) 10%, rgba(255, 255, 255, 0.32) 90%, transparent);
+  box-shadow: 0 29px 0 rgba(255, 255, 255, 0.18);
+}
+
+.track-road-dashes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 26px;
+  height: 3px;
+  margin-top: -1.5px;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.45) 0 28px, transparent 28px 68px);
+  animation: road-dashes 1.1s linear infinite;
+}
+
+.track-road-sheen {
+  position: absolute;
+  inset: 0;
+}
+
+.track-road-sheen.is-wet {
+  background: linear-gradient(100deg, transparent 22%, rgba(125, 211, 252, 0.18) 42%, rgba(186, 230, 253, 0.28) 47%, transparent 62%);
+  background-size: 190% 100%;
+  animation: wet-sheen 3.6s linear infinite;
+}
+
+.track-road-sheen.is-dry {
+  background: linear-gradient(90deg, transparent 35%, rgba(255, 196, 120, 0.12) 50%, transparent 65%);
+  background-size: 160% 100%;
+  animation: dry-sheen 5s ease-in-out infinite alternate;
+}
+
+.track-line {
+  animation: track-line 0.45s ease-out both;
+}
+
+/* --- Scène de course --- */
+.race-weather {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.race-weather.is-wet {
+  background:
+    linear-gradient(180deg, rgba(8, 34, 52, 0.85), rgba(8, 13, 20, 0.2) 55%),
+    radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.18), transparent 65%);
+}
+
+.race-weather.is-wet::after {
+  content: "";
+  position: absolute;
+  inset: -20% -10% 0;
+  background-image: repeating-linear-gradient(101deg, transparent 0 30px, rgba(186, 230, 253, 0.16) 30px 31px);
+  background-size: 90px 90px;
+  animation: rain-drift-far 0.7s linear infinite;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 30%, transparent 85%);
+  mask-image: linear-gradient(180deg, transparent, #000 30%, transparent 85%);
+}
+
+.race-weather.is-dry {
+  background:
+    linear-gradient(180deg, rgba(60, 42, 16, 0.5), rgba(8, 12, 18, 0.2) 58%),
+    radial-gradient(ellipse at 82% 0%, rgba(251, 191, 36, 0.16), transparent 60%);
+}
+
+.race-weather.is-dry::after {
+  content: "";
+  position: absolute;
+  inset: 35% 0 0;
+  background: repeating-linear-gradient(0deg, transparent 0 10px, rgba(255, 255, 255, 0.05) 10px 12px);
+  filter: blur(3px);
+  animation: heat-rise 3s linear infinite;
+}
+
+.race-start-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 12%, rgba(52, 211, 153, 0.45), transparent 60%);
+  animation: race-start-flash 0.6s ease-out forwards;
 }
 
 .race-lane {
-  transition-property: width;
-  transition-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+  isolation: isolate;
+  background: #0a0d12;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
 }
 
-@keyframes rain-fall {
+.race-asphalt {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, #2a3039, #12161d 55%, #0a0d12);
+  opacity: 0.85;
+}
+
+.race-lane.is-winner {
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.35), inset 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.race-lane.is-winner .race-asphalt {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, #4a3510, #1c1608 55%, #0d0a05);
+}
+
+.race-dashes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 30px, transparent 30px 74px);
+  opacity: 0.6;
+}
+
+.race-dashes.is-running {
+  animation: race-dashes 0.55s linear infinite;
+}
+
+.race-wet {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(125, 211, 252, 0.1), transparent 45%, rgba(125, 211, 252, 0.06));
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.2);
+}
+
+.race-wet.is-running::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(100deg, transparent 0 26px, rgba(186, 230, 253, 0.14) 26px 27px);
+  background-size: 80px 80px;
+  animation: rain-drift-far 0.5s linear infinite;
+}
+
+.race-finish {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 13px;
+  background: repeating-conic-gradient(#e4e6eb 0 25%, #14181f 0 50%) 0 0 / 13px 13px;
+  opacity: 0.9;
+  box-shadow: -6px 0 14px rgba(0, 0, 0, 0.55);
+}
+
+.race-lane.is-winner .race-finish {
+  animation: race-finish-glow 1s ease-in-out infinite alternate;
+}
+
+.race-car-layer {
+  position: absolute;
+  inset: 0 42px 0 0;
+  z-index: 2;
+}
+
+.race-car {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition-property: left;
+  transition-timing-function: cubic-bezier(0.48, 0.02, 0.18, 1);
+  will-change: left;
+}
+
+.race-car-body {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+
+/* Le pictogramme Lucide regarde déjà vers la droite : aucune symétrie à appliquer. */
+.race-car-icon {
+  display: inline-block;
+  transform-origin: 50% 82%;
+}
+
+.race-car-icon > svg {
+  display: block;
+}
+
+.race-car-icon.is-launch {
+  animation: race-launch 0.62s cubic-bezier(0.18, 0.82, 0.28, 1) both;
+}
+
+.race-car-body.is-moving {
+  animation: race-bump 0.13s linear infinite alternate;
+}
+
+.race-wake {
+  position: absolute;
+  right: 78%;
+  bottom: -2px;
+  width: 40px;
+  height: 30px;
+  pointer-events: none;
+}
+
+.race-wake i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  opacity: 0;
+}
+
+.race-wake.is-wet i {
+  background: rgba(186, 230, 253, 0.65);
+  filter: blur(1px);
+}
+
+.race-wake.is-dry i {
+  width: 10px;
+  height: 10px;
+  background: rgba(196, 168, 130, 0.5);
+  filter: blur(1.5px);
+}
+
+.race-wake.is-on i {
+  animation: race-wake 0.6s ease-out infinite;
+}
+
+.race-speed {
+  position: absolute;
+  right: 100%;
+  top: 42%;
+  width: 34px;
+  height: 12px;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.5) 3px 4px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000);
+  mask-image: linear-gradient(90deg, transparent, #000);
+  animation: race-speed 0.32s linear infinite;
+}
+
+.race-smoke {
+  position: absolute;
+  left: 55%;
+  top: -4px;
+  width: 30px;
+  height: 30px;
+}
+
+.race-smoke i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.5);
+  filter: blur(3px);
+  animation: race-smoke 1.1s ease-out infinite;
+}
+
+/* --- Animations --- */
+@keyframes rain-drift-far {
   from { background-position: 0 0; }
-  to { background-position: -12px 60px; }
+  to { background-position: -26px 68px; }
 }
 
-@keyframes sun-pulse {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
+@keyframes rain-drift-near {
+  from { background-position: 0 0; }
+  to { background-position: -46px 118px; }
+}
+
+@keyframes track-mist {
+  from { opacity: 0.55; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(6px); }
+}
+
+@keyframes rain-bolt {
+  0%, 82%, 100% { opacity: 0; }
+  84% { opacity: 0.85; }
+  85% { opacity: 0.1; }
+  86% { opacity: 0.6; }
+  88% { opacity: 0; }
+}
+
+@keyframes sun-breathe {
+  from { opacity: 0.65; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes sun-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes heat-rise {
+  from { background-position: 0 0; }
+  to { background-position: 0 -44px; }
+}
+
+@keyframes dust-drift {
+  from { transform: translateX(-14px); }
+  to { transform: translateX(18px); }
+}
+
+@keyframes road-dashes {
+  from { background-position: 0 0; }
+  to { background-position: -68px 0; }
+}
+
+@keyframes wet-sheen {
+  from { background-position: 140% 0; }
+  to { background-position: -40% 0; }
+}
+
+@keyframes dry-sheen {
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
+}
+
+@keyframes track-line {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes race-start-flash {
+  from { opacity: 0.9; }
+  to { opacity: 0; }
+}
+
+@keyframes race-dashes {
+  from { background-position: 0 0; }
+  to { background-position: -74px 0; }
+}
+
+@keyframes race-finish-glow {
+  from { opacity: 0.75; }
+  to { opacity: 1; filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6)); }
+}
+
+@keyframes race-bump {
+  from { transform: translateY(-1.5px); }
+  to { transform: translateY(1.5px); }
+}
+
+/* Départ : léger cabrage puis stabilisation. */
+@keyframes race-launch {
+  0% { transform: rotate(0deg) translateY(0) scale(1); }
+  18% { transform: rotate(-7deg) translateY(-3px) scale(1.05); }
+  55% { transform: rotate(-2deg) translateY(-1px) scale(1.01); }
+  100% { transform: rotate(0deg) translateY(0) scale(1); }
+}
+
+@keyframes race-wake {
+  from { opacity: 0.85; transform: translate(0, 0) scale(0.7); }
+  to { opacity: 0; transform: translate(-26px, -14px) scale(1.5); }
+}
+
+@keyframes race-speed {
+  from { opacity: 0.8; transform: translateX(4px) scaleX(0.8); }
+  to { opacity: 0; transform: translateX(-16px) scaleX(1.3); }
+}
+
+@keyframes race-smoke {
+  from { opacity: 0.8; transform: translate(0, 0) scale(0.5); }
+  to { opacity: 0; transform: translate(-8px, -30px) scale(1.8); }
 }
 
 /* Roue OTP : arrivée, secousse d'erreur, validation émeraude. */
@@ -248,8 +729,11 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weather-rain, .weather-sun { animation: none; }
-  .race-lane { transition: none; }
+  .rain-sheet, .rain-mist, .rain-bolt, .sun-disc, .sun-halo, .heat-wave, .dust,
+  .track-road-dashes, .track-road-sheen, .track-line, .race-weather::after,
+  .race-start-flash, .race-dashes, .race-wet::after, .race-finish, .race-car-body,
+  .race-car-icon, .race-wake i, .race-speed, .race-smoke i { animation: none; }
+  .race-car { transition: none; }
   .draw-aura, .draw-shake, .draw-burst, .draw-spark { animation: none; }
   .card-flip { transition: none; }
   .duel-rise, .duel-from-left, .duel-from-right, .duel-verdict { animation: none; }
