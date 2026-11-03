@@ -202,7 +202,7 @@ export function CardDraw({
             disabled={advancing}
             className="min-h-12 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 px-6 font-display text-lg font-bold uppercase text-black shadow-[0_6px_24px_rgba(245,158,11,0.25)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
           >
-            {advancing ? "…" : faceUp ? (index + 1 < cards.length ? "Suivante" : "Terminer") : "Révéler"}
+            {faceUp ? (index + 1 < cards.length ? "Suivante" : "Terminer") : "Révéler"}
           </button>}
           <button type="button" onClick={onClose}
             className="min-h-12 rounded-xl border border-zinc-600 bg-[#11141a]/80 px-5 font-display text-base font-bold uppercase text-zinc-200 transition hover:border-zinc-400 hover:bg-zinc-800"

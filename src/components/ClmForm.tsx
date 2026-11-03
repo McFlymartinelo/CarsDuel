@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Trophy, X } from "lucide-react";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { ClmResult } from "@/components/ClmResult";
 import { Modal } from "@/components/Modal";
@@ -40,26 +40,34 @@ export function ClmForm({
   action,
   deckId,
   challenge,
-  config,
 }: {
   action: (prev: ActionState<ClmReport>, fd: FormData) => Promise<ActionState<ClmReport>>;
   deckId?: string;
   challenge: ClmChallenge;
-  config?: { engine: string; gearbox: string; tire: string; tireGum: number | null };
 }) {
-  const [state, formAction, pending] = useActionState(action, null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const armed = useRef(false);
+  const [state, setState] = useState<ActionState<ClmReport>>(null);
+  const lastState = useRef<ActionState<ClmReport>>(null);
   const [open, setOpen] = useState(false);
   const [showRace, setShowRace] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [slow, setSlow] = useState(false);
   const router = useRouter();
   const report = state?.ok ? state.data : undefined;
-  const waiting = pending || launching;
+  // Le loader suit la promesse de l'action, pas `pending` de useActionState :
+  // après un revalidatePath, React peut laisser `pending` bloqué à true alors
+  // que le tour est terminé et que le résultat est déjà revenu.
+  const waiting = launching;
 
+  // Filet de sécurité : si la requête ne revient jamais (réseau perdu, serveur muet),
+  // on laisse le joueur sortir de l'écran d'attente.
   useEffect(() => {
-    if (!pending) setLaunching(false);
-  }, [pending]);
+    if (!launching) {
+      setSlow(false);
+      return;
+    }
+    const id = window.setTimeout(() => setSlow(true), 15000);
+    return () => window.clearTimeout(id);
+  }, [launching]);
 
   // Au passage de minuit, le circuit et la météo changent : on recharge le défi.
   useEffect(() => {
@@ -72,11 +80,24 @@ export function ClmForm({
     return () => window.clearTimeout(id);
   }, [challenge.changes_at, router]);
 
-  function launch() {
+  async function launch() {
+    if (!deckId || launching) return;
     setShowRace(true);
     setLaunching(true);
-    armed.current = true;
-    formRef.current?.requestSubmit();
+    const fd = new FormData();
+    fd.set("deck_id", deckId);
+    try {
+      const next = await action(lastState.current, fd);
+      lastState.current = next;
+      setState(next);
+    } catch {
+      const failed: ActionState<ClmReport> = { ok: false, message: "Le tour n'a pas pu être lancé." };
+      lastState.current = failed;
+      setState(failed);
+    } finally {
+      // Toujours exécuté : l'écran d'attente ne peut plus rester bloqué.
+      setLaunching(false);
+    }
   }
 
   function close() {
@@ -94,12 +115,21 @@ export function ClmForm({
 
   const canReplay = Boolean(deckId) && !report?.brokenPart && !report?.tireDestroyed;
 
+  const personalBest = challenge.personal_best;
+  const recordMedal = personalBest
+    ? CLM_MEDALS.find((m) => personalBest.seconds <= challenge.circuit.medals_seconds[m.key])
+    : undefined;
+  const recordDate = personalBest
+    ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeZone: "Europe/Paris" }).format(new Date(personalBest.achieved_on))
+    : null;
+
   return (
     <>
       <button
         type="button"
         onClick={() => {
           setShowRace(false);
+          setState(null);
           setOpen(true);
         }}
         className={tileClass()}
@@ -112,38 +142,46 @@ export function ClmForm({
         />
       </button>
 
-      <form
-        ref={formRef}
-        action={formAction}
-        className="hidden"
-        onSubmit={(e) => {
-          if (armed.current) {
-            armed.current = false;
-            return;
-          }
-          e.preventDefault();
-        }}
-      >
-        <input type="hidden" name="deck_id" value={deckId ?? ""} />
-      </form>
-
       {open && (
         <Modal labelledBy="clm-dialog-title" size="lg" onClose={waiting ? undefined : close}>
           <h3 id="clm-dialog-title" className="sr-only">Contre-La-Montre solo</h3>
           {showRace ? (
-            waiting ? (
+            report ? (
+              <div className="space-y-4">
+                <ClmResult
+                  key={report.attemptId}
+                  r={report}
+                  busy={launching}
+                  onReplay={canReplay ? launch : undefined}
+                  onReplaceBrokenPart={report.brokenPart === "moteur" || report.brokenPart === "boite" ? replaceBrokenPart : undefined}
+                  onClose={close}
+                />
+                {launching && slow && (
+                  <p className="text-center text-xs text-zinc-500">
+                    Le serveur tarde à répondre.{" "}
+                    <button type="button" onClick={() => window.location.reload()} className="underline hover:text-zinc-300">
+                      Recharger la page
+                    </button>
+                  </p>
+                )}
+              </div>
+            ) : waiting ? (
               <div className="space-y-4 py-10 text-center">
                 <p className="font-display text-2xl font-bold uppercase text-amber-400">Tour lancé…</p>
                 <p className="text-sm text-zinc-400">Chronométrage en cours sur le circuit du jour.</p>
+                {slow && (
+                  <div className="space-y-2 border-t border-zinc-800 pt-4">
+                    <p className="text-xs text-zinc-500">Le serveur tarde à répondre. Votre tour est peut-être déjà enregistré.</p>
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="min-h-12 w-full rounded-xl border border-zinc-600 font-display text-base font-bold uppercase hover:bg-zinc-800"
+                    >
+                      Recharger la page
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : report ? (
-              <ClmResult
-                key={report.attemptId}
-                r={report}
-                onReplay={canReplay ? launch : undefined}
-                onReplaceBrokenPart={report.brokenPart === "moteur" || report.brokenPart === "boite" ? replaceBrokenPart : undefined}
-                onClose={close}
-              />
             ) : (
               <div className="space-y-4">
                 <p className="text-red-400">{state?.message ?? "Le tour n'a pas pu être lancé."}</p>
@@ -173,17 +211,20 @@ export function ClmForm({
                 </button>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-[1.35fr_1fr]">
-                <div className="rounded-xl border border-amber-500/40 bg-[#10131a] p-4">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Circuit du jour</p>
-                  <p className="mt-1 font-display text-2xl font-bold leading-tight text-amber-300">{challenge.circuit.name}</p>
-                  <p className="text-sm text-zinc-300">{challenge.circuit.profile}</p>
-                  <p className="mt-1 text-sm text-zinc-400">{formatDistance(challenge.circuit.distance_km)}</p>
+              <div className="rounded-xl border border-amber-500/40 bg-[#10131a] p-4">
+                <div className="grid gap-3 sm:grid-cols-[1.35fr_1fr]">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Circuit du jour</p>
+                    <p className="mt-1 font-display text-2xl font-bold leading-tight text-amber-300">{challenge.circuit.name}</p>
+                    <p className="mt-1 text-sm text-zinc-400">{formatDistance(challenge.circuit.distance_km)}</p>
+                  </div>
+                  <div className="sm:border-l sm:border-white/10 sm:pl-4">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Conditions de piste</p>
+                    <p className="mt-1 font-display text-xl font-bold leading-tight">{WEATHER_LABEL[challenge.weather]}</p>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-4">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Conditions de piste</p>
-                  <p className="font-display text-xl font-bold leading-tight">{WEATHER_LABEL[challenge.weather]}</p>
-                  <p className="mt-3 text-xs uppercase tracking-wide text-zinc-400">Rotation</p>
+                <div className="mt-3 border-t border-white/10 pt-3">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Rotation</p>
                   <p className="text-sm text-zinc-300">Changement du circuit à minuit</p>
                   <p className="text-sm text-zinc-400">
                     dans <ClmCountdown until={challenge.changes_at} />
@@ -205,21 +246,49 @@ export function ClmForm({
                         <div className="relative flex items-center gap-2">
                           <Image src={m.image} alt="" width={30} height={30} className="h-[30px] w-[30px] object-contain" />
                           <span className={`font-display font-bold uppercase ${m.text}`}>{m.label}</span>
-                          {claimed && <span className="ml-auto text-[10px] font-semibold uppercase text-emerald-400">Validée</span>}
+                          <span className={`ml-auto text-[10px] font-semibold uppercase ${claimed ? "text-emerald-400" : "text-zinc-500"}`}>
+                            {claimed ? "Validée" : "À viser"}
+                          </span>
                         </div>
-                        <p className="relative mt-2 font-display text-xl font-bold tabular-nums">{formatLapTime(challenge.circuit.medals_seconds[m.key])}</p>
-                        <p className="relative text-[11px] text-zinc-400">SP final ≥ {m.threshold} · +{m.coins} 🪙</p>
+                        <div className="relative mt-2 flex items-baseline justify-between gap-2">
+                          <p className="font-display text-xl font-bold tabular-nums">{formatLapTime(challenge.circuit.medals_seconds[m.key])}</p>
+                          <p className="font-display text-sm font-bold text-amber-300">+{m.coins} 🪙</p>
+                        </div>
+                        <p className="relative text-[11px] text-zinc-400">SP final ≥ {m.threshold}</p>
                       </div>
                     );
                   })}
                 </div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-3 py-2 text-sm">
+                  <span className="text-sky-300">Prime de participation</span>
+                  <span className="flex items-center gap-2">
+                    <span className="font-display font-bold text-amber-300">+{CLM_PARTICIPATION_COINS} 🪙</span>
+                    <span className={challenge.participation_claimed ? "text-emerald-400" : "text-zinc-400"}>
+                      {challenge.participation_claimed ? "Déjà remportée" : "Disponible"}
+                    </span>
+                  </span>
+                </div>
               </div>
 
-              {challenge.personal_best && (
-                <p className="rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-sm text-zinc-400">
-                  Votre record sur ce circuit :{" "}
-                  <span className="font-display font-bold tabular-nums text-zinc-200">{formatLapTime(challenge.personal_best.seconds)}</span>
-                </p>
+              {personalBest && (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-[#10131a] px-3 py-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-400/40 bg-amber-400/10 text-amber-300">
+                    <Trophy size={18} aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Votre record sur ce circuit</p>
+                    <p className="font-display text-xl font-bold leading-tight tabular-nums text-zinc-100">{formatLapTime(personalBest.seconds)}</p>
+                  </div>
+                  <div className="ml-auto flex flex-wrap items-center gap-2">
+                    {recordMedal && (
+                      <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold uppercase ${recordMedal.border} ${recordMedal.text}`}>
+                        <Image src={recordMedal.image} alt="" width={18} height={18} className="h-[18px] w-[18px] object-contain" />
+                        Niveau {recordMedal.label}
+                      </span>
+                    )}
+                    <span className="text-xs text-zinc-500">Réalisé le {recordDate}</span>
+                  </div>
+                </div>
               )}
 
               <div className="rounded-xl border-2 border-red-500/50 bg-red-950/30 p-3">
@@ -232,41 +301,6 @@ export function ClmForm({
                   décomptés à chaque tentative !
                 </p>
               </div>
-
-              <div className="rounded-xl border border-zinc-800 bg-black/20 p-3">
-                <p className="font-display text-sm font-bold uppercase tracking-wide text-zinc-300">Récompenses du jour</p>
-                <ul className="mt-2 grid gap-1 text-sm text-zinc-400 sm:grid-cols-2">
-                  {CLM_MEDALS.map((m) => {
-                    const claimed = challenge.claimed.includes(m.key);
-                    return (
-                      <li key={m.key} className="flex items-center justify-between gap-2">
-                        <span className={m.text}>Médaille {m.label}</span>
-                        <span className={claimed ? "text-emerald-400" : "text-zinc-500"}>{claimed ? "Déjà remportée" : "Disponible"}</span>
-                      </li>
-                    );
-                  })}
-                  <li className="flex items-center justify-between gap-2">
-                    <span className="text-sky-300">Prime de participation</span>
-                    <span className={challenge.participation_claimed ? "text-emerald-400" : "text-zinc-500"}>
-                      {challenge.participation_claimed ? "Déjà remportée" : `Disponible · +${CLM_PARTICIPATION_COINS} 🪙`}
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              {config && (
-                <div className="rounded-xl border border-zinc-800 bg-black/20 p-3 text-xs text-zinc-400">
-                  <p className="font-display text-sm font-bold uppercase tracking-wide text-zinc-300">Config engagée</p>
-                  <p className="mt-1 truncate">
-                    <span className="text-zinc-200">{config.engine}</span>
-                    <span className="mx-1 text-zinc-600">·</span>
-                    <span className="text-zinc-200">{config.gearbox}</span>
-                    <span className="mx-1 text-zinc-600">·</span>
-                    <span className="text-zinc-200">{config.tire}</span>
-                    {config.tireGum != null && <span> (gomme {config.tireGum} %)</span>}
-                  </p>
-                </div>
-              )}
 
               {!deckId && (
                 <p className="text-sm text-red-400">

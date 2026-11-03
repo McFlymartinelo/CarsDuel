@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { TileBody, tileClass } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
@@ -83,7 +83,10 @@ export function ChallengeList({
 }) {
   const [ask, setAsk] = useState<string | null>(null);
   const [hideResult, setHideResult] = useState(false);
-  const [state, formAction, pending] = useActionState(acceptDuel, null as ActionState<ArrangedPlay>);
+  const [state, setState] = useState<ActionState<ArrangedPlay>>(null);
+  const lastState = useRef<ActionState<ArrangedPlay>>(null);
+  const [pending, setPending] = useState(false);
+  const [slow, setSlow] = useState(false);
   const play = !hideResult && state?.ok ? state.data : undefined;
   const report: DuelReport | undefined = play?.kind === "duel" ? play.report : undefined;
   const forfeit = play?.kind === "forfeit" ? play : undefined;
@@ -93,6 +96,36 @@ export function ChallengeList({
   useEffect(() => {
     if (pending) setHideResult(false);
   }, [pending]);
+
+  // Filet de sécurité : si l'action ne revient jamais, on laisse sortir.
+  useEffect(() => {
+    if (!pending) {
+      setSlow(false);
+      return;
+    }
+    const id = window.setTimeout(() => setSlow(true), 15000);
+    return () => window.clearTimeout(id);
+  }, [pending]);
+
+  // L'attente suit la promesse de l'action, pas `pending` de useActionState :
+  // après un revalidatePath, React peut le laisser bloqué à true.
+  async function accept(challengeId: string) {
+    if (pending) return;
+    setPending(true);
+    const fd = new FormData();
+    fd.set("challenge_id", challengeId);
+    try {
+      const next = await acceptDuel(lastState.current, fd);
+      lastState.current = next;
+      setState(next);
+    } catch {
+      const failed: ActionState<ArrangedPlay> = { ok: false, message: "Le duel n'a pas pu être lancé." };
+      lastState.current = failed;
+      setState(failed);
+    } finally {
+      setPending(false);
+    }
+  }
 
   function close() {
     setAsk(null);
@@ -144,7 +177,21 @@ export function ChallengeList({
         <Modal labelledBy="accept-title" wide={Boolean(report)} onClose={pending ? undefined : close}>
           <h3 id="accept-title" className="sr-only">Accepter le duel</h3>
           {pending ? (
-            <p className="py-8 text-center font-display text-xl uppercase text-amber-300">Duel en cours…</p>
+            <div className="space-y-4 py-8 text-center">
+              <p className="font-display text-xl uppercase text-amber-300">Duel en cours…</p>
+              {slow && (
+                <div className="space-y-2 border-t border-zinc-800 pt-4">
+                  <p className="text-xs text-zinc-500">Le serveur tarde à répondre. Votre duel est peut-être déjà enregistré.</p>
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="min-h-12 w-full rounded-xl border border-zinc-600 font-display text-base font-bold uppercase hover:bg-zinc-800"
+                  >
+                    Recharger la page
+                  </button>
+                </div>
+              )}
+            </div>
           ) : report ? (
             <DuelCinema r={report} onClose={close} />
           ) : forfeit ? (
@@ -160,10 +207,13 @@ export function ChallengeList({
               <p className="text-sm text-zinc-300">Avez-vous bien vérifié votre configuration avant d&apos;accepter ?</p>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={close} className="min-h-12 rounded-xl border border-zinc-600 font-display text-lg font-bold uppercase hover:bg-zinc-800">Non</button>
-                <form action={formAction}>
-                  <input type="hidden" name="challenge_id" value={ask} />
-                  <button className="min-h-12 w-full rounded-xl bg-amber-500 font-display text-lg font-bold uppercase text-black hover:bg-amber-400">Oui</button>
-                </form>
+                <button
+                  type="button"
+                  onClick={() => accept(ask)}
+                  className="min-h-12 w-full rounded-xl bg-amber-500 font-display text-lg font-bold uppercase text-black hover:bg-amber-400"
+                >
+                  Oui
+                </button>
               </div>
             </div>
           ) : (

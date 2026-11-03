@@ -31,7 +31,7 @@ function TireRow({ type, bonusPct, malus, mod }: { type: string; bonusPct: numbe
 }
 
 /** Écran de résultat : piste, comparaison Vous / adversaire, verdict, actions. */
-export function DuelResult({ r, onReplay, onReplaceBrokenPart, onClose }: { r: DuelReport; onReplay?: () => void; onReplaceBrokenPart?: () => void; onClose: () => void }) {
+export function DuelResult({ r, busy = false, onReplay, onReplaceBrokenPart, onClose }: { r: DuelReport; busy?: boolean; onReplay?: () => void; onReplaceBrokenPart?: () => void; onClose: () => void }) {
   const engineBroke = r.brokenPart === "moteur";
   const gearboxBroke = r.brokenPart === "boite";
   const brokenLabel = engineBroke ? "le moteur" : gearboxBroke ? "la boîte" : "la pièce";
@@ -80,9 +80,10 @@ export function DuelResult({ r, onReplay, onReplaceBrokenPart, onClose }: { r: D
           <button
             type="button"
             onClick={onReplay}
-            className="min-h-14 rounded-xl bg-amber-500 px-2 text-center font-display text-base font-bold uppercase leading-tight text-black hover:bg-amber-400 sm:text-xl"
+            disabled={busy}
+            className="min-h-14 rounded-xl bg-amber-500 px-2 text-center font-display text-base font-bold uppercase leading-tight text-black hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60 sm:text-xl"
           >
-            Recommencer un duel
+            {busy ? "En course…" : "Recommencer un duel"}
           </button>
         )}
         {onReplaceBrokenPart && (

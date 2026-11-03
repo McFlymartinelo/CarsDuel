@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
@@ -23,30 +23,54 @@ export function DuelForm({
   tirePerfs?: TirePerf[];
   children?: React.ReactNode;
 }) {
-  const [state, formAction, pending] = useActionState(action, null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const armed = useRef(false);
+  const [state, setState] = useState<ActionState<DuelReport>>(null);
+  const lastState = useRef<ActionState<DuelReport>>(null);
   const [bonus, setBonus] = useState<UserCard | null>(null);
   const [open, setOpen] = useState(false);
   const [showRace, setShowRace] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [slow, setSlow] = useState(false);
   const router = useRouter();
   const report = state?.ok ? state.data : undefined;
-  const waiting = pending || launching;
+  // Le loader suit la promesse de l'action, pas `pending` de useActionState :
+  // après un revalidatePath, React peut laisser `pending` bloqué à true alors
+  // que le duel est terminé et que le résultat est déjà revenu.
+  const waiting = launching;
 
   useEffect(() => {
     if (state?.ok) setBonus(null);
   }, [state]);
 
+  // Filet de sécurité : si la requête ne revient jamais (réseau perdu, serveur muet),
+  // on laisse le joueur sortir de l'écran d'attente.
   useEffect(() => {
-    if (!pending) setLaunching(false);
-  }, [pending]);
+    if (!launching) {
+      setSlow(false);
+      return;
+    }
+    const id = window.setTimeout(() => setSlow(true), 15000);
+    return () => window.clearTimeout(id);
+  }, [launching]);
 
-  function launch() {
+  async function launch() {
+    if (!deckId || launching) return;
     setShowRace(true);
     setLaunching(true);
-    armed.current = true;
-    formRef.current?.requestSubmit();
+    const fd = new FormData();
+    fd.set("deck_id", deckId);
+    fd.set("bonus_id", bonus?.id ?? "");
+    try {
+      const next = await action(lastState.current, fd);
+      lastState.current = next;
+      setState(next);
+    } catch {
+      const failed: ActionState<DuelReport> = { ok: false, message: "Le duel n'a pas pu être lancé." };
+      lastState.current = failed;
+      setState(failed);
+    } finally {
+      // Toujours exécuté : l'écran d'attente ne peut plus rester bloqué.
+      setLaunching(false);
+    }
   }
 
   function close() {
@@ -70,42 +94,51 @@ export function DuelForm({
       <button
         type="button"
         disabled={!deckId}
-        onClick={() => { setShowRace(false); setOpen(true); }}
+        onClick={() => { setShowRace(false); setState(null); setOpen(true); }}
         className={tileClass()}
       >
         <TileBody title="Affronter au hasard" text="Défiez le fantôme d'un pilote" image="/duel/hasard.webp" />
       </button>
 
-      <form
-        ref={formRef}
-        action={formAction}
-        className="hidden"
-        onSubmit={(e) => {
-          if (armed.current) {
-            armed.current = false;
-            return;
-          }
-          e.preventDefault();
-        }}
-      >
-        <input type="hidden" name="deck_id" value={deckId ?? ""} />
-        <input type="hidden" name="bonus_id" value={bonus?.id ?? ""} />
-      </form>
-
       {open && (
         <Modal labelledBy="duel-dialog-title" wide onClose={waiting ? undefined : close}>
           <h3 id="duel-dialog-title" className="sr-only">Affronter au hasard</h3>
           {showRace ? (
-            waiting ? (
-              <p className="py-10 text-center font-display text-2xl font-bold uppercase text-amber-400">Course en cours…</p>
-            ) : report ? (
-              <DuelCinema
-                key={report.duelId}
-                r={report}
-                onReplay={deckId && !report.brokenPart ? launch : undefined}
-                onReplaceBrokenPart={report.brokenPart === "moteur" || report.brokenPart === "boite" ? replaceBrokenPart : undefined}
-                onClose={close}
-              />
+            report ? (
+              <div className="space-y-4">
+                <DuelCinema
+                  key={report.duelId}
+                  r={report}
+                  busy={launching}
+                  onReplay={deckId && !report.brokenPart ? launch : undefined}
+                  onReplaceBrokenPart={report.brokenPart === "moteur" || report.brokenPart === "boite" ? replaceBrokenPart : undefined}
+                  onClose={close}
+                />
+                {launching && slow && (
+                  <p className="text-center text-xs text-zinc-500">
+                    Le serveur tarde à répondre.{" "}
+                    <button type="button" onClick={() => window.location.reload()} className="underline hover:text-zinc-300">
+                      Recharger la page
+                    </button>
+                  </p>
+                )}
+              </div>
+            ) : waiting ? (
+              <div className="space-y-4 py-10 text-center">
+                <p className="font-display text-2xl font-bold uppercase text-amber-400">Course en cours…</p>
+                {slow && (
+                  <div className="space-y-2 border-t border-zinc-800 pt-4">
+                    <p className="text-xs text-zinc-500">Le serveur tarde à répondre. Votre duel est peut-être déjà enregistré.</p>
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="min-h-12 w-full rounded-xl border border-zinc-600 font-display text-base font-bold uppercase hover:bg-zinc-800"
+                    >
+                      Recharger la page
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="space-y-4">
                 <p className="text-red-400">{state?.message ?? "Le duel n'a pas pu être lancé."}</p>

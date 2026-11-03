@@ -62,11 +62,14 @@ function Stat({ label, value, hint, tone = "text-zinc-100" }: { label: string; v
 
 export function ClmResult({
   r,
+  busy = false,
   onReplay,
   onReplaceBrokenPart,
   onClose,
 }: {
   r: ClmReport;
+  /** Nouvelle tentative en cours : on garde le résultat affiché et on désactive les relances. */
+  busy?: boolean;
   onReplay?: () => void;
   onReplaceBrokenPart?: () => void;
   onClose: () => void;
@@ -207,9 +210,10 @@ export function ClmResult({
           <button
             type="button"
             onClick={onReplay}
-            className="min-h-14 rounded-xl bg-amber-500 px-2 text-center font-display text-base font-bold uppercase leading-tight text-black hover:bg-amber-400 sm:text-xl"
+            disabled={busy}
+            className="min-h-14 rounded-xl bg-amber-500 px-2 text-center font-display text-base font-bold uppercase leading-tight text-black hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60 sm:text-xl"
           >
-            Rejouer le tour
+            {busy ? "En course…" : "Rejouer le tour"}
           </button>
         )}
         {onReplaceBrokenPart && (
