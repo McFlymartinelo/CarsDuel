@@ -70,7 +70,7 @@ export default async function MarketplacePage({
 
   const card = (x: Listing, mode: CardViewMode, children: React.ReactNode, note?: React.ReactNode) =>
     mode === "liste" ? (
-      <CardRow key={x.id} template={x.user_cards.card_templates} card={x.user_cards} note={note}>
+      <CardRow key={x.id} template={x.user_cards.card_templates} card={x.user_cards} image={cardImageUrl(x.user_cards.card_templates)} note={note}>
         {children}
       </CardRow>
     ) : (

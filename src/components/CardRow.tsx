@@ -1,6 +1,5 @@
 import { Cog, Flag, ShieldCheck, Trophy } from "lucide-react";
 import { THEME } from "@/components/CardView";
-import { cardImageUrl } from "@/lib/card-images";
 import { CATEGORY_LABEL, RARITY_LABEL, TIRE_LABEL, TIRE_THEME, cardSummary } from "@/lib/format";
 import { warrantyState } from "@/lib/game";
 import type { CardTemplate, UserCard } from "@/lib/types";
@@ -28,7 +27,7 @@ export function CardRow({
   const rarity = template.rarity;
   const tire = template.category === "pneus" ? TIRE_THEME[template.tire_type ?? ""] : undefined;
   const theme = rarity ? THEME[rarity] : tire ?? THEME.neutre;
-  const img = image === undefined ? cardImageUrl(template) : image;
+  const img = image ?? null;
   const tag = rarity ? RARITY_LABEL[rarity] : template.category === "pneus" ? (TIRE_LABEL[template.tire_type ?? ""] ?? "Pneus") : null;
   const warranty = warrantyState(template, card);
 

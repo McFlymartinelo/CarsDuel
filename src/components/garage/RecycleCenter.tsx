@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -7,6 +10,7 @@ import {
   Cog,
   Disc,
   LayoutGrid,
+  List,
   Recycle,
   Settings2,
   TriangleAlert,
@@ -16,11 +20,10 @@ import {
 import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
-import { ViewToggle, type CardViewMode } from "@/components/ViewToggle";
+import type { CardViewMode } from "@/components/ViewToggle";
 import { RecycleExchangeTile } from "@/components/garage/RecycleExchangeTile";
 import { RecycleLaunch } from "@/components/garage/RecycleLaunch";
 import { addToRecycleBin, exchangeRecycledCard, removeFromRecycleBin } from "@/app/(game)/garage/actions";
-import { cardImageUrl } from "@/lib/card-images";
 import {
   formatCubes,
   formatKg,
@@ -48,6 +51,11 @@ const FILTERS: { key: RecycleFilter; label: string; icon: LucideIcon }[] = [
   { key: "detruites", label: "Cartes détruites", icon: TriangleAlert },
 ];
 
+const VIEWS: { key: CardViewMode; label: string; icon: LucideIcon }[] = [
+  { key: "cartes", label: "Cartes", icon: LayoutGrid },
+  { key: "liste", label: "Liste", icon: List },
+];
+
 const FILTER_CATEGORY: Partial<Record<RecycleFilter, Category>> = {
   moteurs: "moteur",
   boites: "boite",
@@ -63,19 +71,28 @@ const segment = (active: boolean) =>
 
 const countClass = (active: boolean) => (active ? "tabular-nums text-black/60" : "tabular-nums text-zinc-500");
 
-function emptyState(title: string, text: string, action?: { href: string; label: string }) {
+/** URL canonique du centre de recyclage (partage, rechargement). */
+const recycleHref = (tab: RecycleTab, filter: RecycleFilter, view: CardViewMode) => {
+  const params = new URLSearchParams({ tab });
+  if (tab === "inventaire") params.set("cat", filter);
+  if (view === "liste") params.set("vue", "liste");
+  return `/garage/recyclage?${params.toString()}`;
+};
+
+function emptyState(title: string, text: string, action?: { label: string; onClick: () => void }) {
   return (
     <div className="rounded-xl border border-dashed border-zinc-700 bg-[#0e1117] px-4 py-8 text-center">
       <Recycle size={34} strokeWidth={1.5} className="mx-auto text-zinc-600" />
       <p className="mt-3 font-display text-lg font-bold uppercase text-zinc-300">{title}</p>
       <p className="mx-auto mt-1 max-w-md text-sm text-zinc-500">{text}</p>
       {action && (
-        <Link
-          href={action.href}
+        <button
+          type="button"
+          onClick={action.onClick}
           className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-500/70 px-4 text-sm font-semibold text-amber-300 hover:bg-amber-500/10"
         >
           {action.label}
-        </Link>
+        </button>
       )}
     </div>
   );
@@ -97,17 +114,47 @@ export function RecycleCenter({
   cubes,
   cards,
   tirePerfs,
-  tab,
-  filter,
-  view,
+  images,
+  tab: initialTab,
+  filter: initialFilter,
+  view: initialView,
 }: {
   cubes: number;
   cards: UserCard[];
   tirePerfs: TirePerf[];
+  /** Visuel déjà résolu côté serveur (cardImageUrl lit le disque). */
+  images: Record<string, string | null>;
   tab: RecycleTab;
   filter: RecycleFilter;
   view: CardViewMode;
 }) {
+  // Toutes les données du centre sont déjà chargées : les onglets et filtres
+  // basculent localement. Une navigation RSC pour changer `?tab=` provoquait
+  // une attente serveur (et parfois l'annulation de la requête) au retour
+  // sur l'inventaire.
+  const [tab, setTab] = useState<RecycleTab>(initialTab);
+  const [filter, setFilter] = useState<RecycleFilter>(initialFilter);
+  const [view, setView] = useState<CardViewMode>(initialView);
+
+  const syncUrl = (nextTab: RecycleTab, nextFilter: RecycleFilter, nextView: CardViewMode) => {
+    window.history.replaceState(null, "", recycleHref(nextTab, nextFilter, nextView));
+  };
+
+  const selectTab = (next: RecycleTab) => {
+    setTab(next);
+    syncUrl(next, filter, view);
+  };
+
+  const selectFilter = (next: RecycleFilter) => {
+    setFilter(next);
+    syncUrl(tab, next, view);
+  };
+
+  const selectView = (next: CardViewMode) => {
+    setView(next);
+    syncUrl(tab, filter, next);
+  };
+
   const recyclable = cards
     .filter((c) => isRecyclableCategory(c.card_templates.category))
     .sort(
@@ -119,17 +166,6 @@ export function RecycleCenter({
   const binCards = recyclable.filter((c) => c.in_recycle_bin);
   const summary = recycleBinSummary(binCards);
   const compact = view === "liste";
-
-  const href = (overrides: { tab?: RecycleTab; cat?: RecycleFilter; vue?: CardViewMode } = {}) => {
-    const params = new URLSearchParams();
-    const nextTab = overrides.tab ?? tab;
-    const nextFilter = overrides.cat ?? filter;
-    const nextView = overrides.vue ?? view;
-    params.set("tab", nextTab);
-    if (nextTab === "inventaire") params.set("cat", nextFilter);
-    if (nextView === "liste") params.set("vue", "liste");
-    return `/garage/recyclage?${params.toString()}`;
-  };
 
   const filterCount = (key: RecycleFilter) => {
     if (key === "toutes") return inventoryCards.length;
@@ -187,10 +223,10 @@ export function RecycleCenter({
           const active = key === tab;
           const count = key === "inventaire" ? inventoryCards.length : key === "benne" ? binCards.length : null;
           return (
-            <Link
+            <button
               key={key}
-              href={href({ tab: key })}
-              scroll={false}
+              type="button"
+              onClick={() => selectTab(key)}
               aria-current={active ? "true" : undefined}
               className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 font-display text-sm font-semibold uppercase tracking-wide transition-colors ${
                 active ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
@@ -199,7 +235,7 @@ export function RecycleCenter({
               <Icon size={17} strokeWidth={2} className="shrink-0" />
               <span className="truncate">{label}</span>
               {count !== null && <span className={countClass(active)}>{count}</span>}
-            </Link>
+            </button>
           );
         })}
       </nav>
@@ -213,24 +249,40 @@ export function RecycleCenter({
                 Moteurs, boîtes et pneus, neufs, usés ou détruits. Une carte déposée quitte votre inventaire actif.
               </p>
             </div>
-            <ViewToggle current={view} hrefFor={(mode) => href({ vue: mode })} />
+            <nav className="inline-flex gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
+              {VIEWS.map(({ key, label, icon: Icon }) => {
+                const active = key === view;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => selectView(key)}
+                    aria-current={active ? "true" : undefined}
+                    className={segment(active)}
+                  >
+                    <Icon size={15} strokeWidth={2} />
+                    {label}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
           <nav className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer l'inventaire recyclable">
             {FILTERS.map(({ key, label, icon: Icon }) => {
               const active = key === filter;
               return (
-                <Link
+                <button
                   key={key}
-                  href={href({ cat: key })}
-                  scroll={false}
+                  type="button"
+                  onClick={() => selectFilter(key)}
                   aria-current={active ? "true" : undefined}
                   className={segment(active)}
                 >
                   <Icon size={15} strokeWidth={2} className={key === "detruites" ? "text-red-400" : undefined} />
                   {label}
                   <span className={countClass(active)}>{filterCount(key)}</span>
-                </Link>
+                </button>
               );
             })}
           </nav>
@@ -239,7 +291,7 @@ export function RecycleCenter({
             ? emptyState(
                 "Aucune carte à recycler",
                 "Ce filtre ne contient aucune carte. Les cartes en vente sont exclues de la benne.",
-                filter !== "toutes" ? { href: href({ cat: "toutes" }), label: "Voir toutes les cartes" } : undefined,
+                filter !== "toutes" ? { label: "Voir toutes les cartes", onClick: () => selectFilter("toutes") } : undefined,
               )
             : (
               <div className={gridClass}>
@@ -247,7 +299,7 @@ export function RecycleCenter({
                   const t = c.card_templates;
                   const weight = recycleCardWeight(t);
                   return (
-                    <Card key={c.id} template={t} card={c} image={cardImageUrl(t)} tirePerfs={tirePerfs}>
+                    <Card key={c.id} template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs}>
                       <div className="flex w-full flex-col gap-2">
                         <p className="flex items-center justify-between gap-2 text-xs text-zinc-400">
                           <span className="inline-flex items-center gap-1">
@@ -300,7 +352,14 @@ export function RecycleCenter({
             ? emptyState(
                 "La benne est vide",
                 "Déposez un moteur, une boîte ou des pneus depuis l'inventaire du centre de recyclage.",
-                { href: href({ tab: "inventaire", cat: "toutes" }), label: "Ouvrir l'inventaire" },
+                {
+                  label: "Ouvrir l'inventaire",
+                  onClick: () => {
+                    setFilter("toutes");
+                    setTab("inventaire");
+                    syncUrl("inventaire", "toutes", view);
+                  },
+                },
               )
             : (
               <div className={gridClass}>
@@ -308,7 +367,7 @@ export function RecycleCenter({
                   const t = c.card_templates;
                   const weight = recycleCardWeight(t);
                   return (
-                    <Card key={c.id} template={t} card={c} image={cardImageUrl(t)} tirePerfs={tirePerfs}>
+                    <Card key={c.id} template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs}>
                       <div className="flex w-full flex-col gap-2">
                         <p className="flex items-center justify-between gap-2 text-xs text-zinc-400">
                           <span className="inline-flex items-center gap-1">

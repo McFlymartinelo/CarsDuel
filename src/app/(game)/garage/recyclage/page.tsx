@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
-import { loadGaragePage } from "@/lib/queries";
+import { loadRecycleCenterPage } from "@/lib/queries";
 import { viewMode } from "@/components/ViewToggle";
+import { cardImageUrl } from "@/lib/card-images";
 import {
   RecycleCenter,
   type RecycleFilter,
@@ -22,13 +23,18 @@ export default async function RecycleCenterPage({
 }) {
   const { tab, cat, vue } = await searchParams;
   const { user } = await requireUser();
-  const { cards, modifiers } = await loadGaragePage(user.id);
+  const { cards, modifiers } = await loadRecycleCenterPage(user.id);
+
+  // Les visuels sont résolus ici : cardImageUrl lit le disque (server-only).
+  const images: Record<string, string | null> = {};
+  for (const card of cards) images[card.id] = cardImageUrl(card.card_templates);
 
   return (
     <RecycleCenter
       cubes={user.scrap_cubes}
       cards={cards}
       tirePerfs={modifiers}
+      images={images}
       tab={oneOf(tab, TABS, "inventaire")}
       filter={oneOf(cat, FILTERS, "toutes")}
       view={viewMode(vue)}

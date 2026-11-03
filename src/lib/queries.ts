@@ -181,6 +181,24 @@ export const loadGaragePage = (uid: string) =>
     )).rows,
   }));
 
+/**
+ * Centre de recyclage : uniquement les cartes recyclables (moteurs, boîtes,
+ * pneus) hors annonces, plus les modificateurs pneus. Évite de charger tout
+ * l'inventaire (bonus, decks, annonces) pour une page qui n'en a pas besoin.
+ */
+export const loadRecycleCenterPage = (uid: string) =>
+  withUser(uid, async (c) => ({
+    cards: (await c.query<UserCard>(
+      `${CARD_SELECT}
+        where uc.owner_id = $1
+          and not uc.is_listed
+          and t.category in ('moteur', 'boite', 'pneus')
+        order by uc.acquired_at desc`,
+      [uid],
+    )).rows,
+    modifiers: await qModifiers(c),
+  }));
+
 export interface PullRow {
   source: string;
   acquired_at: string;
