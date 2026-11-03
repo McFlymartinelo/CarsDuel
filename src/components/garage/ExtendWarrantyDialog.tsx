@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { ShieldPlus } from "lucide-react";
 import { ActionForm } from "@/components/ActionForm";
 import { Modal } from "@/components/Modal";
 import type { ActionState } from "@/lib/types";
 
+const openBtn =
+  "inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-sky-300 transition hover:border-sky-400 hover:bg-sky-500/20 hover:text-sky-200 active:scale-95";
 const btn =
   "flex min-h-11 flex-1 items-center justify-center rounded-lg border border-zinc-600 px-3 py-1.5 text-sm font-medium text-zinc-200 hover:bg-zinc-800 sm:min-h-10";
 
@@ -26,7 +29,8 @@ export function ExtendWarrantyDialog({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={btn}>
+      <button type="button" onClick={() => setOpen(true)} className={openBtn}>
+        <ShieldPlus size={13} strokeWidth={2.5} aria-hidden />
         Étendre la garantie
       </button>
       {open && (

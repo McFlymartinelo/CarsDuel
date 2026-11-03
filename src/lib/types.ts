@@ -306,6 +306,8 @@ export interface DrawnCard {
   rarity: Rarity | null;
   tireType: string | null;
   image: string | null;
+  /** Caractéristiques affichées sous le nom lors de la révélation. */
+  details?: string[];
 }
 
 /** Prix de référence d'un modèle : moyenne des dernières ventes (vue market_price_ref). */

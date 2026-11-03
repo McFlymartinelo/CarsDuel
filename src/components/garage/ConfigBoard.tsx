@@ -42,9 +42,6 @@ export function ConfigBoard({
         </div>
         <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
       </div>
-      {engine?.is_destroyed && (
-        <p className="rounded-lg border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">Moteur cassé. Recyclage possible pour 1 pièce, dans le garage.</p>
-      )}
       {gearbox?.is_destroyed && (
         <p className="rounded-lg border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">Boîte cassée. Recyclage possible pour 1 pièce, dans le garage.</p>
       )}

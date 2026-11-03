@@ -68,6 +68,9 @@ function Face({ card }: { card: DrawnCard }) {
         <div className="my-4 h-40" />
       )}
       <h3 className="font-display text-2xl font-bold uppercase leading-tight text-white">{card.name}</h3>
+      {card.details && card.details.length > 0 && (
+        <p className="mt-2 text-xs leading-relaxed text-zinc-400">{card.details.join(" · ")}</p>
+      )}
       {badge && <p className={`mt-auto pt-4 font-display text-lg font-semibold uppercase ${tire?.accent ?? "text-amber-300"}`}>{badge}</p>}
     </div>
   );
