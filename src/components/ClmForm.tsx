@@ -255,7 +255,10 @@ export function ClmForm({
                           <p className="font-display text-xl font-bold tabular-nums">{formatLapTime(challenge.circuit.medals_seconds[m.key])}</p>
                           <p className="font-display text-sm font-bold text-amber-300">+{m.coins} 🪙</p>
                         </div>
-                        <p className="relative text-[11px] text-zinc-400">SP final ≥ {m.threshold}</p>
+                        <div className="relative mt-1 flex items-center justify-between gap-2">
+                          <p className="text-[11px] text-zinc-400">SP final ≥ {m.threshold}</p>
+                          <span className="rounded-md bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">+{m.coins} XP</span>
+                        </div>
                       </div>
                     );
                   })}
@@ -264,6 +267,7 @@ export function ClmForm({
                   <span className="text-sky-300">Prime de participation</span>
                   <span className="flex items-center gap-2">
                     <span className="font-display font-bold text-amber-300">+{CLM_PARTICIPATION_COINS} 🪙</span>
+                    <span className="rounded-md bg-sky-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-sky-300">+{CLM_PARTICIPATION_COINS} XP</span>
                     <span className={challenge.participation_claimed ? "text-emerald-400" : "text-zinc-400"}>
                       {challenge.participation_claimed ? "Déjà remportée" : "Disponible"}
                     </span>

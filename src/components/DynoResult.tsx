@@ -215,6 +215,7 @@ export function DynoResult({
                 </div>
                 <p className="mt-1 font-display text-sm font-bold tabular-nums">{n(thresholds[m.key], 0)} SP</p>
                 <p className="text-[11px] font-semibold text-amber-300">+{m.coins} 🪙</p>
+                <p className="text-[11px] font-semibold text-sky-300">+{m.coins} XP</p>
               </div>
             );
           })}
@@ -260,6 +261,8 @@ export function DynoResult({
           <span className="text-emerald-400">0 % usure · 0 % casse</span>
         </p>
       </div>
+
+      <p className="text-center font-display text-lg font-bold text-sky-300">Total XP récupérés : +{n(r.coins, 0)} XP</p>
 
       <div className={onReplay ? "grid grid-cols-2 gap-3" : ""}>
         {onReplay && (

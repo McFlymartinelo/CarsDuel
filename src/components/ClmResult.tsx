@@ -181,6 +181,7 @@ export function ClmResult({
                   </div>
                   <p className="mt-1 font-display text-sm font-bold tabular-nums">{formatLapTime(medalTargets[m.key])}</p>
                   <p className="text-[11px] font-semibold text-amber-300">+{m.coins} 🪙</p>
+                  <p className="text-[11px] font-semibold text-sky-300">+{m.coins} XP</p>
                   <p className="text-[10px] text-zinc-500">SP ≥ {m.threshold}</p>
                 </div>
               );
@@ -235,6 +236,8 @@ export function ClmResult({
         )}
         {r.tireDestroyed && <p className="mt-2 text-red-300">Vos pneus sont morts : changez-les avant de relancer.</p>}
       </div>
+
+      <p className="text-center font-display text-lg font-bold text-sky-300">Total XP récupérés : +{n(r.coins, 0)} XP</p>
 
       <div className={onReplay || onReplaceBrokenPart ? "grid grid-cols-2 gap-3" : ""}>
         {onReplay && (
