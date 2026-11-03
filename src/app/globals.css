@@ -740,6 +740,87 @@ html {
   .clm-chrono-locked, .clm-medal-pop { animation: none; }
   .filter-sheet-in, .filter-backdrop-in { animation: none; }
   .otp-wheel-arrive, .otp-wheel-shake, .otp-wheel-success, .otp-success-burst, .otp-success-halo { animation: none; }
+  .podium-label, .podium-wow, .podium-trait, .podium-gold-glow, .podium-halo, .podium-sparkle, .podium-shine, .podium-ripple, .podium-flash { animation: none; }
+}
+
+/* Podium du classement : entrée échelonnée, trait qui pousse, lueur de la marche 1 et étincelles. */
+.podium-label {
+  animation: podium-label-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) var(--podium-delay, 0s) both;
+}
+
+.podium-trait {
+  transform-origin: top;
+  animation: podium-grow 0.5s ease-out calc(var(--podium-delay, 0s) + 0.25s) both;
+}
+
+.podium-gold-glow {
+  animation: podium-gold-glow 2.4s ease-in-out infinite;
+}
+
+.podium-halo {
+  animation: sun-breathe 3.2s ease-in-out infinite alternate;
+}
+
+.podium-sparkle {
+  animation: podium-twinkle 2.4s ease-in-out var(--podium-delay, 0s) infinite both;
+}
+
+.podium-wow {
+  animation: podium-wow 0.9s cubic-bezier(0.2, 1.2, 0.3, 1) var(--podium-delay, 0s) both;
+}
+
+.podium-flash {
+  animation: podium-flash 1s ease-out var(--podium-delay, 0s) both;
+}
+
+.podium-shine {
+  animation: podium-shine 6s ease-in-out 3s infinite;
+}
+
+.podium-ripple {
+  animation: podium-ripple 1.6s ease-out var(--podium-delay, 0s) 2 both;
+}
+
+@keyframes podium-label-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes podium-grow {
+  from { transform: scaleY(0); }
+  to { transform: none; }
+}
+
+@keyframes podium-gold-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.35)); }
+  50% { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.7)); }
+}
+
+@keyframes podium-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+
+@keyframes podium-shine {
+  0% { transform: translateX(-100%) skewX(-20deg); }
+  35%, 100% { transform: translateX(250%) skewX(-20deg); }
+}
+
+@keyframes podium-ripple {
+  from { opacity: 0.9; transform: scale(0.4); }
+  to { opacity: 0; transform: scale(1.8); }
+}
+
+@keyframes podium-wow {
+  0% { opacity: 0; transform: translateY(-48px) scale(1.5); filter: blur(6px); }
+  55% { opacity: 1; transform: translateY(6px) scale(0.94); filter: blur(0); }
+  75% { transform: translateY(-3px) scale(1.04); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes podium-flash {
+  from { opacity: 1; transform: scale(0.3); }
+  to { opacity: 0; transform: scale(2.2); }
 }
 
 /* Boutons du garage : même langage visuel que les cartes (pierre sombre, filets orange lumineux, coins marqués). */
