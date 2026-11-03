@@ -6,7 +6,13 @@ import { withUser } from "@/lib/db";
 import { callRpc, invalidate, optStr, str } from "@/lib/rpc";
 import { rpcErrorMessage } from "@/lib/errors";
 import { toDrawn } from "@/lib/reveal";
-import type { ActionState, CardTemplate, DrawnCard } from "@/lib/types";
+import {
+  RECYCLE_EXCHANGE_TIERS,
+  type RecycleExchangeCategory,
+  type RecycleExchangeResult,
+  type RecycleExchangeTier,
+} from "@/lib/recycle";
+import type { ActionState, CardTemplate, DrawnCard, Rarity } from "@/lib/types";
 
 async function drawnFromIds(ids: string[]): Promise<DrawnCard[]> {
   if (ids.length === 0) return [];
@@ -91,25 +97,43 @@ export async function processRecycleBin(_prev: ActionState, _fd: FormData): Prom
 }
 
 export async function exchangeRecycledCard(
-  _prev: ActionState<{ cards: DrawnCard[] }>,
+  _prev: ActionState<RecycleExchangeResult>,
   fd: FormData,
-): Promise<ActionState<{ cards: DrawnCard[] }>> {
-  const category = str(fd, "category");
+): Promise<ActionState<RecycleExchangeResult>> {
+  const tier = str(fd, "tier") as RecycleExchangeTier;
+  if (!Object.hasOwn(RECYCLE_EXCHANGE_TIERS, tier)) return { ok: false, message: "Palier de tirage invalide." };
+
+  const category = str(fd, "category") as RecycleExchangeCategory;
   if (category !== "moteur" && category !== "boite") return { ok: false, message: "Choisissez un moteur ou une boîte." };
 
-  const res = await callRpc<{ card_id: string; category: string }>(
-    "select public.recycle_exchange($1::uuid, $2::text) as r",
-    (id) => [id, category],
+  const res = await callRpc<{
+    card_id: string;
+    category: RecycleExchangeCategory;
+    tier: RecycleExchangeTier;
+    rarity: Rarity | null;
+    cost: number;
+    cubes_left: number;
+  }>(
+    "select public.recycle_exchange_tiered($1::uuid, $2::text, $3::text) as r",
+    (id) => [id, tier, category],
     ["/", ...RECYCLE_CENTER_PATHS],
   );
   if (!res?.ok) return { ok: false, message: res?.message };
 
   const cardId = res.data?.card_id;
   const cards = cardId ? await drawnFromIds([cardId]) : [];
+  const cost = Number(res.data?.cost ?? RECYCLE_EXCHANGE_TIERS[tier].cost);
   return {
     ok: true,
-    message: `Échange effectué : -25 cubes de ferraille.`,
-    data: { cards },
+    message: `Échange ${RECYCLE_EXCHANGE_TIERS[tier].shortLabel} effectué : -${cost} cubes de ferraille.`,
+    data: {
+      cards,
+      cubesLeft: Number(res.data?.cubes_left ?? 0),
+      cost,
+      tier,
+      category,
+      rarity: res.data?.rarity ?? null,
+    },
   };
 }
 

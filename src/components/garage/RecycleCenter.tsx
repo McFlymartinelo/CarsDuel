@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -21,14 +21,13 @@ import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
 import type { CardViewMode } from "@/components/ViewToggle";
-import { RecycleExchangeTile } from "@/components/garage/RecycleExchangeTile";
+import { RecycleExchangeTiers } from "@/components/garage/RecycleExchangeTiers";
 import { RecycleLaunch } from "@/components/garage/RecycleLaunch";
 import { addToRecycleBin, exchangeRecycledCard, removeFromRecycleBin } from "@/app/(game)/garage/actions";
 import {
   formatCubes,
   formatKg,
   isRecyclableCategory,
-  RECYCLE_EXCHANGE_COST,
   recycleBinSummary,
   recycleCardWeight,
 } from "@/lib/recycle";
@@ -135,6 +134,10 @@ export function RecycleCenter({
   const [tab, setTab] = useState<RecycleTab>(initialTab);
   const [filter, setFilter] = useState<RecycleFilter>(initialFilter);
   const [view, setView] = useState<CardViewMode>(initialView);
+  // Solde local : le débit est reflété immédiatement (header de page) en attendant
+  // le rafraîchissement RSC déclenché par la Server Action.
+  const [cubeBalance, setCubeBalance] = useState(cubes);
+  useEffect(() => setCubeBalance(cubes), [cubes]);
 
   const syncUrl = (nextTab: RecycleTab, nextFilter: RecycleFilter, nextView: CardViewMode) => {
     window.history.replaceState(null, "", recycleHref(nextTab, nextFilter, nextView));
@@ -208,7 +211,7 @@ export function RecycleCenter({
           <div className="mt-1 flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/40 bg-black/55 px-2.5 py-1 font-display text-sm font-semibold text-orange-200">
               <Boxes size={16} strokeWidth={2.1} />
-              {formatCubes(cubes)}
+              {formatCubes(cubeBalance)}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-600 bg-black/45 px-2.5 py-1 text-sm text-zinc-300">
               <Recycle size={15} strokeWidth={2} />
@@ -399,20 +402,21 @@ export function RecycleCenter({
             <div>
               <h2 className="font-display text-2xl font-bold uppercase">Atelier de reconditionnement</h2>
               <p className="max-w-2xl text-sm text-zinc-400">
-                Échangez {RECYCLE_EXCHANGE_COST} cubes de ferraille contre une pièce mécanique aléatoire de la catégorie
-                choisie. La carte est garantie et arrive avec 0 run.
+                Choisissez un palier, puis la catégorie de la pièce. Chaque tirage suit sa propre table de rareté et
+                produit une carte neuve, garantie et à 0 run.
               </p>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/40 bg-orange-500/5 px-2.5 py-1 font-display text-sm font-semibold text-orange-200">
               <Boxes size={16} strokeWidth={2.1} />
-              {formatCubes(cubes)} disponible{cubes === 1 ? "" : "s"}
+              {formatCubes(cubeBalance)} disponible{cubeBalance === 1 ? "" : "s"}
             </span>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <RecycleExchangeTile category="moteur" cubes={cubes} action={exchangeRecycledCard} />
-            <RecycleExchangeTile category="boite" cubes={cubes} action={exchangeRecycledCard} />
-          </div>
+          <RecycleExchangeTiers
+            cubes={cubeBalance}
+            action={exchangeRecycledCard}
+            onCubesChange={setCubeBalance}
+          />
         </section>
       )}
     </section>

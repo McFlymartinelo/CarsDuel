@@ -10,6 +10,10 @@ const processBin = (uid) =>
   asUser(uid, (c) => c.query("select public.recycle_bin_process($1::uuid) as r", [uid])).then((r) => r.rows[0].r);
 const exchange = (uid, category) =>
   asUser(uid, (c) => c.query("select public.recycle_exchange($1::uuid, $2::text) as r", [uid, category])).then((r) => r.rows[0].r);
+const exchangeTiered = (uid, tier, category) =>
+  asUser(uid, (c) =>
+    c.query("select public.recycle_exchange_tiered($1::uuid, $2::text, $3::text) as r", [uid, tier, category]),
+  ).then((r) => r.rows[0].r);
 
 before(async () => {
   await withAdmin(async (c) => {
@@ -193,6 +197,68 @@ test("échanges : 25 cubes = 1 carte neuve de la catégorie choisie, 0 run", asy
     }
     const tx = await c.query("select amount, reason from scrap_cube_transactions where user_id = $1 order by created_at", [user]);
     assert.deepEqual(tx.rows.map((x) => [x.amount, x.reason]), [[-25, "recycle_exchange"], [-25, "recycle_exchange"]]);
+  });
+});
+
+test("échanges à paliers : coût, catégorie et solde débité", async () => {
+  const user = await withAdmin((c) => createPlayer(c, 0));
+  await withAdmin((c) => c.query("update profiles set scrap_cubes = 175 where id = $1", [user]));
+
+  const standard = await exchangeTiered(user, "standard", "moteur");
+  assert.equal(standard.tier, "standard");
+  assert.equal(standard.category, "moteur");
+  assert.equal(Number(standard.cost), 25);
+  assert.equal(Number(standard.cubes_left), 150);
+
+  const ameliore = await exchangeTiered(user, "ameliore", "boite");
+  assert.equal(ameliore.tier, "ameliore");
+  assert.equal(ameliore.category, "boite");
+  assert.equal(Number(ameliore.cost), 50);
+  assert.equal(Number(ameliore.cubes_left), 100);
+
+  const prestige = await exchangeTiered(user, "prestige", "moteur");
+  assert.equal(prestige.tier, "prestige");
+  assert.equal(prestige.category, "moteur");
+  assert.equal(Number(prestige.cost), 100);
+  assert.equal(Number(prestige.cubes_left), 0);
+
+  await expectError(
+    user,
+    (c) => c.query("select public.recycle_exchange_tiered($1::uuid, 'standard', 'moteur')", [user]),
+    "insufficient_scrap_cubes",
+  );
+  await expectError(
+    user,
+    (c) => c.query("select public.recycle_exchange_tiered($1::uuid, 'inconnu', 'moteur')", [user]),
+    "invalid_tier",
+  );
+  await expectError(
+    user,
+    (c) => c.query("select public.recycle_exchange_tiered($1::uuid, 'standard', 'pneus')", [user]),
+    "invalid_category",
+  );
+
+  await withAdmin(async (c) => {
+    for (const draw of [standard, ameliore, prestige]) {
+      const card = (await c.query(
+        `select uc.runs_count, uc.source, t.category
+           from user_cards uc join card_templates t on t.id = uc.template_id
+          where uc.id = $1`,
+        [draw.card_id],
+      )).rows[0];
+      assert.equal(card.runs_count, 0);
+      assert.equal(card.source, "recycle_exchange");
+      assert.equal(card.category, draw.category);
+    }
+    const tx = await c.query(
+      "select amount, reason from scrap_cube_transactions where user_id = $1 order by created_at",
+      [user],
+    );
+    assert.deepEqual(tx.rows.map((x) => [x.amount, x.reason]), [
+      [-25, "recycle_exchange"],
+      [-50, "recycle_exchange"],
+      [-100, "recycle_exchange"],
+    ]);
   });
 });
 

@@ -333,7 +333,7 @@ export default function RulesPage() {
             <>L&apos;état d&apos;usure ou de casse ne change pas le poids : 1 kg de métal reste 1 kg de métal.</>,
             <>Le bouton de recyclage reste désactivé tant que la benne pèse moins de 10 kg.</>,
             <>Confirmer le recyclage détruit définitivement toutes les cartes de la benne et crédite les cubes sur le profil.</>,
-            <>{b("Échanges :")} 25 cubes de ferraille pour un moteur reconditionné ou 25 cubes pour une boîte reconditionnée. La carte est garantie, de catégorie choisie et démarre à 0 run.</>,
+            <>{b("Échanges :")} trois paliers de tirage contre des cubes de ferraille — Standard (25 cubes), Amélioré (50 cubes) et Prestige (100 cubes). Chaque palier affiche sa table de rareté ; la pièce obtenue est neuve (100 % garantie, 0 run), de la catégorie choisie (moteur ou boîte) et rejoint directement l&apos;inventaire.</>,
           ]}
         />
       </Section>
