@@ -13,6 +13,8 @@ import type {
   ClmReport,
   DuelOutcome,
   DuelReport,
+  DynoMedal,
+  DynoReport,
   Weather,
 } from "@/lib/types";
 
@@ -328,6 +330,123 @@ export async function launchClm(_prev: ActionState<ClmReport>, fd: FormData): Pr
   // Pièces, usure, casse, record et médailles ont changé : on rafraîchit l'UI.
   invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/garage/trophees", "/duel"]);
   return { ok: true, data: buildClmReport(outcome) };
+}
+
+interface DynoOutcome {
+  attempt_id: string;
+  day: string;
+  weather: Weather;
+  config_id: string;
+  config_name: string;
+  sp_final: number;
+  score_meca: number;
+  previous_best: number | null;
+  personal_best: number;
+  is_new_record: boolean;
+  medal: DynoMedal | null;
+  new_medals: DynoMedal[];
+  medals_coins: number;
+  coins: number;
+  claimed: DynoMedal[];
+  tire_type: string;
+  tire_gum: number;
+  tire_bonus_pct: number;
+  tire_malus: number;
+  tire_mod: number;
+  engine_name: string;
+  gearbox_name: string;
+  tire_name: string;
+  power_hp: number;
+  engine_weight_kg: number;
+  gearbox_weight_kg: number;
+  shift_time_ms: number;
+}
+
+function buildDynoReport(o: DynoOutcome): DynoReport {
+  return {
+    attemptId: o.attempt_id,
+    day: o.day,
+    weather: o.weather,
+    configId: o.config_id,
+    configName: o.config_name,
+    spFinal: o.sp_final,
+    scoreMeca: o.score_meca,
+    previousBest: o.previous_best,
+    personalBest: o.personal_best,
+    isNewRecord: o.is_new_record,
+    medal: o.medal,
+    newMedals: o.new_medals ?? [],
+    medalsCoins: o.medals_coins,
+    coins: o.coins,
+    claimed: o.claimed ?? [],
+    tireType: o.tire_type,
+    tireGum: o.tire_gum,
+    tireBonusPct: o.tire_bonus_pct,
+    tireMalus: o.tire_malus,
+    tireMod: o.tire_mod,
+    engineName: o.engine_name,
+    gearboxName: o.gearbox_name,
+    tireName: o.tire_name,
+    powerHp: o.power_hp,
+    engineWeightKg: o.engine_weight_kg,
+    gearboxWeightKg: o.gearbox_weight_kg,
+    shiftTimeMs: o.shift_time_ms,
+  };
+}
+
+/** Passage au banc : aucun risque, aucune usure, seules les contraintes du jour comptent. */
+export async function launchDyno(_prev: ActionState<DynoReport>, fd: FormData): Promise<ActionState<DynoReport>> {
+  const deckId = str(fd, "deck_id");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deckId)) {
+    return { ok: false, message: "Votre configuration n'est plus disponible. Équipez un moteur, une boîte et des pneus avant de lancer le banc." };
+  }
+  const { user } = await requireUser();
+  const { rows: configs } = await withUser(user.id, (c) =>
+    c.query<{
+      engine_missing: boolean;
+      gearbox_missing: boolean;
+      tire_missing: boolean;
+      engine_destroyed: boolean;
+      gearbox_destroyed: boolean;
+      tire_destroyed: boolean;
+    }>(
+      `select d.engine_card_id is null as engine_missing,
+              d.gearbox_card_id is null as gearbox_missing,
+              d.tire_card_id is null as tire_missing,
+              coalesce(ce.is_destroyed, false) as engine_destroyed,
+              coalesce(cg.is_destroyed, false) as gearbox_destroyed,
+              coalesce(ct.is_destroyed, false) as tire_destroyed
+         from user_decks d
+         left join user_cards ce on ce.id = d.engine_card_id
+         left join user_cards cg on cg.id = d.gearbox_card_id
+         left join user_cards ct on ct.id = d.tire_card_id
+        where d.id = $1::uuid and d.owner_id = $2`,
+      [deckId, user.id],
+    ),
+  );
+  const config = configs[0];
+  if (!config) return { ok: false, message: "Configuration introuvable. Vérifiez votre garage avant de relancer." };
+  if (config.engine_missing || config.gearbox_missing || config.tire_missing) {
+    return { ok: false, message: "Configuration incomplète : équipez un moteur, une boîte et des pneus." };
+  }
+  if (config.engine_destroyed) return { ok: false, message: "Votre moteur est détruit. Équipez-en un autre avant de lancer le banc." };
+  if (config.gearbox_destroyed) return { ok: false, message: "Votre boîte est détruite. Équipez-en une autre avant de lancer le banc." };
+  if (config.tire_destroyed) return { ok: false, message: "Vos pneus sont détruits. Équipez-en d'autres avant de lancer le banc." };
+
+  let outcome: DynoOutcome | undefined;
+  try {
+    const { rows } = await withUser(user.id, (c) =>
+      c.query<{ r: DynoOutcome }>("select public.execute_dyno($1::uuid, $2::uuid) as r", [user.id, deckId]),
+    );
+    outcome = rows[0]?.r;
+  } catch (e) {
+    return { ok: false, message: rpcErrorMessage(e) };
+  }
+  if (!outcome) return { ok: false, message: "Le banc d'essai n'a pas renvoyé de résultat." };
+
+  // Pièces, record et médailles ont changé : on rafraîchit l'UI.
+  invalidate(["/", "/garage", "/garage/inventaire", "/garage/casse", "/duel"]);
+  return { ok: true, data: buildDynoReport(outcome) };
 }
 
 export async function proposeDuel(_prev: ActionState<{ username: string }>, fd: FormData): Promise<ActionState<{ username: string }>> {

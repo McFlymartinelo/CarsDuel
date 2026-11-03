@@ -62,6 +62,9 @@ const MESSAGES: Record<string, string> = {
   collector_challenge_unavailable: "Ce défi n'est pas disponible dans le catalogue actuel.",
   collector_challenge_not_done: "Ce défi n'est pas encore terminé.",
   collector_challenge_already_claimed: "La récompense de ce défi a déjà été réclamée.",
+  dyno_constraint_failed: "Votre configuration ne respecte pas toutes les contraintes du banc d'essai du jour.",
+  dyno_no_config: "Le catalogue des défis du banc d'essai est vide.",
+  dyno_unknown_constraint: "Contrainte de banc d'essai inconnue.",
 };
 
 type PgErr = { message?: string; code?: string; stack?: string };

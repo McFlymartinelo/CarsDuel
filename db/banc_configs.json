@@ -1,0 +1,150 @@
+[
+  {
+    "id": "dyno_free_run",
+    "name": "Banc d'Essai Libre",
+    "description": "Aucune contrainte. Trouvez la meilleure synergie pour la météo du jour.",
+    "constraints": [],
+    "medals_sp": { "bronze": 120, "silver": 190, "gold": 270 }
+  },
+  {
+    "id": "dyno_tire_route",
+    "name": "Spécification Pneus Route",
+    "description": "Pneus Route obligatoires.",
+    "constraints": [
+      { "type": "tire_type", "value": "Route" }
+    ],
+    "medals_sp": { "bronze": 90, "silver": 135, "gold": 180 }
+  },
+  {
+    "id": "dyno_tire_sport",
+    "name": "Spécification Pneus Sport",
+    "description": "Pneus Sport obligatoires.",
+    "constraints": [
+      { "type": "tire_type", "value": "Sport" }
+    ],
+    "medals_sp": { "bronze": 100, "silver": 150, "gold": 210 }
+  },
+  {
+    "id": "dyno_tire_pluie",
+    "name": "Spécification Pneus Pluie",
+    "description": "Pneus Pluie obligatoires.",
+    "constraints": [
+      { "type": "tire_type", "value": "Pluie" }
+    ],
+    "medals_sp": { "bronze": 95, "silver": 145, "gold": 200 }
+  },
+  {
+    "id": "dyno_max_power_120",
+    "name": "Défi Petites Cylindrées",
+    "description": "Puissance moteur limitée à 120 ch maximum.",
+    "constraints": [
+      { "type": "max_power_hp", "value": 120 }
+    ],
+    "medals_sp": { "bronze": 80, "silver": 105, "gold": 130 }
+  },
+  {
+    "id": "dyno_max_power_200",
+    "name": "Défi Moins de 200 Chevaux",
+    "description": "Puissance moteur limitée à 200 ch maximum.",
+    "constraints": [
+      { "type": "max_power_hp", "value": 200 }
+    ],
+    "medals_sp": { "bronze": 95, "silver": 135, "gold": 175 }
+  },
+  {
+    "id": "dyno_max_weight_total",
+    "name": "Chasse au Poids Global",
+    "description": "Poids total (moteur + boîte) limité à 190 kg maximum.",
+    "constraints": [
+      { "type": "max_weight_total_kg", "value": 190 }
+    ],
+    "medals_sp": { "bronze": 105, "silver": 150, "gold": 205 }
+  },
+  {
+    "id": "dyno_max_engine_weight",
+    "name": "Moteur Compact",
+    "description": "Poids du moteur seul limité à 130 kg maximum.",
+    "constraints": [
+      { "type": "max_engine_weight_kg", "value": 130 }
+    ],
+    "medals_sp": { "bronze": 95, "silver": 140, "gold": 190 }
+  },
+  {
+    "id": "dyno_max_gearbox_weight",
+    "name": "Boîte Poids Plume",
+    "description": "Poids de la boîte seule limité à 45 kg maximum.",
+    "constraints": [
+      { "type": "max_gearbox_weight_kg", "value": 45 }
+    ],
+    "medals_sp": { "bronze": 95, "silver": 140, "gold": 190 }
+  },
+  {
+    "id": "dyno_manual_shift",
+    "name": "Boîte Mécanique Traditionnelle",
+    "description": "Boîte de vitesses avec temps de passage de 250 ms ou plus.",
+    "constraints": [
+      { "type": "min_shift_time_ms", "value": 250 }
+    ],
+    "medals_sp": { "bronze": 100, "silver": 155, "gold": 215 }
+  },
+  {
+    "id": "dyno_combo_sport_shift150",
+    "name": "Tourisme Sportif",
+    "description": "Pneus Sport obligatoires ET boîte avec temps de passage de 150 ms ou plus.",
+    "constraints": [
+      { "type": "tire_type", "value": "Sport" },
+      { "type": "min_shift_time_ms", "value": 150 }
+    ],
+    "medals_sp": { "bronze": 100, "silver": 150, "gold": 205 }
+  },
+  {
+    "id": "dyno_combo_route_power150",
+    "name": "Citadine Quotidienne",
+    "description": "Pneus Route obligatoires ET puissance moteur limitée à 150 ch maximum.",
+    "constraints": [
+      { "type": "tire_type", "value": "Route" },
+      { "type": "max_power_hp", "value": 150 }
+    ],
+    "medals_sp": { "bronze": 85, "silver": 115, "gold": 145 }
+  },
+  {
+    "id": "dyno_combo_pluie_shift200",
+    "name": "Pluie & Boîte Standard",
+    "description": "Pneus Pluie obligatoires ET boîte avec temps de passage de 200 ms ou plus.",
+    "constraints": [
+      { "type": "tire_type", "value": "Pluie" },
+      { "type": "min_shift_time_ms", "value": 200 }
+    ],
+    "medals_sp": { "bronze": 95, "silver": 140, "gold": 190 }
+  },
+  {
+    "id": "dyno_combo_power160_weight180",
+    "name": "Équilibre Poids / Puissance",
+    "description": "Puissance limitée à 160 ch max ET poids total (moteur + boîte) limité à 180 kg max.",
+    "constraints": [
+      { "type": "max_power_hp", "value": 160 },
+      { "type": "max_weight_total_kg", "value": 180 }
+    ],
+    "medals_sp": { "bronze": 90, "silver": 125, "gold": 160 }
+  },
+  {
+    "id": "dyno_combo_engweight120_sport",
+    "name": "Agilité & Gomme Sport",
+    "description": "Poids moteur limité à 120 kg max ET pneus Sport obligatoires.",
+    "constraints": [
+      { "type": "max_engine_weight_kg", "value": 120 },
+      { "type": "tire_type", "value": "Sport" }
+    ],
+    "medals_sp": { "bronze": 95, "silver": 135, "gold": 175 }
+  },
+  {
+    "id": "dyno_combo_boxweight45_manual",
+    "name": "Transmission Épurée",
+    "description": "Poids de boîte limité à 45 kg max ET temps de passage de 250 ms ou plus.",
+    "constraints": [
+      { "type": "max_gearbox_weight_kg", "value": 45 },
+      { "type": "min_shift_time_ms", "value": 250 }
+    ],
+    "medals_sp": { "bronze": 95, "silver": 140, "gold": 190 }
+  }
+]

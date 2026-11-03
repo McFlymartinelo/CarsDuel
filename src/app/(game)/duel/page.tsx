@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { DailyQuests } from "@/components/DailyQuests";
 import { DuelForm } from "@/components/DuelForm";
 import { ClmForm } from "@/components/ClmForm";
+import { DynoForm } from "@/components/DynoForm";
 import { ChallengeList, ProposeDuel } from "@/components/OrganizedDuels";
 import { ConfigBoard } from "@/components/garage/ConfigBoard";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
@@ -10,8 +11,8 @@ import { type SlotKey } from "@/components/garage/SlotTabs";
 import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
 import { parsePage } from "@/lib/pagination";
-import { DUEL_PAGE_SIZE, getDailyQuests, loadClmChallenge, loadDuelPage, loadOrganizedChallenges } from "@/lib/queries";
-import { launchClm, launchDuel } from "./actions";
+import { DUEL_PAGE_SIZE, getDailyQuests, loadClmChallenge, loadDuelPage, loadDynoChallenge, loadOrganizedChallenges } from "@/lib/queries";
+import { launchClm, launchDuel, launchDyno } from "./actions";
 
 export const metadata = { title: "Jouer — CarsDuel" };
 
@@ -22,7 +23,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
   const page = parsePage(pageParam);
   const nextPage = parsePage(page + 1);
   const { user } = await requireUser();
-  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized, clm] = await Promise.all([
+  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized, clm, dyno] = await Promise.all([
     loadDuelPage(user.id, page),
     getDailyQuests(user.id).catch((e) => {
       console.error("défis indisponibles :", e);
@@ -34,6 +35,10 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
     }),
     loadClmChallenge(user.id).catch((e) => {
       console.error("contre-la-montre indisponible :", e);
+      return null;
+    }),
+    loadDynoChallenge(user.id).catch((e) => {
+      console.error("banc d'essai indisponible :", e);
       return null;
     }),
   ]);
@@ -85,16 +90,16 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
             action={launchClm}
             deckId={playable ? config?.id : undefined}
             challenge={clm}
-            config={
-              engine && gearbox && tire
-                ? {
-                    engine: engine.card_templates.name,
-                    gearbox: gearbox.card_templates.name,
-                    tire: tire.card_templates.name,
-                    tireGum: tire.tire_wear,
-                  }
-                : undefined
-            }
+          />
+        )}
+        {dyno && (
+          <DynoForm
+            action={launchDyno}
+            deckId={playable ? config?.id : undefined}
+            challenge={dyno}
+            engine={engine}
+            gearbox={gearbox}
+            tire={tire}
           />
         )}
         <DailyQuests state={quests} />

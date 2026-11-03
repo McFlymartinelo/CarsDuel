@@ -5,12 +5,13 @@ import type { CatalogQuery } from "@/lib/catalog-filters";
 import { LISTING_ORDER_SQL } from "@/lib/catalog-sort";
 import { parsePage } from "@/lib/pagination";
 import { cleanSearch, isReferenceSearch } from "@/lib/search";
-import { nextParisMidnight } from "@/lib/format";
+import { nextParisMidnight, nextUtcMidnight } from "@/lib/format";
 import type { DailyQuestState } from "@/lib/quests";
 import type {
   CardTemplate,
   ClmChallenge,
   DuelRow,
+  DynoChallenge,
   Listing,
   MarketHistoryRow,
   NotificationFeed,
@@ -256,6 +257,14 @@ export const loadClmChallenge = (uid: string) =>
     const row = (await c.query<{ r: ClmChallenge }>("select public.my_clm_today($1::uuid) as r", [uid])).rows[0]?.r;
     if (!row) return null;
     return { ...row, changes_at: nextParisMidnight() };
+  });
+
+/** Banc d'essai : défi et météo du jour, meilleur SP personnel et médailles déjà validées. */
+export const loadDynoChallenge = (uid: string) =>
+  withUser(uid, async (c) => {
+    const row = (await c.query<{ r: DynoChallenge }>("select public.my_dyno_today($1::uuid) as r", [uid])).rows[0]?.r;
+    if (!row) return null;
+    return { ...row, changes_at: nextUtcMidnight() };
   });
 
 /** Marketplace : annonces filtrées (page), offres, inventaire et pseudos des vendeurs. */

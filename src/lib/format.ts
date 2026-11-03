@@ -251,6 +251,10 @@ function zonedToUtc(y: number, m: number, d: number, h: number, min: number, s: 
 /** Prochain minuit à Paris. */
 export const nextParisMidnight = (now = new Date()) => shiftParisDay(1, now).toISOString();
 
+/** Prochain minuit UTC (rotation du Banc d'essai). */
+export const nextUtcMidnight = (now = new Date()) =>
+  new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)).toISOString();
+
 /** Prochain lundi 00:00 à Paris. */
 export function nextParisMonday(now = new Date()): string {
   const [y, m, d] = parisTodayParts(now);

@@ -222,6 +222,74 @@ export interface ClmReport {
   tireName: string;
 }
 
+export type DynoMedal = "bronze" | "silver" | "gold";
+
+/** Contrainte simple d'un défi du Banc d'essai. */
+export type DynoConstraint =
+  | { type: "tire_type"; value: string }
+  | { type: "max_power_hp"; value: number }
+  | { type: "max_weight_total_kg"; value: number }
+  | { type: "max_engine_weight_kg"; value: number }
+  | { type: "max_gearbox_weight_kg"; value: number }
+  | { type: "min_shift_time_ms"; value: number };
+
+export interface DynoConfig {
+  id: string;
+  name: string;
+  description: string;
+  constraints: DynoConstraint[];
+  medals_sp: Record<DynoMedal, number>;
+}
+
+export interface DynoDailyBest {
+  sp: number;
+  day: string;
+  updated_at: string;
+}
+
+/** Défi du jour du Banc d'essai. */
+export interface DynoChallenge {
+  day: string;
+  weather: Weather;
+  config: DynoConfig;
+  personal_best: DynoDailyBest | null;
+  claimed: DynoMedal[];
+  attempts: number;
+  /** Prochain minuit UTC, pour le compte à rebours de rotation. */
+  changes_at: string;
+}
+
+/** Résultat d'un passage au banc. */
+export interface DynoReport {
+  attemptId: string;
+  day: string;
+  weather: Weather;
+  configId: string;
+  configName: string;
+  spFinal: number;
+  scoreMeca: number;
+  previousBest: number | null;
+  personalBest: number;
+  isNewRecord: boolean;
+  medal: DynoMedal | null;
+  newMedals: DynoMedal[];
+  medalsCoins: number;
+  coins: number;
+  claimed: DynoMedal[];
+  tireType: string;
+  tireGum: number;
+  tireBonusPct: number;
+  tireMalus: number;
+  tireMod: number;
+  engineName: string;
+  gearboxName: string;
+  tireName: string;
+  powerHp: number;
+  engineWeightKg: number;
+  gearboxWeightKg: number;
+  shiftTimeMs: number;
+}
+
 /** Carte révélée par un tirage (quotidien ou kit de départ). */
 export interface DrawnCard {
   id: string;
