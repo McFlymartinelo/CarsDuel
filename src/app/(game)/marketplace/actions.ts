@@ -8,10 +8,12 @@ const done = (message: string) => async (res: ActionState): Promise<ActionState>
 
 export async function listCard(_p: ActionState, fd: FormData): Promise<ActionState> {
   const offers = fd.get("accepts_offers") === "on";
-  return done("Carte mise en vente.")(
+  const cardIds = fd.getAll("card_id").map((v) => String(v).trim()).filter(Boolean);
+  const message = cardIds.length > 1 ? `${cardIds.length} cartes mises en vente.` : "Carte mise en vente.";
+  return done(message)(
     await callRpc(
-      "select public.create_listing($1::uuid, $2::uuid, $3::int, $4::boolean) as r",
-      (id) => [id, str(fd, "card_id"), int(fd, "price", "invalid_price"), offers],
+      "select public.create_listings($1::uuid, $2::uuid[], $3::int, $4::boolean) as r",
+      (id) => [id, cardIds, int(fd, "price", "invalid_price"), offers],
       ["/marketplace", "/garage", "/garage/inventaire"],
     ),
   );

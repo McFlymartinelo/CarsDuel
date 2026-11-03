@@ -20,15 +20,17 @@ export const TABS: { key: string; label: string; category: Category; icon: Lucid
 ];
 
 /** Regroupe les cartes qui partagent un même état (les bonus n'ont pas d'état propre, les pneus sont regroupés à gomme égale). */
-type GroupedEntry = { card: UserCard; count: number };
+type GroupedEntry = { card: UserCard; count: number; cards: UserCard[] };
 
 function groupCards(cards: UserCard[], keyOf: (card: UserCard) => string): GroupedEntry[] {
   const groups = new Map<string, GroupedEntry>();
   for (const card of cards) {
     const key = keyOf(card);
     const group = groups.get(key);
-    if (group) group.count += 1;
-    else groups.set(key, { card, count: 1 });
+    if (group) {
+      group.count += 1;
+      group.cards.push(card);
+    } else groups.set(key, { card, count: 1, cards: [card] });
   }
   return [...groups.values()];
 }
@@ -70,10 +72,10 @@ export function Inventory({
   const entries: GroupedEntry[] = grouped
     ? groupCards(visible, (card) =>
         current.category === "bonus"
-          ? `${card.template_id}${card.is_destroyed ? "|hs" : ""}`
+          ? `${card.template_id}${card.is_destroyed ? "|hs" : ""}${card.is_listed ? `|${card.id}` : ""}`
           : `${card.template_id}|${wearKey(card)}${card.is_destroyed ? "|hs" : ""}${card.is_listed ? `|${card.id}` : ""}`,
       )
-    : visible.map((card) => ({ card, count: 1 }));
+    : visible.map((card) => ({ card, count: 1, cards: [card] }));
 
   if (grouped) {
     entries.sort((a, b) => {
@@ -153,8 +155,14 @@ export function Inventory({
           Aucune carte dans cette catégorie.
         </p>
       )}
-      <div className={compact ? "grid gap-2 xl:grid-cols-2" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
-        {entries.map(({ card: c, count }) => {
+      <div
+        className={
+          compact
+            ? "grid gap-2 grid-cols-[repeat(auto-fill,minmax(max(20rem,calc((100%_-_1.5rem)/4)),1fr))]"
+            : "grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(16rem,calc((100%_-_3rem)/4)),1fr))]"
+        }
+      >
+        {entries.map(({ card: c, count, cards: group }) => {
           const t = c.card_templates;
           const warranty = warrantyState(t, c);
           const Card = compact ? CardRow : CardView;
@@ -178,20 +186,18 @@ export function Inventory({
                       <input type="hidden" name="card_id" value={c.id} />
                     </ActionForm>
                   )}
-                  {t.category !== "bonus" && (
-                    <div className="flex w-full items-center gap-2">
-                      <SellDialog action={listCard} cardId={c.id} name={t.name} />
-                    </div>
-                  )}
-                  {warranty?.extendable && (
-                    <ExtendWarrantyDialog
-                      action={extendWarranty}
-                      cardId={c.id}
-                      name={t.name}
-                      remaining={warranty.remaining}
-                      limit={warranty.limit}
-                    />
-                  )}
+                  <div className="grid w-full grid-cols-2 gap-2">
+                    <SellDialog action={listCard} cardIds={group.map((x) => x.id)} name={t.name} />
+                    {warranty?.extendable && (
+                      <ExtendWarrantyDialog
+                        action={extendWarranty}
+                        cardId={c.id}
+                        name={t.name}
+                        remaining={warranty.remaining}
+                        limit={warranty.limit}
+                      />
+                    )}
+                  </div>
                 </div>
               )}
             </Card>

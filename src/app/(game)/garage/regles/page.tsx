@@ -121,7 +121,7 @@ export default function RulesPage() {
               {b("Le Train de pneus :")} défini par sa typologie de gomme, son taux d&apos;usure de base par run et sa jauge de gomme restante (de 100 % à 0 %).
             </>,
             <>
-              {b("La Carte Bonus (optionnelle en mode Actif) :")} consommable à usage unique, activé avant le départ et détruit lors du lancement. Les cartes bonus n&apos;ont aucun niveau de rareté et ne peuvent être ni vendues sur la Marketplace, ni déposées dans la benne du centre de recyclage.
+              {b("La Carte Bonus (optionnelle en mode Actif) :")} consommable à usage unique, activé avant le départ et détruit lors du lancement. Les cartes bonus n&apos;ont aucun niveau de rareté. Elles peuvent être vendues sur la Marketplace, mais ne peuvent pas être déposées dans la benne du centre de recyclage.
             </>,
           ]}
         />

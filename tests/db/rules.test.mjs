@@ -80,27 +80,44 @@ test("user_decks autorise une config partielle (1 ou 2 emplacements) et refuse u
   });
 });
 
-test("bonus : vente refusée et dépôt dans la benne impossible", async () => {
+test("bonus : vendable sur la marketplace, dépôt dans la benne impossible", async () => {
   const fx = await withAdmin(async (c) => {
     const user = await createPlayer(c, 0);
     const bonus = await giveCard(c, user, "bonus_vidange_boite");
     return { user, bonus };
   });
-  await expectError(
-    fx.user,
-    (c) => c.query("select public.create_listing($1::uuid, $2::uuid, 10, false)", [fx.user, fx.bonus]),
-    "bonus_not_sellable",
+  const { rows } = await asUser(fx.user, (c) =>
+    c.query("select public.create_listing($1::uuid, $2::uuid, 10, false) as id", [fx.user, fx.bonus]),
   );
+  assert.ok(rows[0].id);
   await expectError(
     fx.user,
     (c) => c.query("select public.recycle_bin_add($1::uuid, $2::uuid)", [fx.user, fx.bonus]),
     "card_not_recyclable",
   );
   await withAdmin(async (c) => {
-    const still = await c.query("select is_listed, in_recycle_bin from user_cards where id = $1", [fx.bonus]);
-    assert.equal(still.rows[0].is_listed, false);
-    assert.equal(still.rows[0].in_recycle_bin, false);
+    const listed = await c.query("select is_listed, in_recycle_bin from user_cards where id = $1", [fx.bonus]);
+    assert.equal(listed.rows[0].is_listed, true);
+    assert.equal(listed.rows[0].in_recycle_bin, false);
   });
+});
+
+test("create_listings : plusieurs exemplaires mis en vente en une fois, tout ou rien", async () => {
+  const fx = await withAdmin(async (c) => {
+    const user = await createPlayer(c, 0);
+    const a = await giveCard(c, user, "bonus_vidange_boite");
+    const b = await giveCard(c, user, "bonus_vidange_boite");
+    return { user, a, b };
+  });
+  const { rows } = await asUser(fx.user, (c) =>
+    c.query("select public.create_listings($1::uuid, $2::uuid[], 10, false) as ids", [fx.user, [fx.a, fx.b]]),
+  );
+  assert.equal(rows[0].ids.length, 2);
+  await expectError(
+    fx.user,
+    (c) => c.query("select public.create_listings($1::uuid, $2::uuid[], 10, false)", [fx.user, [fx.a]]),
+    "already_listed",
+  );
 });
 
 test("claim_daily_pull : 3 bonus, un seul tirage par jour Paris", async () => {

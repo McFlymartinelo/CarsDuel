@@ -48,7 +48,7 @@ const MESSAGES: Record<string, string> = {
   out_of_stock: "Rupture de stock.",
   incomplete_collection: "Il vous faut au moins un moteur, une boîte et des pneus disponibles pour créer un deck.",
   invalid_deck_card: "Carte invalide pour cet emplacement (propriété, catégorie, vente ou benne).",
-  bonus_not_sellable: "Les cartes bonus ne se vendent pas et ne peuvent pas être recyclées.",
+  invalid_quantity: "Quantité invalide.",
   card_not_sellable: "Cette carte ne peut pas être mise en vente.",
   card_not_recyclable: "Cette carte ne peut pas être déposée dans la benne.",
   card_already_in_recycle_bin: "Cette carte est déjà dans la benne.",
