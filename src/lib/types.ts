@@ -199,6 +199,8 @@ export interface ClmReport {
   circuitId: string;
   circuitName: string;
   brokenPart: Category | null;
+  partSaved: boolean;
+  bonus: string | null;
   spFinal: number | null;
   lapSeconds: number | null;
   previousBest: number | null;

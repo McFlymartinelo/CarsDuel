@@ -5,6 +5,60 @@ import { Boxes, Recycle } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { processRecycleBin } from "@/app/(game)/garage/actions";
 import { formatKg, RECYCLE_CUBE_WEIGHT_KG } from "@/lib/recycle";
+import type { ActionState } from "@/lib/types";
+
+const CRUSH_MS = 5000;
+
+/** Pile de cubes de ferraille qui remplit le bac : 5 rangées de 22 px, face haute plane (la presse s'y pose). */
+const PILE_COLS = 17;
+const PILE_ROWS = 5;
+const TONES = [
+  "from-zinc-200 to-zinc-500",
+  "from-zinc-300 to-zinc-600",
+  "from-zinc-400 to-zinc-700",
+  "from-zinc-300 to-zinc-500",
+  "from-zinc-500 to-zinc-800",
+];
+const PILE = Array.from({ length: PILE_COLS * PILE_ROWS }, (_, k) => ({
+  key: k,
+  tone: TONES[(k * 7 + Math.floor(k / PILE_COLS)) % TONES.length],
+}));
+
+async function recycleWithCrush(prev: ActionState, fd: FormData): Promise<ActionState> {
+  const [res] = await Promise.all([
+    processRecycleBin(prev, fd),
+    new Promise((resolve) => setTimeout(resolve, CRUSH_MS)),
+  ]);
+  return res;
+}
+
+function CrushAnimation() {
+  return (
+    <div className="mt-5">
+      <div className="relative h-44 overflow-hidden rounded-xl border border-zinc-800 bg-[#07090d]">
+        <div className="crush-box absolute inset-0">
+          <div
+            className="crush-pile absolute inset-x-2 bottom-2 grid grid-cols-[repeat(17,minmax(0,1fr))] grid-rows-[repeat(5,22px)]"
+          >
+            {PILE.map(({ key, tone }) => (
+              <span
+                key={key}
+                className={`block rounded-[3px] border border-black/50 bg-gradient-to-br ${tone} shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-2px_0_rgba(0,0,0,0.35)]`}
+              />
+            ))}
+          </div>
+          <div className="crush-plate absolute inset-x-0 top-0 h-9 border-b-4 border-amber-500 bg-gradient-to-b from-zinc-500 to-zinc-700" />
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+            <div className="crush-cube flex size-16 items-center justify-center rounded-lg border border-orange-400/60 bg-orange-500/20 text-orange-200 shadow-lg shadow-orange-950/50">
+              <Boxes size={28} strokeWidth={2} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-center text-sm text-zinc-300">Compactage de la ferraille…</p>
+    </div>
+  );
+}
 
 export function RecycleLaunch({
   cardCount,
@@ -15,7 +69,7 @@ export function RecycleLaunch({
   weightKg: number;
   cubes: number;
 }) {
-  const [state, formAction, pending] = useActionState(processRecycleBin, null);
+  const [state, formAction, pending] = useActionState(recycleWithCrush, null);
   const [open, setOpen] = useState(false);
   const disabled = cubes < 1;
   const missingKg = Math.max(0, Math.round((RECYCLE_CUBE_WEIGHT_KG - (weightKg % RECYCLE_CUBE_WEIGHT_KG)) * 100) / 100);
@@ -78,23 +132,25 @@ export function RecycleLaunch({
 
           {state && !state.ok && <p className="mt-3 text-sm text-red-400">{state.message}</p>}
 
-          <form action={formAction} className="mt-5 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              disabled={pending}
-              className="min-h-12 rounded-lg border border-zinc-600 px-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="min-h-12 rounded-lg bg-amber-500 px-3 text-sm font-bold text-black hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60"
-            >
-              {pending ? "Recyclage…" : `Confirmer (+${cubes} cube${cubes === 1 ? "" : "s"})`}
-            </button>
-          </form>
+          {pending ? (
+            <CrushAnimation />
+          ) : (
+            <form action={formAction} className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="min-h-12 rounded-lg border border-zinc-600 px-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="min-h-12 rounded-lg bg-amber-500 px-3 text-sm font-bold text-black hover:bg-amber-400"
+              >
+                Confirmer (+{cubes} cube{cubes === 1 ? "" : "s"})
+              </button>
+            </form>
+          )}
         </Modal>
       )}
     </div>

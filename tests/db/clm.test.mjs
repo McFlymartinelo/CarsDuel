@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { asUser, createPlayer, ensureTemplates, makeDeck, neutralizeWeather, withAdmin } from "./helpers.mjs";
+import { asUser, createPlayer, ensureTemplates, expectError, giveCard, makeDeck, neutralizeWeather, withAdmin } from "./helpers.mjs";
 
-async function clm(uid, deckId) {
+async function clm(uid, deckId, bonusId = null) {
   const { rows } = await asUser(uid, (c) =>
-    c.query("select public.execute_clm($1::uuid, $2::uuid) as r", [uid, deckId]));
+    c.query("select public.execute_clm($1::uuid, $2::uuid, $3::uuid) as r", [uid, deckId, bonusId]));
   return rows[0].r;
 }
 
@@ -170,4 +170,49 @@ test("CLM : une casse ne produit ni chrono, ni récompense, mais consomme la gar
     const claims = await c.query("select count(*)::int as n from clm_daily_claims where user_id = $1", [player]);
     assert.equal(claims.rows[0].n, 0);
   });
+});
+
+test("CLM : la carte bonus est consommée et « Révision express » gèle l'usure du moteur", async () => {
+  await withAdmin(async (c) => {
+    await ensureTemplates(c);
+    await clmTemplates(c);
+    await neutralizeWeather(c);
+
+    const player = await createPlayer(c, 0);
+    const deck = await makeDeck(c, player, "t_eng_clm_silver");
+    const bonus = await giveCard(c, player, "bonus_revision_express");
+
+    const result = await clm(player, deck.deckId, bonus);
+    assert.equal(result.bonus, "revision_express");
+    assert.equal(result.broken_part, null);
+
+    const bonusRow = await c.query("select is_destroyed from user_cards where id = $1", [bonus]);
+    assert.equal(bonusRow.rows[0].is_destroyed, true);
+
+    const engine = await c.query("select runs_count, runs_total from user_cards where id = $1", [deck.engine]);
+    assert.deepEqual(engine.rows[0], { runs_count: 0, runs_total: 1 });
+
+    const gearbox = await c.query("select runs_count from user_cards where id = $1", [deck.gearbox]);
+    assert.equal(gearbox.rows[0].runs_count, 1);
+  });
+});
+
+test("CLM : une carte bonus appartenant à un autre pilote est refusée", async () => {
+  const fx = await withAdmin(async (c) => {
+    await ensureTemplates(c);
+    await clmTemplates(c);
+    await neutralizeWeather(c);
+
+    const player = await createPlayer(c, 0);
+    const other = await createPlayer(c, 0);
+    const deck = await makeDeck(c, player, "t_eng_clm_silver");
+    const foreign = await giveCard(c, other, "bonus_revision_express");
+    return { player, deckId: deck.deckId, foreign };
+  });
+
+  await expectError(
+    fx.player,
+    (c) => c.query("select public.execute_clm($1::uuid, $2::uuid, $3::uuid)", [fx.player, fx.deckId, fx.foreign]),
+    "invalid_bonus",
+  );
 });

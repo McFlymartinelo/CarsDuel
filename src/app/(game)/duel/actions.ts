@@ -215,6 +215,8 @@ interface ClmOutcome {
   circuit_id: string;
   circuit_name: string;
   broken_part: Category | null;
+  part_saved: boolean;
+  bonus: string | null;
   sp_final: number | null;
   lap_seconds: number | null;
   previous_best: number | null;
@@ -250,6 +252,8 @@ function buildClmReport(o: ClmOutcome): ClmReport {
     circuitId: o.circuit_id,
     circuitName: o.circuit_name,
     brokenPart: o.broken_part,
+    partSaved: o.part_saved,
+    bonus: o.bonus,
     spFinal: o.sp_final,
     lapSeconds: o.lap_seconds,
     previousBest: o.previous_best,
@@ -278,7 +282,7 @@ function buildClmReport(o: ClmOutcome): ClmReport {
   };
 }
 
-/** Lance un tour de Contre-La-Montre solo. Mêmes règles d'usure / casse que les duels. */
+/** Lance un tour de Contre-La-Montre solo. Mêmes règles d'usure / casse que les duels, carte bonus incluse. */
 export async function launchClm(_prev: ActionState<ClmReport>, fd: FormData): Promise<ActionState<ClmReport>> {
   const deckId = str(fd, "deck_id");
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deckId)) {
@@ -320,7 +324,7 @@ export async function launchClm(_prev: ActionState<ClmReport>, fd: FormData): Pr
   let outcome: ClmOutcome | undefined;
   try {
     const { rows } = await withUser(user.id, (c) =>
-      c.query<{ r: ClmOutcome }>("select public.execute_clm($1::uuid, $2::uuid) as r", [user.id, deckId]),
+      c.query<{ r: ClmOutcome }>("select public.execute_clm($1::uuid, $2::uuid, $3::uuid) as r", [user.id, deckId, str(fd, "bonus_id") || null]),
     );
     outcome = rows[0]?.r;
   } catch (e) {

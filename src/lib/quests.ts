@@ -25,6 +25,7 @@ export const QUEST_COPY: Record<string, { title: string; detail: string }> = {
   rebond: { title: "Le rebond", detail: "Lancer un duel juste après une défaite." },
   win_attaque: { title: "La passe de deux", detail: "Gagner un duel en attaque." },
   win_defense: { title: "Résistance", detail: "Gagner un duel en défense." },
+  banc: { title: "Séance d'essais", detail: "Faire un passage au banc d'essai." },
 };
 
 export function questDone(id: string, progress: Record<string, number>): boolean {
@@ -49,6 +50,7 @@ export function questDone(id: string, progress: Record<string, number>): boolean
     case "rebond": return n("rebound") >= 1;
     case "win_attaque": return n("attack_wins") >= 1;
     case "win_defense": return n("defense_wins") >= 1;
+    case "banc": return n("dyno") >= 1;
     default: return false;
   }
 }

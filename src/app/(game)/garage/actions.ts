@@ -65,7 +65,7 @@ export async function addToRecycleBin(_prev: ActionState, fd: FormData): Promise
     (id) => [id, str(fd, "card_id")],
     RECYCLE_CENTER_PATHS,
   );
-  if (res?.ok) return { ok: true, message: "Carte placée dans la benne." };
+  if (res?.ok) return { ok: true };
   return res;
 }
 

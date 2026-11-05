@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowLeftRight, ArrowUp } from "lucide-react";
 import { ActionForm } from "@/components/ActionForm";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { Modal } from "@/components/Modal";
@@ -50,8 +50,9 @@ export function ChangeCardDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full cursor-pointer rounded border border-white/30 bg-black/40 py-1.5 text-center text-sm font-medium text-zinc-100 hover:bg-white/10"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 py-2 font-display text-sm font-bold uppercase tracking-wide text-amber-300 transition-colors hover:border-amber-400 hover:bg-amber-500 hover:text-black"
       >
+        <ArrowLeftRight size={16} strokeWidth={2.25} aria-hidden />
         Changer
       </button>
       {open && (

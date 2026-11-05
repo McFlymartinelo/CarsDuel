@@ -208,3 +208,26 @@ test("Banc d'essai : les contraintes du jour sont vérifiées côté base", asyn
     assert.ok(sport.sp_final > 0);
   });
 });
+
+test("Banc d'essai : un passage valide le défi quotidien « banc »", async () => {
+  await withAdmin(async (c) => {
+    await ensureTemplates(c);
+    await dynoTemplates(c);
+    await neutralizeWeather(c);
+    await setDaily(c, "dyno_free_run", "sunny_hot");
+
+    const player = await createPlayer(c, 0);
+    const before = await c.query("select private.quest_done('{}'::jsonb, 'banc') as done");
+    assert.equal(before.rows[0].done, false);
+
+    const deck = await makeDeck(c, player, "t_eng");
+    await dyno(player, deck.deckId);
+
+    const row = await c.query(
+      "select progress->>'dyno' as dyno, private.quest_done(progress, 'banc') as done from daily_quests where user_id = $1",
+      [player],
+    );
+    assert.equal(row.rows[0].dyno, "1");
+    assert.equal(row.rows[0].done, true);
+  });
+});

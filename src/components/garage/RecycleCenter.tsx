@@ -1,10 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
   ArrowLeftRight,
   Boxes,
   Cog,
@@ -14,6 +12,7 @@ import {
   Recycle,
   Settings2,
   TriangleAlert,
+  Undo2,
   Weight,
   type LucideIcon,
 } from "lucide-react";
@@ -21,6 +20,7 @@ import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
 import type { CardViewMode } from "@/components/ViewToggle";
+import { BackToGarage } from "@/components/garage/BackToGarage";
 import { RecycleExchangeTiers } from "@/components/garage/RecycleExchangeTiers";
 import { RecycleLaunch } from "@/components/garage/RecycleLaunch";
 import { addToRecycleBin, exchangeRecycledCard, removeFromRecycleBin } from "@/app/(game)/garage/actions";
@@ -29,7 +29,6 @@ import {
   formatKg,
   isRecyclableCategory,
   recycleBinSummary,
-  recycleCardWeight,
 } from "@/lib/recycle";
 import type { Category, UserCard } from "@/lib/types";
 
@@ -137,6 +136,9 @@ export function RecycleCenter({
   // Solde local : le débit est reflété immédiatement (header de page) en attendant
   // le rafraîchissement RSC déclenché par la Server Action.
   const [cubeBalance, setCubeBalance] = useState(cubes);
+  // Cartes en cours de chute : restent affichées le temps de l'animation, même si le serveur les a déjà déplacées.
+  const [falling, setFalling] = useState<string[]>([]);
+
   useEffect(() => setCubeBalance(cubes), [cubes]);
 
   const syncUrl = (nextTab: RecycleTab, nextFilter: RecycleFilter, nextView: CardViewMode) => {
@@ -165,7 +167,7 @@ export function RecycleCenter({
         CATEGORY_ORDER[a.card_templates.category] - CATEGORY_ORDER[b.card_templates.category] ||
         a.card_templates.name.localeCompare(b.card_templates.name, "fr"),
     );
-  const inventoryCards = recyclable.filter((c) => !c.in_recycle_bin && !c.is_listed);
+  const inventoryCards = recyclable.filter((c) => (!c.in_recycle_bin && !c.is_listed) || falling.includes(c.id));
   const binCards = recyclable.filter((c) => c.in_recycle_bin);
   const summary = recycleBinSummary(binCards);
   const compact = view === "liste";
@@ -184,7 +186,9 @@ export function RecycleCenter({
   });
 
   const Card = compact ? CardRow : CardView;
-  const gridClass = compact ? "grid gap-2 xl:grid-cols-2" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3";
+  const gridClass = compact
+    ? "grid gap-2 grid-cols-[repeat(auto-fill,minmax(max(20rem,calc((100%_-_1.5rem)/4)),1fr))]"
+    : "grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(16rem,calc((100%_-_3rem)/4)),1fr))]";
 
   return (
     <section className="space-y-4">
@@ -199,9 +203,7 @@ export function RecycleCenter({
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#05070a] via-[#05070a]/85 to-[#05070a]/15" />
         <div className="relative flex min-h-[14rem] flex-col justify-center gap-2 p-5 sm:min-h-[16rem] sm:p-7">
-          <Link href="/garage" className="mb-1 inline-flex w-fit items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-white">
-            <ArrowLeft size={14} /> Retour au garage
-          </Link>
+          <BackToGarage overlay />
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-400">Garage · Atelier</p>
           <h1 className="font-display text-3xl font-bold uppercase leading-none text-white sm:text-4xl">Centre de recyclage</h1>
           <p className="max-w-xl text-sm leading-relaxed text-zinc-300">
@@ -300,27 +302,37 @@ export function RecycleCenter({
               <div className={gridClass}>
                 {filtered.map((c) => {
                   const t = c.card_templates;
-                  const weight = recycleCardWeight(t);
                   return (
-                    <Card key={c.id} template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs}>
-                      <div className="flex w-full flex-col gap-2">
-                        <p className="flex items-center justify-between gap-2 text-xs text-zinc-400">
-                          <span className="inline-flex items-center gap-1">
-                            <Weight size={13} /> {t.category === "pneus" ? "Poids forfaitaire" : "Poids"}
-                          </span>
-                          <span className="font-display text-sm font-semibold tabular-nums text-zinc-200">{formatKg(weight)}</span>
-                        </p>
-                        <ActionForm
-                          action={addToRecycleBin}
-                          submitLabel="Placer dans la benne"
-                          variant="outline"
-                          submitClassName="min-h-10 w-full rounded-lg px-3 text-sm font-semibold"
-                          className="flex w-full"
-                        >
-                          <input type="hidden" name="card_id" value={c.id} />
-                        </ActionForm>
-                      </div>
-                    </Card>
+                    <div
+                      key={c.id}
+                      className={falling.includes(c.id) ? "bin-drop" : undefined}
+                      onSubmitCapture={() => setFalling((f) => [...f, c.id])}
+                      onAnimationEnd={(e) => {
+                        if (e.target === e.currentTarget) setFalling((f) => f.filter((id) => id !== c.id));
+                      }}
+                    >
+                      <Card template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs}>
+                        <div className="flex w-full flex-col gap-2">
+                          <ActionForm
+                            action={addToRecycleBin}
+                            onResult={(result) => {
+                              if (!result?.ok) setFalling((f) => f.filter((id) => id !== c.id));
+                            }}
+                            submitLabel={
+                              <span className="inline-flex items-center justify-center gap-1.5">
+                                <Recycle size={13} strokeWidth={2.5} aria-hidden />
+                                Placer dans la benne
+                              </span>
+                            }
+                            variant="none"
+                            submitClassName="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-amber-300 transition hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-200 active:scale-95"
+                            className="flex w-1/2"
+                          >
+                            <input type="hidden" name="card_id" value={c.id} />
+                          </ActionForm>
+                        </div>
+                      </Card>
+                    </div>
                   );
                 })}
               </div>
@@ -368,22 +380,20 @@ export function RecycleCenter({
               <div className={gridClass}>
                 {binCards.map((c) => {
                   const t = c.card_templates;
-                  const weight = recycleCardWeight(t);
                   return (
                     <Card key={c.id} template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs}>
                       <div className="flex w-full flex-col gap-2">
-                        <p className="flex items-center justify-between gap-2 text-xs text-zinc-400">
-                          <span className="inline-flex items-center gap-1">
-                            <Weight size={13} /> {t.category === "pneus" ? "Poids forfaitaire" : "Poids"}
-                          </span>
-                          <span className="font-display text-sm font-semibold tabular-nums text-zinc-200">{formatKg(weight)}</span>
-                        </p>
                         <ActionForm
                           action={removeFromRecycleBin}
-                          submitLabel="Retirer de la benne"
-                          variant="ghost"
-                          submitClassName="min-h-10 w-full rounded-lg px-3 text-sm font-semibold"
-                          className="flex w-full"
+                          submitLabel={
+                            <span className="inline-flex items-center justify-center gap-1.5">
+                              <Undo2 size={13} strokeWidth={2.5} aria-hidden />
+                              Retirer de la benne
+                            </span>
+                          }
+                          variant="none"
+                          submitClassName="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-zinc-600 bg-zinc-800/60 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-zinc-200 transition hover:border-zinc-400 hover:bg-zinc-700/70 hover:text-white active:scale-95"
+                          className="flex w-1/2"
                         >
                           <input type="hidden" name="card_id" value={c.id} />
                         </ActionForm>

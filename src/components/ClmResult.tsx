@@ -9,12 +9,16 @@ import type { ClmCircuit, ClmReport } from "@/lib/types";
 
 const n = (v: number, d = 1) => v.toLocaleString("fr-FR", { maximumFractionDigits: d });
 
-/** Chrono animé : les chiffres défilent puis se figent avec une pulsation. */
-function Chrono({ seconds }: { seconds: number }) {
-  const [value, setValue] = useState(0);
-  const [locked, setLocked] = useState(false);
+/**
+ * Chrono du tour. Le chrono a déjà été calé sur le temps réel par l'écran de
+ * course : il s'affiche donc figé, avec la pulsation de verrouillage.
+ */
+function Chrono({ seconds, countUp = false }: { seconds: number; countUp?: boolean }) {
+  const [value, setValue] = useState(countUp ? 0 : seconds);
+  const [locked, setLocked] = useState(!countUp);
 
   useEffect(() => {
+    if (!countUp) return;
     if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setValue(seconds);
       setLocked(true);
@@ -36,7 +40,7 @@ function Chrono({ seconds }: { seconds: number }) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [seconds]);
+  }, [seconds, countUp]);
 
   return (
     <p
@@ -98,6 +102,9 @@ export function ClmResult({
           <>
             <p className="mt-5 font-display text-4xl font-bold uppercase text-red-400">Casse {brokenLabel}</p>
             <p className="mt-2 text-sm text-red-200">Le tour n&apos;a pas été bouclé. Aucun chrono enregistré.</p>
+            {r.partSaved && (
+              <p className="mt-2 text-sm text-emerald-300">Assistance plateau : la pièce est réintégrée à votre inventaire.</p>
+            )}
           </>
         ) : (
           <>

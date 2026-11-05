@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Trophy, X } from "lucide-react";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { ClmResult } from "@/components/ClmResult";
+import { ClmRunning, CLM_RACE_MIN_MS } from "@/components/ClmRunning";
+import type { TirePerf } from "@/components/CardView";
+import { ChangeCardDialog } from "@/components/garage/ChangeCardDialog";
 import { Modal } from "@/components/Modal";
 import { CLM_MEDALS, CLM_PARTICIPATION_COINS, formatDistance, formatLapTime } from "@/lib/clm";
 import { WEATHER_LABEL } from "@/lib/format";
-import type { ActionState, ClmChallenge, ClmReport } from "@/lib/types";
+import type { ActionState, ClmChallenge, ClmReport, UserCard } from "@/lib/types";
 
 function countdownLabel(ms: number): string {
   if (ms <= 0) return "Rotation imminente";
@@ -40,23 +43,37 @@ export function ClmForm({
   action,
   deckId,
   challenge,
+  bonuses,
+  tirePerfs,
 }: {
   action: (prev: ActionState<ClmReport>, fd: FormData) => Promise<ActionState<ClmReport>>;
   deckId?: string;
   challenge: ClmChallenge;
+  bonuses: (UserCard & { image: string | null })[];
+  tirePerfs?: TirePerf[];
 }) {
   const [state, setState] = useState<ActionState<ClmReport>>(null);
   const lastState = useRef<ActionState<ClmReport>>(null);
+  const [bonus, setBonus] = useState<UserCard | null>(null);
   const [open, setOpen] = useState(false);
   const [showRace, setShowRace] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [slow, setSlow] = useState(false);
+  // Chrono réel du tour, connu seulement quand le serveur répond : la course
+  // continue à l'écran et le chrono se cale dessus avant d'afficher le résultat.
+  const [targetSeconds, setTargetSeconds] = useState<number | null>(null);
+  const pendingReport = useRef<ClmReport | null>(null);
   const router = useRouter();
   const report = state?.ok ? state.data : undefined;
   // Le loader suit la promesse de l'action, pas `pending` de useActionState :
   // après un revalidatePath, React peut laisser `pending` bloqué à true alors
   // que le tour est terminé et que le résultat est déjà revenu.
   const waiting = launching;
+
+  // La carte bonus est consommée au lancement : elle ne reste pas sélectionnée pour le tour suivant.
+  useEffect(() => {
+    if (state?.ok) setBonus(null);
+  }, [state]);
 
   // Filet de sécurité : si la requête ne revient jamais (réseau perdu, serveur muet),
   // on laisse le joueur sortir de l'écran d'attente.
@@ -80,24 +97,50 @@ export function ClmForm({
     return () => window.clearTimeout(id);
   }, [challenge.changes_at, router]);
 
+  /** Fin de la course à l'écran : on bascule sur le résultat, qui reprend le chrono figé. */
+  const finishRun = useCallback(() => {
+    const done = pendingReport.current;
+    pendingReport.current = null;
+    setTargetSeconds(null);
+    if (!done) return;
+    setState({ ok: true, data: done });
+    setLaunching(false);
+  }, []);
+
   async function launch() {
     if (!deckId || launching) return;
     setShowRace(true);
+    setState(null);
+    setTargetSeconds(null);
+    pendingReport.current = null;
     setLaunching(true);
     const fd = new FormData();
     fd.set("deck_id", deckId);
+    fd.set("bonus_id", bonus?.id ?? "");
+    const started = Date.now();
     try {
       const next = await action(lastState.current, fd);
       lastState.current = next;
+      const data = next?.ok ? next.data : undefined;
+      if (data) {
+        // La course reste à l'écran le temps prévu, même si le serveur répond vite.
+        const remaining = CLM_RACE_MIN_MS - (Date.now() - started);
+        if (remaining > 0) await new Promise((resolve) => window.setTimeout(resolve, remaining));
+        // Tour bouclé : le chrono se cale sur le temps réel avant le résultat.
+        if (data.lapSeconds != null && data.brokenPart === null) {
+          pendingReport.current = data;
+          setTargetSeconds(data.lapSeconds);
+          return;
+        }
+      }
+      // Casse, erreur : rien à chronométrer, on affiche directement le bilan.
       setState(next);
     } catch {
       const failed: ActionState<ClmReport> = { ok: false, message: "Le tour n'a pas pu être lancé." };
       lastState.current = failed;
       setState(failed);
-    } finally {
-      // Toujours exécuté : l'écran d'attente ne peut plus rester bloqué.
-      setLaunching(false);
     }
+    setLaunching(false);
   }
 
   function close() {
@@ -167,9 +210,14 @@ export function ClmForm({
                 )}
               </div>
             ) : waiting ? (
-              <div className="space-y-4 py-10 text-center">
+              <div className="space-y-4 py-6 text-center">
                 <p className="font-display text-2xl font-bold uppercase text-amber-400">Tour lancé…</p>
                 <p className="text-sm text-zinc-400">Chronométrage en cours sur le circuit du jour.</p>
+                <ClmRunning
+                  circuitName={challenge.circuit.name}
+                  targetSeconds={targetSeconds}
+                  onFinish={finishRun}
+                />
                 {slow && (
                   <div className="space-y-2 border-t border-zinc-800 pt-4">
                     <p className="text-xs text-zinc-500">Le serveur tarde à répondre. Votre tour est peut-être déjà enregistré.</p>
@@ -305,6 +353,12 @@ export function ClmForm({
                   Participations illimitées. Attention : les usures de pneus et les risques de casse mécanique sont bien réels et
                   décomptés à chaque tentative !
                 </p>
+              </div>
+
+              <div className="rounded-2xl border-2 border-dashed border-amber-500/40 bg-[#10131a] p-3">
+                <p className="font-display text-sm uppercase tracking-wide text-zinc-300">Bonus</p>
+                <p className="my-2 min-h-10 text-sm text-zinc-200">{bonus?.card_templates.name ?? "Aucun bonus"}</p>
+                <ChangeCardDialog slot="bonus" alternatives={bonuses} tirePerfs={tirePerfs} onPick={setBonus} />
               </div>
 
               {!deckId && (

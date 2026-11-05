@@ -5,7 +5,7 @@ import { asUser, createPlayer, expectError, withAdmin } from "./helpers.mjs";
 const QUEST_POOL = [
   "inventaire", "boutique", "recycle_bonus", "duel", "duels_2", "duels_3",
   "attaque", "defense", "bonus", "bonus_2", "pneus_90", "leaderboard",
-  "marketplace", "matin", "nuit", "rebond", "win_attaque", "win_defense",
+  "marketplace", "matin", "nuit", "rebond", "win_attaque", "win_defense", "banc",
 ];
 
 async function dailyQuests(user) {

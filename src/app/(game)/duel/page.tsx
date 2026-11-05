@@ -97,6 +97,8 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
             action={launchClm}
             deckId={playable ? config?.id : undefined}
             challenge={clm}
+            bonuses={bonuses}
+            tirePerfs={modifiers}
           />
         )}
         {dyno && (
