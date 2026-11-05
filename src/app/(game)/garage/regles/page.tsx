@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BackToGarage } from "@/components/garage/BackToGarage";
 
 export const metadata = { title: "Règles du jeu — CarsDuel" };
 
@@ -69,11 +70,15 @@ const SUMMARY = [
   ["economie", "Récompenses et économie"],
   ["rangs", "Classements et rangs"],
   ["clm", "Contre-La-Montre solo"],
+  ["banc", "Banc d'essai"],
+  ["quotidiens", "Défis quotidiens"],
+  ["configs", "Configs Constructeur"],
 ];
 
 export default function RulesPage() {
   return (
     <section className="mx-auto max-w-4xl space-y-4">
+      <BackToGarage />
       <header className="space-y-1">
         <h1 className="font-display text-3xl font-bold uppercase">Règles officielles de Cars Duel</h1>
         <p className="text-sm text-zinc-400">Tout ce qu&apos;il faut savoir pour composer son deck, courir et grimper au classement.</p>
@@ -89,22 +94,19 @@ export default function RulesPage() {
 
       <Section id="principe" title="1. Principe général du jeu">
         <P>
-          Cars Duel est un jeu de cartes et de stratégie automobile tactique fondé sur le deck-building mécanique. Trois modes de course structurent les affrontements :
+          Cars Duel est un jeu de cartes et de stratégie automobile fondé sur le deck-building mécanique. Chaque mode mobilise les pièces du garage :
         </P>
-        <List
-          items={[
-            <>
-              {b("Mode « Affronter au hasard » :")} une confrontation asynchrone où un joueur {b("Actif")} défie le fantôme d&apos;un joueur {b("Passif")} tiré au sort sur le serveur. Le joueur Actif engage ses pièces, subit l&apos;usure et les risques de casse. Le joueur Passif défend son rang de manière autonome, sans risquer de dégradation mécanique.
-            </>,
-            <>
-              {b("Mode « Organiser un duel » :")} un défi direct entre deux pilotes ciblés. Les deux adversaires sont en statut {b("Actif")} : chacun engage son propre deck, choisit optionnellement un bonus et assume l&apos;usure ainsi que les risques mécaniques de la course.
-            </>,
-            <>
-              {b("Mode « Contre-La-Montre solo » :")} un défi chronométré quotidien sur un circuit tiré au sort. Le pilote engage sa configuration, subit les mêmes usures et risques de casse, et vise les trois paliers de médailles du jour.
-            </>,
+        <Table
+          head={["Mode", "En bref"]}
+          rows={[
+            ["Affronter au hasard", <>Duel asynchrone contre le fantôme d&apos;un pilote tiré au sort ; l&apos;attaquant subit l&apos;usure et la casse.</>],
+            ["Organiser un duel", <>Défi direct entre deux pilotes, tous deux actifs, avec usure et casse.</>],
+            ["Contre-La-Montre solo", <>Chrono quotidien sur un circuit tiré au sort, avec trois médailles à viser.</>],
+            ["Banc d'essai", <>Test quotidien de configuration, sans usure ni risque de casse.</>],
+            ["Défis quotidiens", <>Objectifs du jour à remplir pour gagner des pièces.</>],
+            ["Configs Constructeur", <>Défi hebdomadaire : valider des paires moteur + boîte d&apos;un même constructeur.</>],
           ]}
         />
-        <P>La victoire revient au pilote qui génère le {b("Score de Performance (SP)")} le plus élevé à l&apos;issue des tests de fiabilité et du calcul de course.</P>
       </Section>
 
       <Section id="deck" title="2. Composition du deck et raretés">
@@ -121,7 +123,7 @@ export default function RulesPage() {
               {b("Le Train de pneus :")} défini par sa typologie de gomme, son taux d&apos;usure de base par run et sa jauge de gomme restante (de 100 % à 0 %).
             </>,
             <>
-              {b("La Carte Bonus (optionnelle en mode Actif) :")} consommable à usage unique, activé avant le départ et détruit lors du lancement. Les cartes bonus n&apos;ont aucun niveau de rareté. Elles peuvent être vendues sur la Marketplace, mais ne peuvent pas être déposées dans la benne du centre de recyclage.
+              {b("La Carte Bonus (optionnelle en mode Actif et en Contre-La-Montre solo) :")} consommable à usage unique, activé avant le départ et détruit lors du lancement. Les cartes bonus n&apos;ont aucun niveau de rareté. Elles peuvent être vendues sur la Marketplace, mais ne peuvent pas être déposées dans la benne du centre de recyclage.
             </>,
           ]}
         />
@@ -236,7 +238,7 @@ export default function RulesPage() {
           rows={[
             [
               "Piste sèche et chaude",
-              "+2,0 % casse (surchauffe)",
+              "+1,0 % casse (surchauffe)",
               "+0,5 % casse",
               "Slicks +20 % / −10 % · Semi-slicks +12 % / −8 % · Sport +5 % / −5 % · Route 0 % / −3 % · Pluie −30 % / −14 % (usure doublée)",
             ],
@@ -263,7 +265,7 @@ export default function RulesPage() {
       </Section>
 
       <Section id="bonus" title="5. Les cartes bonus">
-        <P>Consommables d&apos;appui utilisables uniquement par un joueur en statut Actif :</P>
+        <P>Consommables d&apos;appui utilisables par un joueur en statut Actif en duel, ainsi qu&apos;au lancement d&apos;un tour de Contre-La-Montre solo (mêmes effets) :</P>
         <List
           items={[
             <>{b("« Révision express » :")} gèle l&apos;usure du moteur pour la course (le compteur de runs ne s&apos;incrémente pas).</>,
@@ -271,7 +273,7 @@ export default function RulesPage() {
             <>{b("« Révision complète » :")} gèle simultanément l&apos;usure du moteur et de la boîte de vitesses.</>,
             <>{b("« Huile moteur de compétition » :")} multiplie par 0,5 le risque de casse calculé du moteur sur ce run.</>,
             <>{b("« Huile de boîte compétition » :")} multiplie par 0,5 le risque de casse calculé de la boîte sur ce run.</>,
-            <>{b("« Assistance plateau » :")} en cas d&apos;échec au test de casse, le duel est perdu mais le composant cassé réintègre directement l&apos;inventaire au lieu d&apos;être détruit.</>,
+            <>{b("« Assistance plateau » :")} en cas d&apos;échec au test de casse, le duel est perdu (ou le tour du Contre-La-Montre n&apos;est pas bouclé) mais le composant cassé réintègre directement l&apos;inventaire au lieu d&apos;être détruit.</>,
           ]}
         />
       </Section>
@@ -341,7 +343,7 @@ export default function RulesPage() {
       <Section id="rangs" title="7. Classements et rangs">
         <P>Les compteurs de rang sont réinitialisés le premier jour de chaque mois à 00:00:00 (heure de Paris).</P>
         <Table
-          head={["Rang", "XP mensuel requis", "Coefficient de primes"]}
+          head={["Rang", "XP mensuel requis", "Multiplicateur de pièces"]}
           rows={[
             ["Niveau 1 · Rookie", "0 - 119 XP", "×1"],
             ["Niveau 2 · Amateur de Paddock", "120 - 299 XP", "×1,5"],
@@ -351,8 +353,10 @@ export default function RulesPage() {
           ]}
         />
         <P>
-          Le coefficient du rang atteint sur l&apos;XP du mois multiplie les {b("primes de classement")} hebdomadaires et mensuelles
-          (montant arrondi à la pièce). Il est figé sur l&apos;XP du mois où la période se termine, au moment du versement.
+          Le {b("multiplicateur de pièces")} du rang atteint sur l&apos;XP du mois s&apos;applique uniquement aux {b("récompenses en pièces")}
+          obtenues après l&apos;obtention du rang : primes de classement hebdomadaires et mensuelles, montant arrondi à la pièce.
+          Il ne multiplie jamais l&apos;XP et n&apos;a aucun effet rétroactif sur les gains déjà versés. Il est figé sur l&apos;XP du mois
+          où la période se termine, au moment du versement.
         </P>
         <H3>Classements calendaires (fuseau Europe/Paris)</H3>
         <List
@@ -394,6 +398,100 @@ export default function RulesPage() {
             <>{b("Cascade :")} décrocher l&apos;Or verse automatiquement l&apos;Or, l&apos;Argent et le Bronze encore disponibles. Décrocher l&apos;Argent verse l&apos;Argent et le Bronze.</>,
             <>Le premier tour bouclé du jour rapporte une {b("prime de participation de 10 pièces")}, quel que soit le chrono.</>,
             <>Le classement du circuit ne conserve que le {b("meilleur temps personnel (Personal Best)")} du pilote.</>,
+            <>
+              {b("Carte bonus :")} optionnelle, à choisir avant le lancement du tour. Elle est consommée au départ et produit les mêmes effets qu&apos;en duel (voir section 5).
+            </>,
+          ]}
+        />
+      </Section>
+
+      <Section id="banc" title="9. Banc d'essai">
+        <P>
+          Le banc d&apos;essai propose un défi technique renouvelé chaque jour à minuit (UTC). Il se joue dans un {b("environnement de test certifié")} : aucun risque,
+          aucune contrepartie.
+        </P>
+        <H3>Contraintes du défi</H3>
+        <P>
+          Le défi impose des contraintes sur le deck (type de pneus, puissance maximale, poids total ou poids d&apos;une pièce maximum, temps de passage minimum).
+          Une configuration qui ne les respecte pas ne peut pas être lancée : les contraintes non satisfaites sont signalées en rouge dans la fenêtre du défi.
+        </P>
+        <H3>Calcul du passage</H3>
+        <P>
+          Le passage produit un Score de Performance (SP) calculé selon la même logique que la phase 2 des duels : puissance, poids, temps de passage,
+          type de pneus de la météo du jour et gomme restante du train monté.
+        </P>
+        <List
+          items={[
+            <>{b("0 % d'usure")} de pneus et {b("0 % de risque de casse")} mécanique.</>,
+            <>Aucune garantie consommée et {b("relances illimitées")} : votre garage ne subit aucune contrepartie.</>,
+            <>Aucune carte bonus n&apos;est utilisable au banc d&apos;essai.</>,
+            <>Le meilleur SP de la journée est conservé comme record personnel.</>,
+          ]}
+        />
+        <H3>Médailles et récompenses</H3>
+        <P>
+          Les seuils de SP à atteindre sont affichés dans le défi du jour. Chaque médaille ne peut être remportée qu&apos;une fois par jour, avec la même cascade
+          que le Contre-La-Montre : décrocher l&apos;Or verse aussi l&apos;Argent et le Bronze encore disponibles.
+        </P>
+        <Table
+          head={["Médaille", "Pièces (et XP)"]}
+          rows={[
+            ["Or", "+100"],
+            ["Argent", "+50"],
+            ["Bronze", "+20"],
+          ]}
+        />
+        <List
+          items={[
+            <>Le premier passage du jour rapporte une {b("prime de participation de 10 pièces")}, quel que soit le SP obtenu.</>,
+          ]}
+        />
+      </Section>
+
+      <Section id="quotidiens" title="10. Défis quotidiens">
+        <P>
+          Trois défis sont proposés chaque jour, renouvelés à minuit (heure de Paris). Le défi {b("« Pointage au paddock »")} est toujours présent ;
+          les deux autres sont tirés au sort parmi la liste ci-dessous. Chaque défi terminé se récupère manuellement et rapporte {b("5 pièces")}.
+        </P>
+        <Table
+          head={["Défi", "Objectif"]}
+          rows={[
+            ["Pointage au paddock", "Se connecter."],
+            ["Vérification des niveaux", "Ouvrir son inventaire."],
+            ["Coup d'œil sur l'étal", "Visiter la boutique."],
+            ["Seconde vie", "Placer une carte dans la benne du centre de recyclage."],
+            ["Échauffement", "Terminer un duel."],
+            ["La routine", "Participer à 2 duels."],
+            ["En mode turbo", "Participer à 3 duels."],
+            ["Viser le sommet", "Tenter une attaque sur un adversaire."],
+            ["Tenir la position", "Subir un duel en défense."],
+            ["Consommation interne", "Utiliser une carte bonus pendant un duel."],
+            ["Coup de boost", "Faire 2 duels avec une carte bonus."],
+            ["Préventif", "Faire un duel avec des pneus à 90 % de gomme restante minimum."],
+            ["Regarder le sommet", "Consulter le leaderboard."],
+            ["Regarder la vitrine", "Consulter la Marketplace."],
+            ["Pilote matinal", "Lancer un duel avant midi."],
+            ["Pilote nocturne", "Lancer un duel entre 20 h et 23 h 59."],
+            ["Le rebond", "Lancer un duel juste après une défaite."],
+            ["La passe de deux", "Gagner un duel en attaque."],
+            ["Résistance", "Gagner un duel en défense."],
+            ["Séance d'essais", "Faire un passage au banc d'essai."],
+          ]}
+        />
+      </Section>
+
+      <Section id="configs" title="11. Configs Constructeur">
+        <P>
+          Chaque semaine, une énigme désigne un constructeur sans jamais citer son nom (« La marque au lion », « Les quatre anneaux »…).
+          Pour la résoudre, équipez dans {b("Ma config")} un {b("moteur")} et une {b("boîte")} appartenant tous deux à ce constructeur, puis lancez l&apos;analyse.
+        </P>
+        <List
+          items={[
+            <>{b("Récompense :")} +20 pièces et +20 XP par paire inédite validée.</>,
+            <>{b("Unicité :")} une même paire (moteur + boîte) ne rapporte qu&apos;une fois par semaine. Plusieurs paires différentes peuvent être validées.</>,
+            <>{b("Aucun risque :")} l&apos;analyse ne consomme ni usure, ni garantie, ni risque de casse.</>,
+            <>{b("Rotation :")} le défi change chaque lundi à 00:00 UTC, le compteur repart de zéro et toutes les paires redeviennent valables. Un constructeur peut revenir plusieurs fois.</>,
+            <>{b("Teaser :")} la popup affiche l&apos;énigme de la semaine suivante pour anticiper ses pièces.</>,
           ]}
         />
       </Section>
