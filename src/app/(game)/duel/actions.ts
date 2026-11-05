@@ -11,6 +11,7 @@ import type {
   Category,
   ClmMedal,
   ClmReport,
+  ConfigReport,
   DuelOutcome,
   DuelReport,
   DynoMedal,
@@ -451,6 +452,11 @@ export async function launchDyno(_prev: ActionState<DynoReport>, fd: FormData): 
   // Pièces, record et médailles ont changé : on rafraîchit l'UI.
   invalidate(["/", "/garage", "/garage/inventaire", "/garage/trophees", "/duel"]);
   return { ok: true, data: buildDynoReport(outcome) };
+}
+
+/** Valide la paire moteur + boîte équipée contre le défi de la semaine. Aucune pièce n'est engagée. */
+export async function validateConfigPair(): Promise<ActionState<ConfigReport>> {
+  return callRpc<ConfigReport>("select public.validate_config_pair($1::uuid) as r", (id) => [id], ["/", "/duel"]);
 }
 
 export async function proposeDuel(_prev: ActionState<{ username: string }>, fd: FormData): Promise<ActionState<{ username: string }>> {

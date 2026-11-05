@@ -10,6 +10,7 @@ import type { DailyQuestState } from "@/lib/quests";
 import type {
   CardTemplate,
   ClmChallenge,
+  ConfigChallenge,
   DuelRow,
   DynoChallenge,
   Listing,
@@ -284,6 +285,12 @@ export const loadDynoChallenge = (uid: string) =>
     if (!row) return null;
     return { ...row, changes_at: nextUtcMidnight() };
   });
+
+/** Configs Constructeur : défi de la semaine, teaser, progression et paires déjà validées. */
+export const loadConfigChallenge = (uid: string) =>
+  withUser(uid, async (c) =>
+    (await c.query<{ r: ConfigChallenge }>("select public.config_challenge_status($1::uuid) as r", [uid])).rows[0]?.r ?? null,
+  );
 
 /** Marketplace : annonces filtrées (page), offres, inventaire et pseudos des vendeurs. */
 export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery | null) =>

@@ -72,6 +72,7 @@ const MESSAGES: Record<string, string> = {
   dyno_constraint_failed: "Votre configuration ne respecte pas toutes les contraintes du banc d'essai du jour.",
   dyno_no_config: "Le catalogue des défis du banc d'essai est vide.",
   dyno_unknown_constraint: "Contrainte de banc d'essai inconnue.",
+  config_challenge_unavailable: "Aucun défi Configs Constructeur n'est disponible pour le moment.",
 };
 
 type PgErr = { message?: string; code?: string; stack?: string };

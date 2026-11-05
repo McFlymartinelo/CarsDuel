@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Coins, Swords } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { DailyQuests } from "@/components/DailyQuests";
 import { DuelForm } from "@/components/DuelForm";
 import { ClmForm } from "@/components/ClmForm";
 import { DynoForm } from "@/components/DynoForm";
+import { ConfigConstructeurForm } from "@/components/ConfigConstructeurForm";
 import { ChallengeList, ProposeDuel } from "@/components/OrganizedDuels";
 import { ConfigBoard } from "@/components/garage/ConfigBoard";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
@@ -11,8 +13,8 @@ import { type SlotKey } from "@/components/garage/SlotTabs";
 import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
 import { parsePage } from "@/lib/pagination";
-import { DUEL_PAGE_SIZE, getDailyQuests, loadClmChallenge, loadDuelPage, loadDynoChallenge, loadOrganizedChallenges } from "@/lib/queries";
-import { launchClm, launchDuel, launchDyno } from "./actions";
+import { DUEL_PAGE_SIZE, getDailyQuests, loadClmChallenge, loadConfigChallenge, loadDuelPage, loadDynoChallenge, loadOrganizedChallenges } from "@/lib/queries";
+import { launchClm, launchDuel, launchDyno, validateConfigPair } from "./actions";
 
 export const metadata = { title: "Jouer — CarsDuel" };
 
@@ -23,7 +25,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
   const page = parsePage(pageParam);
   const nextPage = parsePage(page + 1);
   const { user } = await requireUser();
-  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized, clm, dyno] = await Promise.all([
+  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized, clm, dyno, configs] = await Promise.all([
     loadDuelPage(user.id, page),
     getDailyQuests(user.id).catch((e) => {
       console.error("défis indisponibles :", e);
@@ -39,6 +41,10 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
     }),
     loadDynoChallenge(user.id).catch((e) => {
       console.error("banc d'essai indisponible :", e);
+      return null;
+    }),
+    loadConfigChallenge(user.id).catch((e) => {
+      console.error("configs constructeur indisponibles :", e);
       return null;
     }),
   ]);
@@ -80,7 +86,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
         modifiers={modifiers}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <DailyQuests state={quests} />
         <DuelForm action={launchDuel} deckId={playable ? config?.id : undefined} bonuses={bonuses} tirePerfs={modifiers}>
           <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
@@ -103,6 +109,7 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
             tire={tire}
           />
         )}
+        {configs && <ConfigConstructeurForm action={validateConfigPair} challenge={configs} />}
       </div>
       {!playable && <p className="text-sm text-zinc-500">Complétez Ma config avec un moteur, une boîte et des pneus disponibles.</p>}
 

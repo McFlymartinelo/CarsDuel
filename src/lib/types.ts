@@ -349,3 +349,40 @@ export interface NotificationFeed {
   unread: number;
   items: NotificationItem[];
 }
+
+/** Pièce équipée affichée dans le mode Configs Constructeur (sans sa marque, qui fait partie de l'énigme). */
+export interface ConfigPart {
+  code: string;
+  name: string;
+  /** Intacte et non en vente : utilisable pour la validation. */
+  ok: boolean;
+}
+
+/** Défi du mode Configs Constructeur : semaine courante, teaser, progression et historique. */
+export interface ConfigChallenge {
+  week_start: string;
+  /** Lundi 00:00 UTC suivant, pour le compte à rebours. */
+  ends_at: string;
+  reward: { coins: number; xp: number };
+  challenge: { slug: string; label: string; riddle: string } | null;
+  next: { riddle: string } | null;
+  found: number;
+  total: number;
+  equipped: { engine: ConfigPart; gearbox: ConfigPart } | null;
+  history: { engine: string; gearbox: string }[];
+}
+
+export type ConfigStatus = "validated" | "duplicate" | "mismatch";
+
+/** Résultat d'une validation de paire. `mismatch` et `duplicate` ne sont pas des erreurs. */
+export interface ConfigReport {
+  status: ConfigStatus;
+  engine_code: string;
+  gearbox_code: string;
+  engine_ok: boolean;
+  gearbox_ok: boolean;
+  coins: number;
+  xp: number;
+  found: number;
+  total: number;
+}

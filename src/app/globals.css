@@ -170,6 +170,51 @@ html {
   to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
 }
 
+/* Configs Constructeur : balayage de l'analyse, validation (flash vert) et incompatibilité (secousse rouge). */
+@keyframes cfg-scan {
+  from { top: 0; }
+  to { top: calc(100% - 2px); }
+}
+
+@keyframes cfg-ok {
+  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+  35% { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.45), 0 0 48px rgba(52, 211, 153, 0.55); }
+  100% { box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4), 0 0 20px rgba(52, 211, 153, 0.18); }
+}
+
+@keyframes cfg-ko {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.cfg-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fcd34d, transparent);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.8);
+  animation: cfg-scan 0.7s ease-in-out infinite alternate;
+}
+
+.cfg-ok { animation: cfg-ok 0.9s ease-out both; }
+.cfg-ko { animation: cfg-ko 0.5s linear 2; }
+
+@keyframes cfg-count-pop {
+  0% { transform: scale(1); text-shadow: none; }
+  40% { transform: scale(1.25); text-shadow: 0 0 18px rgba(251, 191, 36, 0.75); }
+  100% { transform: scale(1); text-shadow: none; }
+}
+
+.cfg-count-pop { display: inline-block; transform-origin: left center; animation: cfg-count-pop 0.6s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cfg-scan-line, .cfg-ok, .cfg-ko, .cfg-count-pop { animation: none; }
+}
+
 /* Duel : scène de piste (ciel animé, asphalte) puis course. */
 
 /* --- Ciel de la carte « conditions de piste » --- */
