@@ -1,7 +1,6 @@
 -- =============================================================================
 -- Seed minimal : pneus, bonus, vendeur.
--- Les moteurs réels sont dans catalog_engines.sql, les boîtes dans catalog_gearboxes.sql.
--- db:seed applique les deux juste après ce fichier.
+-- Les moteurs et boîtes réels viennent de db/catalog/*.json (chargés par db:seed juste après ce fichier).
 -- =============================================================================
 
 insert into public.shop_vendors (name) values ('Magasin de pièces neuves')

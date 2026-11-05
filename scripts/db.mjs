@@ -24,6 +24,24 @@ const cmd = process.argv[2];
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await client.connect();
 
+/** Catalogue moteurs et boîtes (db/catalog/*.json), puis prix de la boutique. Rejouable. */
+async function loadParts() {
+  const parts = ["moteurs", "boites"].flatMap((name) =>
+    JSON.parse(fs.readFileSync(path.join(root, "db", "catalog", `${name}.json`), "utf8")));
+  const codes = parts.map((p) => p.code);
+  await client.query("begin");
+  try {
+    await client.query(fs.readFileSync(path.join(root, "db", "catalog", "upsert_parts.sql"), "utf8"), [JSON.stringify(parts)]);
+    await client.query(fs.readFileSync(path.join(root, "db", "catalog", "retire_parts.sql"), "utf8"), [codes]);
+    await client.query("commit");
+  } catch (e) {
+    await client.query("rollback");
+    throw e;
+  }
+  await runFile(path.join(root, "db", "shop_prices.sql"));
+  console.log(`Catalogue : ${parts.length} pièces.`);
+}
+
 async function runFile(file) {
   await client.query("begin");
   try {
@@ -62,14 +80,12 @@ try {
     }
   } else if (cmd === "seed" || cmd === "dev-seed") {
     await runFile(path.join(root, "db", cmd === "seed" ? "seed.sql" : "dev_seed.sql"));
-    if (cmd === "seed") {
-      await runFile(path.join(root, "db", "catalog_engines.sql"));
-      await runFile(path.join(root, "db", "catalog_gearboxes.sql"));
-      await runFile(path.join(root, "db", "catalog_warranty.sql"));
-    }
+    if (cmd === "seed") await loadParts();
     console.log(cmd === "seed" ? "Seed appliqué." : "Seed de test appliqué.");
+  } else if (cmd === "parts") {
+    await loadParts();
   } else {
-    console.error("Usage : node scripts/db.mjs <migrate|seed|dev-seed>");
+    console.error("Usage : node scripts/db.mjs <migrate|seed|dev-seed|parts>");
     process.exit(1);
   }
 } catch (e) {

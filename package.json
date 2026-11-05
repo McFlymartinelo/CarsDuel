@@ -12,6 +12,7 @@
     "db:migrate": "node scripts/db.mjs migrate",
     "db:seed": "node scripts/db.mjs seed",
     "db:dev-seed": "node scripts/db.mjs dev-seed",
+    "db:parts": "node scripts/db.mjs parts",
     "db:setup": "node scripts/db.mjs migrate && node scripts/db.mjs seed",
     "coins:add": "node scripts/grant-coins.mjs",
     "users:list": "node scripts/list-users.mjs",
