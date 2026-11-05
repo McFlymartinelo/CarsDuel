@@ -6,7 +6,7 @@ before(async () => {
   await withAdmin(ensureTemplates);
 });
 
-test("grant_starter_kit : commun, 5 bonus, un pneu de chaque type, sans config", async () => {
+test("grant_starter_kit : 2 moteurs et 2 boîtes communs, 5 bonus, 5 pneus au hasard, sans config", async () => {
   const user = await withAdmin(async (c) => {
     const id = await createPlayer(c);
     await c.query("select private.grant_starter_kit($1)", [id]);
@@ -20,12 +20,13 @@ test("grant_starter_kit : commun, 5 bonus, un pneu de chaque type, sans config",
       [user],
     );
     const of = (cat) => rows.filter((r) => r.category === cat);
-    assert.equal(of("moteur").length, 1);
-    assert.equal(of("moteur")[0].rarity, "commune");
-    assert.equal(of("boite").length, 1);
-    assert.equal(of("boite")[0].rarity, "commune");
+    assert.equal(of("moteur").length, 2);
+    assert.ok(of("moteur").every((r) => r.rarity === "commune"));
+    assert.equal(of("boite").length, 2);
+    assert.ok(of("boite").every((r) => r.rarity === "commune"));
     assert.equal(of("bonus").length, 5);
-    assert.equal(new Set(of("pneus").map((r) => r.tire_type)).size, 5);
+    assert.equal(of("pneus").length, 5);
+    assert.ok(of("pneus").every((r) => r.tire_type !== null));
     const decks = await c.query("select id from user_decks where owner_id = $1", [user]);
     assert.equal(decks.rows.length, 0);
   });

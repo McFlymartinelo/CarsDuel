@@ -63,7 +63,7 @@ export function ProfileMenu({
             <dd className="font-display text-lg font-bold tabular-nums text-amber-400">{xp(xpMonth)}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-zinc-400">Coefficient de primes</dt>
+            <dt className="text-zinc-400">Multiplicateur de pièces</dt>
             <dd className="font-display text-lg font-bold tabular-nums text-amber-400">{rankMultiplierLabel(rank.multiplier)}</dd>
           </div>
         </dl>

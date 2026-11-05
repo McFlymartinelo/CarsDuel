@@ -2,7 +2,8 @@ import type { CardTemplate, UserCard } from "./types";
 
 // ---------- Rang de profil (affichage : dérivé de l'XP du mois, reset naturel) --
 // Rookie 0, Amateur 120, Pro 300, Élite 600, Légende 890.
-// Le coefficient multiplie les primes de classement (cf. public.rank_coefficient).
+// Le multiplicateur de pièces s'applique aux récompenses en pièces obtenues après
+// l'obtention du rang (cf. public.rank_coefficient). Il ne touche jamais l'XP.
 export const RANKS = [
   { id: "bronze", level: 1, tier: "Bronze", name: "Rookie", min: 0, max: 119, multiplier: 1, dot: "bg-emerald-400", text: "text-emerald-300", bar: "bg-emerald-400", row: "bg-emerald-500/10" },
   { id: "argent", level: 2, tier: "Argent", name: "Amateur de Paddock", min: 120, max: 299, multiplier: 1.5, dot: "bg-blue-400", text: "text-blue-300", bar: "bg-blue-400", row: "bg-blue-500/10" },
