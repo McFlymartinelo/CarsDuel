@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { AccountForms } from "@/components/AccountForms";
 import { PushSettings } from "@/components/PushSettings";
-import { updateEmail, updatePassword, updateUsername } from "./actions";
+import { deleteAccount, updateEmail, updatePassword, updateUsername } from "./actions";
 
 export const metadata = { title: "Profil — CarsDuel" };
 
@@ -18,6 +18,7 @@ export default async function AccountPage() {
         updateUsername={updateUsername}
         updateEmail={updateEmail}
         updatePassword={updatePassword}
+        deleteAccount={deleteAccount}
       />
       <h2 className="pt-2 font-display text-3xl font-bold uppercase">Notifications</h2>
       <p className="text-sm text-zinc-400">

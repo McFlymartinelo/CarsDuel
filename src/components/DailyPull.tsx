@@ -160,7 +160,7 @@ export function DailyPull({
         />
         <PullCard
           title="Hebdomadaire"
-          description="Un moteur ou une boîte (raretés 70 / 20 / 7 / 2,5 / 0,5 %)."
+          description="Un moteur ou une boîte, au choix."
           claimed={weeklyClaimed}
           claimedText="Déjà effectué cette semaine."
           nextAt={nextWeekly}

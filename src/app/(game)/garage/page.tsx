@@ -66,7 +66,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           />
         ))}
       </div>
-      {welcome.length > 0 && <WelcomeDraw cards={welcome} />}
+      {welcome.length > 0 && <WelcomeDraw cards={welcome} username={user.username} />}
     </>
   );
 }

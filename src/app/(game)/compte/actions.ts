@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { withAdmin } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
-import { invalidateOtherSessions } from "@/lib/session";
+import { destroySession, invalidateOtherSessions } from "@/lib/session";
 import { normalizeEmail, validateEmail, validatePassword, validateUsername } from "@/lib/validation";
 import type { ActionState } from "@/lib/types";
 
@@ -82,4 +83,23 @@ export async function updatePassword(_prev: ActionState, formData: FormData): Pr
   await withAdmin((c) => c.query("update users set password_hash = $1 where id = $2", [hash, user.id]));
   await invalidateOtherSessions(user.id);
   return { ok: true, message: "Mot de passe mis à jour." };
+}
+
+/** Supprime définitivement le compte et toutes ses données (cascades SQL). */
+export async function deleteAccount(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { user } = await requireUser();
+  const current = String(formData.get("current_password") ?? "");
+  const confirmation = String(formData.get("confirmation") ?? "").trim();
+  if (confirmation.toUpperCase() !== "SUPPRIMER") {
+    return { ok: false, message: "Tapez SUPPRIMER pour confirmer la suppression." };
+  }
+
+  const stored = await passwordHash(user.id);
+  if (!stored || !(await verifyPassword(current, stored))) {
+    return { ok: false, message: "Mot de passe actuel incorrect." };
+  }
+
+  await withAdmin((c) => c.query("delete from users where id = $1", [user.id]));
+  await destroySession();
+  redirect("/");
 }
