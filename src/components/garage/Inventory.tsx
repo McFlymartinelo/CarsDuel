@@ -4,6 +4,7 @@ import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { ViewToggle, type CardViewMode } from "@/components/ViewToggle";
+import { BackToGarage } from "@/components/garage/BackToGarage";
 import { SellDialog } from "@/components/garage/SellDialog";
 import { ExtendWarrantyDialog } from "@/components/garage/ExtendWarrantyDialog";
 import { extendWarranty, repairCard } from "@/app/(game)/garage/actions";
@@ -91,6 +92,7 @@ export function Inventory({
 
   return (
     <section className="min-w-0 space-y-3">
+      <BackToGarage />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-2xl font-bold uppercase">Inventaire</h2>
         <ViewToggle current={view} hrefFor={hrefForView} />

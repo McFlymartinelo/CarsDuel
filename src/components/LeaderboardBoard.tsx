@@ -165,7 +165,7 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
         <div className="rounded-xl border border-zinc-800 bg-[#0e1117] p-4 lg:col-span-2">
           <p className="font-display text-sm font-semibold uppercase tracking-wide text-zinc-300">Podium</p>
           {/* Visuel du podium en fond, libellés positionnés par-dessus au pourcentage du conteneur */}
-          <div role="group" aria-label="Podium du classement" className="duel-rise relative mt-4 aspect-[1536/826] w-full @container">
+          <div role="group" aria-label="Podium du classement" className="duel-rise relative mx-auto mt-4 aspect-[1536/826] w-full max-w-md @container">
             <div
               aria-hidden
               className="podium-halo pointer-events-none absolute left-1/2 top-[10%] h-[70%] w-[40%] -translate-x-1/2 bg-[radial-gradient(closest-side,rgba(245,158,11,0.16),transparent)]"

@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { TrophyArt } from "@/components/garage/TrophyArt";
+import { BackToGarage } from "@/components/garage/BackToGarage";
 import { requireUser } from "@/lib/auth";
 import { loadTrophyStats } from "@/lib/queries";
 
@@ -80,10 +79,7 @@ export default async function TrophiesPage() {
   return (
     <section className="mx-auto max-w-5xl space-y-6">
       <header className="space-y-2">
-        <Link href="/garage" className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-amber-300">
-          <ArrowLeft size={16} aria-hidden />
-          Retour au garage
-        </Link>
+        <BackToGarage />
         <h1 className="font-display text-3xl font-bold uppercase sm:text-4xl">Ma vitrine de trophées</h1>
         <p className="text-sm text-zinc-400">
           Vos victoires, vos titres de meilleur pilote et vos médailles de contre-la-montre et de banc d&apos;essai, réunis au même endroit.
