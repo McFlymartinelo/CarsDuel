@@ -102,6 +102,54 @@ export interface Offer {
   status: string;
 }
 
+/** Une instance de carte prête pour l'affichage dans les échanges (image résolue côté serveur). */
+export interface TradeCard extends UserCard {
+  image: string | null;
+}
+
+export type TradeSide = "proposer" | "recipient";
+
+export interface TradeItem {
+  id: string;
+  trade_id: string;
+  side: TradeSide;
+  card_id: string;
+  user_cards: TradeCard;
+}
+
+export interface TradeOffer {
+  id: string;
+  proposer_id: string;
+  recipient_id: string;
+  proposer_coins: number;
+  status: "pending" | "accepted" | "declined" | "cancelled" | "expired" | "failed";
+  created_at: string;
+  updated_at: string;
+  expires_at: string;
+  items: TradeItem[];
+}
+
+/** Résultat d'une RPC d'échange. `ok: false` = vérification métier échouée (offre supprimée). */
+export interface TradeResult {
+  ok: boolean;
+  reason?: "cards_unavailable" | "insufficient_funds" | "expired";
+  accepted?: boolean;
+  id?: string;
+  tax?: number;
+  coins_offered?: number;
+}
+
+export interface TradePartner {
+  user: { id: string; username: string };
+  cards: TradeCard[];
+}
+
+/** Entrée d'autocomplétion de la recherche de joueur. */
+export interface TradePlayerSuggestion {
+  id: string;
+  username: string;
+}
+
 export interface DuelOutcome {
   duel_id: string;
   weather: Weather;

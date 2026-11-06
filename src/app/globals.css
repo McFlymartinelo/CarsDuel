@@ -995,6 +995,28 @@ html {
   to { opacity: 1; }
 }
 
+/* Échanges : balayage de contrôle pendant la validation d'une offre. */
+.trade-scan::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.8);
+  animation: trade-scan 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes trade-scan {
+  from { top: 0; }
+  to { top: calc(100% - 2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trade-scan::after { animation: none; display: none; }
+}
+
 .bin-drop { animation: bin-drop 3s cubic-bezier(0.55, 0, 0.9, 0.4) forwards; transform-origin: 50% 0%; }
 
 @keyframes bin-drop {

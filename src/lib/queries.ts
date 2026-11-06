@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 import { withUser } from "@/lib/db";
 import type { CatalogQuery } from "@/lib/catalog-filters";
 import { LISTING_ORDER_SQL } from "@/lib/catalog-sort";
+import { cardImageUrl } from "@/lib/card-images";
 import { parsePage } from "@/lib/pagination";
 import { cleanSearch, isReferenceSearch } from "@/lib/search";
 import { nextParisMidnight, nextUtcMidnight } from "@/lib/format";
@@ -18,6 +19,9 @@ import type {
   NotificationFeed,
   Offer,
   PriceRef,
+  TradeCard,
+  TradeItem,
+  TradeOffer,
   UserCard,
   UserDeck,
 } from "@/lib/types";
@@ -341,6 +345,10 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery
     const history = p === 1
       ? (await c.query<MarketHistoryRow>("select * from public.my_market_history($1::uuid, 15)", [uid])).rows
       : [];
+    const incomingTrades = (await c.query<{ n: number }>(
+      "select count(*)::int as n from trade_offers where status = 'pending' and recipient_id = $1 and expires_at > now()",
+      [uid],
+    )).rows[0]?.n ?? 0;
     const counts: Record<string, number> = {};
     for (const row of (await c.query<{ category: string; n: string | number }>(
       `select t.category, count(*)::int as n
@@ -362,7 +370,70 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery
         [filter.tab.category],
       )).rows) rarityCounts[row.rarity] = Number(row.n);
     }
-    return { listings, offers, modifiers, names, priceRef, history, page: p, counts, rarityCounts };
+    return { listings, offers, modifiers, names, priceRef, history, incomingTrades, page: p, counts, rarityCounts };
+  });
+
+/** Cartes affichables dans les échanges (propriété, non détruites, hors benne, non privées). */
+const TRADE_CARD_WHERE = "not uc.is_destroyed and not coalesce(uc.in_recycle_bin, false) and t.restricted_to_username is null";
+
+const asTradeCard = (card: UserCard): TradeCard => ({ ...card, image: cardImageUrl(card.card_templates) });
+
+interface TradeItemRow {
+  id: string;
+  trade_id: string;
+  side: "proposer" | "recipient";
+  card_id: string;
+  user_cards: UserCard;
+}
+
+/**
+ * Onglet Échanges : inventaire du joueur, offres en attente (envoyées et reçues)
+ * avec leurs cartes, et pseudos des deux parties. Les offres expirées sont
+ * marquées puis masquées.
+ */
+export const loadTradeCenterPage = (uid: string) =>
+  withUser(uid, async (c) => {
+    await c.query("select public.expire_trade_offers($1::uuid)", [uid]);
+
+    const cards = (await c.query<UserCard>(
+      `${CARD_SELECT} where uc.owner_id = $1 and ${TRADE_CARD_WHERE} order by uc.acquired_at desc`,
+      [uid],
+    )).rows;
+
+    const offers = (await c.query<Omit<TradeOffer, "items">>(
+      `select id, proposer_id, recipient_id, proposer_coins, status, created_at, updated_at, expires_at
+         from trade_offers
+        where status = 'pending' and (proposer_id = $1 or recipient_id = $1)
+        order by updated_at desc`,
+      [uid],
+    )).rows;
+
+    const ids = offers.map((o) => o.id);
+    const items = ids.length === 0 ? [] : (await c.query<TradeItemRow>(
+      `select i.id, i.trade_id, i.side, i.card_id,
+              (to_jsonb(uc) || jsonb_build_object('card_templates', to_jsonb(t))) as user_cards
+         from trade_offer_items i
+         join user_cards uc on uc.id = i.card_id
+         join card_templates t on t.id = uc.template_id
+        where i.trade_id = any($1::uuid[])
+        order by i.created_at, i.id`,
+      [ids],
+    )).rows;
+
+    const byTrade = new Map<string, TradeItem[]>();
+    for (const item of items) {
+      const list = byTrade.get(item.trade_id) ?? [];
+      list.push({ ...item, user_cards: asTradeCard(item.user_cards) });
+      byTrade.set(item.trade_id, list);
+    }
+
+    const names = await qNames(c, [...new Set(offers.flatMap((o) => [o.proposer_id, o.recipient_id]))]);
+
+    return {
+      cards: cards.map(asTradeCard),
+      offers: offers.map((o) => ({ ...o, items: byTrade.get(o.id) ?? [] })),
+      names,
+    };
   });
 
 /** Notifications du Nav : une seule lecture, calculée en base (cf. migration 018). */

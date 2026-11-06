@@ -7,12 +7,14 @@ import { CatalogViewLink, CatalogViewPanels, CatalogViewProvider, CatalogViewTog
 import { QuestPing } from "@/components/QuestPing";
 import { PageHeader } from "@/components/PageHeader";
 import { CatalogFilters } from "@/components/CatalogFilters";
+import { MarketplaceTabs } from "@/components/marketplace/MarketplaceTabs";
+import { TradeCenter } from "@/components/marketplace/TradeCenter";
 import { readCatalogQuery } from "@/lib/catalog-filters";
 import type { Rarity } from "@/lib/types";
 import { CATEGORY_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
 import { parsePage } from "@/lib/pagination";
-import { LISTING_PAGE_SIZE, loadMarketplacePage } from "@/lib/queries";
+import { LISTING_PAGE_SIZE, loadMarketplacePage, loadTradeCenterPage } from "@/lib/queries";
 import type { Listing, PriceRef } from "@/lib/types";
 import { buyListing, cancelListing, makeOffer, respondOffer, withdrawOffer } from "./actions";
 
@@ -39,7 +41,7 @@ function PriceHint({ price, reference }: { price: number | null; reference: Pric
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; tab?: string; rarity?: string; sort?: string; min?: string; max?: string; risk?: string; q?: string; vue?: string }>;
+  searchParams: Promise<{ page?: string; tab?: string; rarity?: string; sort?: string; min?: string; max?: string; risk?: string; q?: string; vue?: string; espace?: string }>;
 }) {
   const sp = await searchParams;
   const page = parsePage(sp.page);
@@ -47,7 +49,42 @@ export default async function MarketplacePage({
   const query = readCatalogQuery(sp);
   const view = viewMode(sp.vue);
   const { user } = await requireUser();
-  const { listings, offers, modifiers: tirePerfs, names: nameOf, priceRef, history, counts, rarityCounts } = await loadMarketplacePage(user.id, page, query);
+
+  const marketQuery = new URLSearchParams();
+  for (const key of ["page", "tab", "rarity", "sort", "min", "max", "risk", "q", "vue"] as const) {
+    const value = sp[key];
+    if (value) marketQuery.set(key, value);
+  }
+  const marketHref = marketQuery.toString() ? `/marketplace?${marketQuery.toString()}` : "/marketplace";
+  const exchangeQuery = new URLSearchParams(marketQuery);
+  exchangeQuery.set("espace", "echanges");
+  const exchangeHref = `/marketplace?${exchangeQuery.toString()}`;
+
+  if (sp.espace === "echanges") {
+    const { cards, offers, names } = await loadTradeCenterPage(user.id);
+    const outgoing = offers.filter((offer) => offer.proposer_id === user.id);
+    const incoming = offers.filter((offer) => offer.recipient_id === user.id);
+    return (
+      <>
+        <QuestPing quest="marketplace" />
+        <section className="space-y-3">
+          <PageHeader
+            title="Marketplace"
+            description="Le marché de l'occasion et les échanges directs entre joueurs."
+          />
+          <MarketplaceTabs current="echanges" marketHref={marketHref} exchangeHref={exchangeHref} incomingCount={incoming.length} />
+        </section>
+        <TradeCenter
+          me={{ id: user.id, username: user.username, coins: user.coins, cards }}
+          outgoing={outgoing}
+          incoming={incoming}
+          names={Object.fromEntries(names)}
+        />
+      </>
+    );
+  }
+
+  const { listings, offers, modifiers: tirePerfs, names: nameOf, priceRef, history, incomingTrades, counts, rarityCounts } = await loadMarketplacePage(user.id, page, query);
 
   const mine = listings.filter((x) => x.seller_id === user.id);
   const others = listings.filter((x) => x.seller_id !== user.id);
@@ -168,6 +205,7 @@ export default async function MarketplacePage({
           description="Achetez et vendez des pièces entre joueurs. Prix et offres à partir de 10 pièces."
           actions={<CatalogViewToggle />}
         />
+        <MarketplaceTabs current="marche" marketHref={marketHref} exchangeHref={exchangeHref} incomingCount={incomingTrades} />
         <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} preserveCatalogView />
       </section>
 
