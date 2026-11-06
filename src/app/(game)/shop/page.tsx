@@ -1,10 +1,11 @@
 import { requireUser } from "@/lib/auth";
 import { QuestPing } from "@/components/QuestPing";
-import { ActionForm } from "@/components/ActionForm";
+import { PageHeader } from "@/components/PageHeader";
 import { CardRow } from "@/components/CardRow";
 import { CardView } from "@/components/CardView";
 import { CatalogFilters } from "@/components/CatalogFilters";
-import { viewMode, type CardViewMode } from "@/components/ViewToggle";
+import { ShopBuyForm } from "@/components/ShopBuyForm";
+import { viewMode } from "@/components/ViewToggle";
 import { CatalogViewPanels, CatalogViewProvider, CatalogViewToggle } from "@/components/CatalogView";
 import { compareTemplates } from "@/lib/catalog-sort";
 import { readCatalogQuery } from "@/lib/catalog-filters";
@@ -44,20 +45,26 @@ export default async function ShopPage({
       return query.sort ? compareTemplates(a.card_templates, b.card_templates, query.sort) : 0;
     });
 
-  const buy = (id: string, name: string, price: number) => (
-    <ActionForm action={buyShopItem} submitLabel="Acheter" confirmText={`Acheter ${name} pour ${price} pièces ?`} className="flex flex-wrap gap-2">
-      <input type="hidden" name="catalog_id" value={id} />
-    </ActionForm>
+  const buy = (item: (typeof shown)[number]) => (
+    <ShopBuyForm
+      action={buyShopItem}
+      catalogId={item.id}
+      name={item.card_templates.name}
+      price={item.price}
+      stock={item.stock}
+      balance={user.coins}
+    />
   );
 
   return (
     <CatalogViewProvider initialView={view}>
       <section className="min-w-0 space-y-4">
         <QuestPing quest="boutique" />
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-bold">Magasin de pièces neuves</h1>
-          <CatalogViewToggle />
-        </div>
+        <PageHeader
+          title="Magasin de pièces neuves"
+          description="Des pièces garanties, disponibles immédiatement pour compléter votre configuration."
+          actions={<CatalogViewToggle />}
+        />
         <CatalogFilters
           path="/shop"
           query={query}
@@ -76,10 +83,7 @@ export default async function ShopPage({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
               {shown.map((it) => (
                 <CardView key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} tirePerfs={tirePerfs}>
-                  <p className="mb-2 text-sm">
-                    {it.price} 🪙 {it.stock !== null && <span className="text-zinc-500">· stock {it.stock}</span>}
-                  </p>
-                  {buy(it.id, it.card_templates.name, it.price)}
+                  {buy(it)}
                 </CardView>
               ))}
             </div>
@@ -87,8 +91,8 @@ export default async function ShopPage({
             list={(
             <div className="grid min-w-0 gap-2">
               {shown.map((it) => (
-                <CardRow key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} note={<p className="text-sm text-amber-300">{it.price} 🪙{it.stock !== null ? ` · stock ${it.stock}` : ""}</p>}>
-                  {buy(it.id, it.card_templates.name, it.price)}
+                <CardRow key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)}>
+                  {buy(it)}
                 </CardRow>
               ))}
             </div>

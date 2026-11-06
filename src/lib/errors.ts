@@ -46,6 +46,7 @@ const MESSAGES: Record<string, string> = {
   offer_not_pending: "Cette offre n'est plus en attente.",
   item_not_found: "Article introuvable.",
   out_of_stock: "Rupture de stock.",
+  insufficient_stock: "Stock insuffisant pour cette quantité.",
   incomplete_collection: "Il vous faut au moins un moteur, une boîte et des pneus disponibles pour créer un deck.",
   invalid_deck_card: "Carte invalide pour cet emplacement (propriété, catégorie, vente ou benne).",
   invalid_quantity: "Quantité invalide.",
