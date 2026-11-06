@@ -43,6 +43,56 @@ test("collection publique d'un pilote : pseudo inconnu et appelant usurpé", asy
   );
 });
 
+test("badge déjà obtenue : l'historique survit au recyclage définitif", async () => {
+  const fx = await withAdmin(async (c) => {
+    await ensureTemplates(c);
+    const user = await createPlayer(c);
+    const card = await giveCard(c, user, "t_eng");
+    const template = (await c.query("select template_id from user_cards where id = $1", [card])).rows[0].template_id;
+    return { user, card, template };
+  });
+
+  await asUser(fx.user, (c) => c.query("select public.recycle_bin_add($1::uuid, $2::uuid)", [fx.user, fx.card]));
+  await asUser(fx.user, (c) => c.query("select public.recycle_bin_process($1::uuid)", [fx.user]));
+
+  const kept = await asUser(fx.user, (c) => c.query(
+    "select 1 from public.collector_obtained where owner_id = $1 and template_id = $2",
+    [fx.user, fx.template],
+  ));
+  assert.equal(kept.rows.length, 1);
+
+  await withAdmin(async (c) => {
+    assert.equal((await c.query("select id from user_cards where id = $1", [fx.card])).rows.length, 0);
+  });
+});
+
+test("badge déjà obtenue : vendeur et acheteur conservent le modèle", async () => {
+  const fx = await withAdmin(async (c) => {
+    await ensureTemplates(c);
+    const seller = await createPlayer(c);
+    const buyer = await createPlayer(c, 100);
+    const card = await giveCard(c, seller, "t_eng");
+    const template = (await c.query("select template_id from user_cards where id = $1", [card])).rows[0].template_id;
+    return { seller, buyer, card, template };
+  });
+
+  const listing = (await asUser(fx.seller, (c) => c.query(
+    "select public.create_listing($1::uuid, $2::uuid, 10, false) as id",
+    [fx.seller, fx.card],
+  ))).rows[0].id;
+  await asUser(fx.buyer, (c) => c.query("select public.buy_marketplace_item($1::uuid, $2::uuid)", [fx.buyer, listing]));
+
+  await withAdmin(async (c) => {
+    for (const user of [fx.seller, fx.buyer]) {
+      const rows = (await c.query(
+        "select 1 from collector_obtained where owner_id = $1 and template_id = $2",
+        [user, fx.template],
+      )).rows;
+      assert.equal(rows.length, 1);
+    }
+  });
+});
+
 test("défi du collectionneur inconnu", async () => {
   const user = await withAdmin((c) => createPlayer(c));
   await expectError(

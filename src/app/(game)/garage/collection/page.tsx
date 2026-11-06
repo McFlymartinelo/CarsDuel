@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { loadCollectorChallengeClaims, loadCollectorCollection, loadTireModifiers } from "@/lib/queries";
 import { cardImageUrl } from "@/lib/card-images";
 import { CollectorCollection } from "@/components/CollectorCollection";
-import { BackToGarage } from "@/components/garage/BackToGarage";
+import { PageHeader } from "@/components/PageHeader";
 import { CollectorChallenges } from "@/components/CollectorChallenges";
 import { VisitCollectorCollection } from "@/components/VisitCollectorCollection";
 import { CatalogViewProvider, CatalogViewToggle } from "@/components/CatalogView";
@@ -19,11 +19,11 @@ export default async function CollectorPage({ searchParams }: { searchParams: Pr
     loadTireModifiers(user.id),
   ]);
   return <CatalogViewProvider initialView={viewMode(sp.vue)}><section className="min-w-0 space-y-6">
-    <BackToGarage />
-    <header>
-      <h1 className="font-display text-3xl font-bold uppercase">Le coin du collectionneur</h1>
-      <p className="mt-2 text-sm text-zinc-400">Retrouvez toutes les cartes du jeu et celles que vous avez déjà obtenues.</p>
-    </header>
+    <PageHeader
+      back
+      title="Le coin du collectionneur"
+      description="Retrouvez toutes les cartes du jeu et celles que vous avez déjà obtenues."
+    />
     <VisitCollectorCollection tirePerfs={tirePerfs} />
     <CollectorChallenges entries={cards} claimedChallenges={claimedChallenges} />
     <div>

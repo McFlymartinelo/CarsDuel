@@ -4,7 +4,7 @@ import { ChallengeDensityProvider, ChallengeDensityToggle } from "@/components/C
 import { ChallengeTile } from "@/components/CollectorChallengeTile";
 import type { CardTemplate } from "@/lib/types";
 
-type Entry = { card_templates: CardTemplate; obtained: boolean };
+type Entry = { card_templates: CardTemplate; obtained: boolean; owned: boolean };
 type Challenge = {
   key: string;
   name: string;
@@ -43,7 +43,7 @@ const CHALLENGES: Challenge[] = [
 
 const progressOf = (challenge: Challenge, entries: Entry[]) => {
   const cards = entries.filter(({ card_templates }) => challenge.matches(card_templates));
-  const owned = cards.filter(({ obtained }) => obtained).length;
+  const owned = cards.filter((entry) => entry.owned).length;
   return { total: cards.length, owned, complete: cards.length > 0 && owned === cards.length };
 };
 

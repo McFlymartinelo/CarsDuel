@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Cog, Disc, Gauge, Hash, Settings2, Ticket, Timer, Weight, Zap, type LucideIcon } from "lucide-react";
-import { compareCollectionDefault, compareTemplates } from "@/lib/catalog-sort";
+import { Cog, Disc, Settings2, Ticket, Zap, type LucideIcon } from "lucide-react";
+import { compareCollectionDefault, compareTemplates, ENGINE_SORTS, GEARBOX_SORTS } from "@/lib/catalog-sort";
 import { CATEGORY_LABEL, RARITY_LABEL, TIRE_LABEL, cardSummary } from "@/lib/format";
 import { matchesTemplateSearch } from "@/lib/search";
 import type { CardTemplate, Category, Rarity } from "@/lib/types";
@@ -10,6 +10,8 @@ import { CardView, type TirePerf } from "@/components/CardView";
 import { MobileCollectionFilters } from "@/components/MobileCollectionFilters";
 import { SearchInput } from "@/components/SearchBox";
 import { CatalogViewPanels } from "@/components/CatalogView";
+import { FilterRow } from "@/components/FilterRow";
+import { SortRow } from "@/components/SortRow";
 
 type Entry = { card_templates: CardTemplate; obtained: boolean; image: string | null };
 const CATEGORIES: { key: Category | "tout"; label: string }[] = [
@@ -21,8 +23,6 @@ const SORT_LABEL: Record<string, string> = {
   power: "Puissance", weight: "Poids", ref: "Référence", shift: "Temps de passage",
 };
 const SEGMENT = "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors";
-const FILTER_ROW = "grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2";
-const FILTER_LABEL = "font-display text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500";
 const CATEGORY_ICONS: Partial<Record<Category | "tout", LucideIcon>> = { moteur: Cog, boite: Settings2, pneus: Disc, bonus: Zap };
 const RARITY_DOT: Record<Rarity, string> = {
   commune: "bg-zinc-400", rare: "bg-blue-400", tres_rare: "bg-cyan-400", epique: "bg-purple-400", legendaire: "bg-amber-400",
@@ -61,11 +61,8 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
   const mechanical = category === "tout" || category === "moteur" || category === "boite";
   const sorts = useMemo(() => category === "moteur" ? ["power", "weight", "ref"]
     : category === "boite" ? ["shift", "weight", "ref"] : [], [category]);
-  const sortOptions: { key: string; label: string; icon: LucideIcon; descending?: boolean }[] = category === "moteur"
-    ? [{ key: "power", label: "Puissance", icon: Gauge, descending: true }, { key: "weight", label: "Poids", icon: Weight }, { key: "ref", label: "Référence", icon: Hash }]
-    : category === "boite"
-      ? [{ key: "shift", label: "Temps de passage", icon: Timer }, { key: "weight", label: "Poids", icon: Weight }, { key: "ref", label: "Référence", icon: Hash }]
-      : [];
+  // Mêmes options que la boutique pour les moteurs et boîtes, sans prix (pas de vente ici).
+  const sortOptions = category === "moteur" ? ENGINE_SORTS : category === "boite" ? GEARBOX_SORTS : [];
   const shown = useMemo(() => entries.filter(({ card_templates, obtained }) =>
     (category === "tout" || card_templates.category === category)
     && (!rarity || card_templates.rarity === rarity)
@@ -98,8 +95,7 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
         placeholder="Rechercher une carte, un nom, une référence…"
       />
       <div className="hidden space-y-3 md:block">
-        <div className={FILTER_ROW}>
-          <span className={FILTER_LABEL}>Type</span>
+        <FilterRow label="Type">
           <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Type de carte">
             {CATEGORIES.map((item) => {
               const active = category === item.key;
@@ -109,9 +105,8 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
               </button>;
             })}
           </nav>
-        </div>
-        {mechanical && <div className={FILTER_ROW}>
-          <span className={FILTER_LABEL}>Niveau</span>
+        </FilterRow>
+        {mechanical && <FilterRow label="Niveau">
           <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer par rareté">
             <button type="button" aria-pressed={!rarity} onClick={() => setRarity("")} className={`${SEGMENT} shrink-0 ${!rarity ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>Tous</button>
             {RARITIES.filter((value) => rarityCounts[value] > 0 || rarity === value).map((value) => {
@@ -121,27 +116,22 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
               </button>;
             })}
           </nav>
-        </div>}
-        {sortOptions.length > 0 && <div className={FILTER_ROW}>
-          <span className={FILTER_LABEL}>Trier</span>
-          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Trier les cartes">
-            {sortOptions.map(({ key, label, icon: Icon, descending }) => {
-              const active = sort === key;
-              const Direction = descending ? ArrowDown : ArrowUp;
-              return <button key={key} type="button" aria-pressed={active} onClick={() => setSort(active ? "" : key)} className={`inline-flex shrink-0 items-center gap-1.5 ${SEGMENT} ${active ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>
-                <Icon size={15} strokeWidth={2} />{label}<Direction size={14} strokeWidth={2.25} className={active ? "text-black/70" : "text-zinc-600"} />
-              </button>;
-            })}
-          </nav>
-        </div>}
-        <div className={FILTER_ROW}>
-          <span className={FILTER_LABEL}>Possession</span>
+        </FilterRow>}
+        {sortOptions.length > 0 && (
+          <SortRow
+            options={sortOptions}
+            current={sort}
+            onSelect={(key) => setSort(sort === key ? "" : key)}
+            ariaLabel="Trier les cartes"
+          />
+        )}
+        <FilterRow label="Possession">
           <div className="inline-flex justify-self-start rounded-xl border border-zinc-800 bg-[#10131a] p-1">
             <button type="button" aria-pressed={ownedOnly} onClick={() => setOwnedOnly((value) => !value)} className={`inline-flex items-center gap-1.5 ${SEGMENT} ${ownedOnly ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>
               <Ticket size={15} strokeWidth={1.8} aria-hidden="true" />Déjà obtenue
             </button>
           </div>
-        </div>
+        </FilterRow>
       </div>
       <MobileCollectionFilters
         category={category} setCategory={changeCategory} rarity={rarity} setRarity={setRarity}
