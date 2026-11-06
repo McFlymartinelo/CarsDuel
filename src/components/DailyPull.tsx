@@ -146,8 +146,7 @@ export function DailyPull({
 }) {
   return (
     <section id="tirage" className="scroll-mt-28 space-y-3">
-      <h2 className="font-display text-2xl font-bold uppercase">Tirages gratuits</h2>
-      <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
+      <div className="grid gap-3 sm:grid-cols-2">
         <PullCard
           title="Quotidien"
           description="3 cartes bonus tirées au sort."

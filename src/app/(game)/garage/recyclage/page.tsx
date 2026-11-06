@@ -12,6 +12,8 @@ export const metadata = { title: "Centre de recyclage — CarsDuel" };
 
 const TABS: RecycleTab[] = ["inventaire", "benne", "echanges"];
 const FILTERS: RecycleFilter[] = ["toutes", "moteurs", "boites", "pneus", "detruites"];
+/** Valeurs acceptées pour ?sort=, revalidées une seconde fois côté composant. */
+const SORT_KEYS = ["power", "weight", "shift", "ref", "gomme"];
 
 const oneOf = <T extends string>(value: string | undefined, allowed: T[], fallback: T): T =>
   allowed.includes((value ?? "") as T) ? ((value ?? "") as T) : fallback;
@@ -19,9 +21,9 @@ const oneOf = <T extends string>(value: string | undefined, allowed: T[], fallba
 export default async function RecycleCenterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; cat?: string; vue?: string }>;
+  searchParams: Promise<{ tab?: string; cat?: string; sort?: string; vue?: string }>;
 }) {
-  const { tab, cat, vue } = await searchParams;
+  const { tab, cat, sort, vue } = await searchParams;
   const { user } = await requireUser();
   const { cards, modifiers } = await loadRecycleCenterPage(user.id);
 
@@ -37,6 +39,7 @@ export default async function RecycleCenterPage({
       images={images}
       tab={oneOf(tab, TABS, "inventaire")}
       filter={oneOf(cat, FILTERS, "toutes")}
+      sort={oneOf(sort as string | undefined, SORT_KEYS, "" as string) || undefined}
       view={viewMode(vue)}
     />
   );

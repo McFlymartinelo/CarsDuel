@@ -9,6 +9,8 @@ import {
   Disc,
   LayoutGrid,
   List,
+  Minus,
+  Plus,
   Recycle,
   Settings2,
   TriangleAlert,
@@ -19,18 +21,22 @@ import {
 import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
+import { FilterRow } from "@/components/FilterRow";
+import { SortRow } from "@/components/SortRow";
 import type { CardViewMode } from "@/components/ViewToggle";
 import { BackToGarage } from "@/components/garage/BackToGarage";
 import { RecycleExchangeTiers } from "@/components/garage/RecycleExchangeTiers";
 import { RecycleLaunch } from "@/components/garage/RecycleLaunch";
 import { addToRecycleBin, exchangeRecycledCard, removeFromRecycleBin } from "@/app/(game)/garage/actions";
+import { cardGroupKey, groupCards } from "@/lib/card-groups";
+import { ENGINE_SORTS, GEARBOX_SORTS, compareTemplates, type CardSort } from "@/lib/catalog-sort";
 import {
   formatCubes,
   formatKg,
   isRecyclableCategory,
   recycleBinSummary,
 } from "@/lib/recycle";
-import type { Category, UserCard } from "@/lib/types";
+import type { ActionState, Category, UserCard } from "@/lib/types";
 
 export type RecycleTab = "inventaire" | "benne" | "echanges";
 export type RecycleFilter = "toutes" | "moteurs" | "boites" | "pneus" | "detruites";
@@ -60,6 +66,40 @@ const FILTER_CATEGORY: Partial<Record<RecycleFilter, Category>> = {
   pneus: "pneus",
 };
 
+export type RecycleSort = Exclude<CardSort, "price"> | "gomme";
+
+/** Options de tri du même catalogue que boutique et marketplace, gomme en plus pour les pneus. */
+const MIXED_SORTS = [
+  { key: "ref", label: "Référence", title: "Numéro croissant" },
+  { key: "power", label: "Puissance", title: "Plus puissant d'abord" },
+  { key: "weight", label: "Poids", title: "Plus léger d'abord" },
+  { key: "shift", label: "Temps de passage", title: "Plus rapide d'abord" },
+  { key: "gomme", label: "Gomme", title: "Plus de gomme restante d'abord" },
+] as const;
+
+const SORTS: Record<RecycleFilter, readonly { key: RecycleSort; label: string; title: string }[]> = {
+  toutes: MIXED_SORTS,
+  moteurs: ENGINE_SORTS,
+  boites: GEARBOX_SORTS,
+  pneus: [{ key: "gomme", label: "Gomme", title: "Plus de gomme restante d'abord" }],
+  detruites: MIXED_SORTS,
+};
+
+const trimSort = (filter: RecycleFilter, sort: string | undefined): string =>
+  SORTS[filter].some((o) => o.key === sort) ? (sort as string) : "";
+
+const byName = (a: UserCard, b: UserCard) => a.card_templates.name.localeCompare(b.card_templates.name, "fr");
+
+/** Compare deux cartes selon le tri choisi (« gomme » n'existe pas dans le tri catalogue). */
+function compareCards(a: UserCard, b: UserCard, sort: RecycleSort): number {
+  if (sort === "gomme") {
+    // Un pneu a une gomme ; les autres pièces n'en ont pas et restent groupées par modèle.
+    const wear = Number(b.tire_wear ?? -1) - Number(a.tire_wear ?? -1);
+    return wear || byName(a, b);
+  }
+  return compareTemplates(a.card_templates, b.card_templates, sort) || byName(a, b);
+}
+
 const CATEGORY_ORDER: Record<Category, number> = { moteur: 0, boite: 1, pneus: 2, bonus: 3 };
 
 const segment = (active: boolean) =>
@@ -70,9 +110,12 @@ const segment = (active: boolean) =>
 const countClass = (active: boolean) => (active ? "tabular-nums text-black/60" : "tabular-nums text-zinc-500");
 
 /** URL canonique du centre de recyclage (partage, rechargement). */
-const recycleHref = (tab: RecycleTab, filter: RecycleFilter, view: CardViewMode) => {
+const recycleHref = (tab: RecycleTab, filter: RecycleFilter, view: CardViewMode, sort = "") => {
   const params = new URLSearchParams({ tab });
-  if (tab === "inventaire") params.set("cat", filter);
+  if (tab === "inventaire") {
+    params.set("cat", filter);
+    if (sort) params.set("sort", sort);
+  }
   if (view === "liste") params.set("vue", "liste");
   return `/garage/recyclage?${params.toString()}`;
 };
@@ -108,6 +151,86 @@ function Stat({ label, value, icon: Icon, tone = "text-white" }: { label: string
   );
 }
 
+const binStepBtn =
+  "flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-[#12151b] text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-300 disabled:opacity-40 disabled:hover:border-zinc-700 disabled:hover:text-zinc-200";
+const binField =
+  "min-w-0 flex-1 rounded-lg border border-zinc-700 bg-[#12151b] px-2 py-1.5 text-center text-sm font-semibold tabular-nums text-white [appearance:textfield] focus:border-amber-500/60 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+
+/**
+ * Dépose un ou plusieurs exemplaires d'un groupe dans la benne.
+ * Comme la boutique, la quantité choisie est plafonnée au nombre du groupe.
+ */
+function PlaceInBinForm({
+  cardIds,
+  onResult,
+}: {
+  cardIds: string[];
+  onResult?: (result: ActionState) => void;
+}) {
+  const [raw, setRaw] = useState("1");
+  const max = cardIds.length;
+  const qty = Math.min(Math.max(1, max), Math.max(1, Math.floor(Number(raw)) || 1));
+  const selected = cardIds.slice(0, qty);
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      {max > 1 && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Retirer un exemplaire"
+            className={binStepBtn}
+            disabled={qty <= 1}
+            onClick={() => setRaw(String(qty - 1))}
+          >
+            <Minus size={14} strokeWidth={2.5} aria-hidden />
+          </button>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={max}
+            aria-label="Nombre d’exemplaires à placer dans la benne"
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            onBlur={() => setRaw(String(qty))}
+            className={binField}
+          />
+          <button
+            type="button"
+            aria-label="Ajouter un exemplaire"
+            className={binStepBtn}
+            disabled={qty >= max}
+            onClick={() => setRaw(String(qty + 1))}
+          >
+            <Plus size={14} strokeWidth={2.5} aria-hidden />
+          </button>
+        </div>
+      )}
+      <ActionForm
+        action={addToRecycleBin}
+        onResult={(result) => {
+          if (result?.ok) setRaw("1");
+          onResult?.(result);
+        }}
+        submitLabel={
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Recycle size={13} strokeWidth={2.5} aria-hidden />
+            {max > 1 ? `Placer ${qty} dans la benne` : "Placer dans la benne"}
+          </span>
+        }
+        variant="none"
+        submitClassName="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-amber-300 transition hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-200 active:scale-95"
+        className="flex w-full"
+      >
+        {selected.map((id) => (
+          <input key={id} type="hidden" name="card_id" value={id} />
+        ))}
+      </ActionForm>
+    </div>
+  );
+}
+
 export function RecycleCenter({
   cubes,
   cards,
@@ -115,6 +238,7 @@ export function RecycleCenter({
   images,
   tab: initialTab,
   filter: initialFilter,
+  sort: initialSort,
   view: initialView,
 }: {
   cubes: number;
@@ -124,6 +248,8 @@ export function RecycleCenter({
   images: Record<string, string | null>;
   tab: RecycleTab;
   filter: RecycleFilter;
+  /** Tri demandé dans l'URL, déjà filtré côté serveur contre les options connues. */
+  sort?: string;
   view: CardViewMode;
 }) {
   // Toutes les données du centre sont déjà chargées : les onglets et filtres
@@ -133,6 +259,9 @@ export function RecycleCenter({
   const [tab, setTab] = useState<RecycleTab>(initialTab);
   const [filter, setFilter] = useState<RecycleFilter>(initialFilter);
   const [view, setView] = useState<CardViewMode>(initialView);
+  // Tri courant, validé à l'entrée contre les options du filtre initial : une
+  // valeur d'URL obsolète retombe sur l'ordre par défaut au lieu de fausser l'affichage.
+  const [sort, setSort] = useState<string>(() => trimSort(initialFilter, initialSort));
   // Solde local : le débit est reflété immédiatement (header de page) en attendant
   // le rafraîchissement RSC déclenché par la Server Action.
   const [cubeBalance, setCubeBalance] = useState(cubes);
@@ -141,31 +270,42 @@ export function RecycleCenter({
 
   useEffect(() => setCubeBalance(cubes), [cubes]);
 
-  const syncUrl = (nextTab: RecycleTab, nextFilter: RecycleFilter, nextView: CardViewMode) => {
-    window.history.replaceState(null, "", recycleHref(nextTab, nextFilter, nextView));
+  const syncUrl = (nextTab: RecycleTab, nextFilter: RecycleFilter, nextSort: string, nextView: CardViewMode) => {
+    window.history.replaceState(null, "", recycleHref(nextTab, nextFilter, nextView, nextSort));
   };
 
   const selectTab = (next: RecycleTab) => {
     setTab(next);
-    syncUrl(next, filter, view);
+    syncUrl(next, filter, "", view);
+  };
+
+  const selectSort = (next: string) => {
+    setSort(next);
+    syncUrl(tab, filter, next, view);
   };
 
   const selectFilter = (next: RecycleFilter) => {
+    // Les options de tri dépendent du filtre : on repart de l'ordre par défaut.
     setFilter(next);
-    syncUrl(tab, next, view);
+    setSort("");
+    syncUrl(tab, next, "", view);
   };
 
   const selectView = (next: CardViewMode) => {
     setView(next);
-    syncUrl(tab, filter, next);
+    syncUrl(tab, filter, sort, next);
   };
 
+  // Moteurs et boîtes par code croissant (M1A, M1B, M2…), pneus par modèle ;
+  // le regroupement en badge ×N conserve cet ordre.
   const recyclable = cards
     .filter((c) => isRecyclableCategory(c.card_templates.category))
     .sort(
       (a, b) =>
         CATEGORY_ORDER[a.card_templates.category] - CATEGORY_ORDER[b.card_templates.category] ||
-        a.card_templates.name.localeCompare(b.card_templates.name, "fr"),
+        (a.card_templates.category === "pneus"
+          ? a.card_templates.name.localeCompare(b.card_templates.name, "fr")
+          : compareTemplates(a.card_templates, b.card_templates, "ref")),
     );
   const inventoryCards = recyclable.filter((c) => (!c.in_recycle_bin && !c.is_listed) || falling.includes(c.id));
   const binCards = recyclable.filter((c) => c.in_recycle_bin);
@@ -184,11 +324,54 @@ export function RecycleCenter({
     if (filter === "detruites") return c.is_destroyed;
     return c.card_templates.category === FILTER_CATEGORY[filter];
   });
+  // Tri explicite (rangée « Trier », même principe que boutique/marketplace) ;
+  // sinon les cartes conservent l'ordre par défaut défini ci-dessus.
+  const sortOptions = SORTS[filter];
+  const activeSort = sortOptions.some((o) => o.key === sort) ? (sort as RecycleSort) : "";
+  // Sur « Toutes » et « Détruites », on garde le regroupement par catégorie
+  // (moteurs, boîtes, pneus) puis on trie à l'intérieur de chacune.
+  const mixed = filter === "toutes" || filter === "detruites";
+  const sorted =
+    activeSort && filtered.length > 1
+      ? filtered.slice().sort(
+          (a, b) =>
+            (mixed ? CATEGORY_ORDER[a.card_templates.category] - CATEGORY_ORDER[b.card_templates.category] : 0) ||
+            compareCards(a, b, activeSort),
+        )
+      : filtered;
+  // Même regroupement que l'inventaire : pneus à gomme égale, moteurs/boîtes au
+  // même risque de casse actuel. Le badge ×N déplace ou retire tout le groupe.
+  const inventoryGroups = groupCards(sorted, cardGroupKey);
+  const binGroups = groupCards(binCards, cardGroupKey);
 
   const Card = compact ? CardRow : CardView;
   const gridClass = compact
     ? "grid gap-2 grid-cols-[repeat(auto-fill,minmax(max(20rem,calc((100%_-_1.5rem)/4)),1fr))]"
     : "grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(16rem,calc((100%_-_3rem)/4)),1fr))]";
+
+  const filterNav = (
+    <nav
+      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:justify-self-start"
+      aria-label="Filtrer l'inventaire recyclable"
+    >
+      {FILTERS.map(({ key, label, icon: Icon }) => {
+        const active = key === filter;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => selectFilter(key)}
+            aria-current={active ? "true" : undefined}
+            className={segment(active)}
+          >
+            <Icon size={15} strokeWidth={2} className={key === "detruites" ? "text-red-400" : undefined} />
+            {label}
+            <span className={countClass(active)}>{filterCount(key)}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
 
   return (
     <section className="space-y-4">
@@ -252,6 +435,8 @@ export function RecycleCenter({
               <h2 className="font-display text-2xl font-bold uppercase">Inventaire recyclable</h2>
               <p className="text-sm text-zinc-400">
                 Moteurs, boîtes et pneus, neufs, usés ou détruits. Une carte déposée quitte votre inventaire actif.
+                Les cartes identiques (même modèle et même gomme ou même risque de casse) sont regroupées sous un badge ×N,
+                et vous choisissez le nombre d’exemplaires à placer dans la benne.
               </p>
             </div>
             <nav className="inline-flex gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
@@ -273,24 +458,19 @@ export function RecycleCenter({
             </nav>
           </div>
 
-          <nav className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer l'inventaire recyclable">
-            {FILTERS.map(({ key, label, icon: Icon }) => {
-              const active = key === filter;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => selectFilter(key)}
-                  aria-current={active ? "true" : undefined}
-                  className={segment(active)}
-                >
-                  <Icon size={15} strokeWidth={2} className={key === "detruites" ? "text-red-400" : undefined} />
-                  {label}
-                  <span className={countClass(active)}>{filterCount(key)}</span>
-                </button>
-              );
-            })}
-          </nav>
+          <div className="hidden md:block">
+            <FilterRow label="Type">{filterNav}</FilterRow>
+          </div>
+          <div className="md:hidden">{filterNav}</div>
+
+          {sortOptions.length > 0 && filtered.length > 1 && (
+            <SortRow
+              options={sortOptions}
+              current={sort}
+              onSelect={(key) => selectSort(sort === key ? "" : key)}
+              ariaLabel="Trier l'inventaire recyclable"
+            />
+          )}
 
           {filtered.length === 0
             ? emptyState(
@@ -300,7 +480,7 @@ export function RecycleCenter({
               )
             : (
               <div className={gridClass}>
-                {filtered.map((c) => {
+                {inventoryGroups.map(({ card: c, count, cards: group }) => {
                   const t = c.card_templates;
                   return (
                     <div
@@ -311,26 +491,13 @@ export function RecycleCenter({
                         if (e.target === e.currentTarget) setFalling((f) => f.filter((id) => id !== c.id));
                       }}
                     >
-                      <Card template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs}>
-                        <div className="flex w-full flex-col gap-2">
-                          <ActionForm
-                            action={addToRecycleBin}
-                            onResult={(result) => {
-                              if (!result?.ok) setFalling((f) => f.filter((id) => id !== c.id));
-                            }}
-                            submitLabel={
-                              <span className="inline-flex items-center justify-center gap-1.5">
-                                <Recycle size={13} strokeWidth={2.5} aria-hidden />
-                                Placer dans la benne
-                              </span>
-                            }
-                            variant="none"
-                            submitClassName="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-amber-300 transition hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-200 active:scale-95"
-                            className="flex w-1/2"
-                          >
-                            <input type="hidden" name="card_id" value={c.id} />
-                          </ActionForm>
-                        </div>
+                      <Card template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs} quantity={count}>
+                        <PlaceInBinForm
+                          cardIds={group.map((x) => x.id)}
+                          onResult={(result) => {
+                            if (!result?.ok) setFalling((f) => f.filter((id) => id !== c.id));
+                          }}
+                        />
                       </Card>
                     </div>
                   );
@@ -372,30 +539,33 @@ export function RecycleCenter({
                   onClick: () => {
                     setFilter("toutes");
                     setTab("inventaire");
-                    syncUrl("inventaire", "toutes", view);
+                    syncUrl("inventaire", "toutes", "", view);
                   },
                 },
               )
             : (
               <div className={gridClass}>
-                {binCards.map((c) => {
+                {binGroups.map(({ card: c, count, cards: group }) => {
                   const t = c.card_templates;
+                  const ids = group.map((x) => x.id);
                   return (
-                    <Card key={c.id} template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs}>
+                    <Card key={c.id} template={t} card={c} image={images[c.id] ?? null} tirePerfs={tirePerfs} quantity={count}>
                       <div className="flex w-full flex-col gap-2">
                         <ActionForm
                           action={removeFromRecycleBin}
                           submitLabel={
                             <span className="inline-flex items-center justify-center gap-1.5">
                               <Undo2 size={13} strokeWidth={2.5} aria-hidden />
-                              Retirer de la benne
+                              {count > 1 ? `Retirer les ${count} de la benne` : "Retirer de la benne"}
                             </span>
                           }
                           variant="none"
                           submitClassName="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-zinc-600 bg-zinc-800/60 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-zinc-200 transition hover:border-zinc-400 hover:bg-zinc-700/70 hover:text-white active:scale-95"
                           className="flex w-1/2"
                         >
-                          <input type="hidden" name="card_id" value={c.id} />
+                          {ids.map((id) => (
+                            <input key={id} type="hidden" name="card_id" value={id} />
+                          ))}
                         </ActionForm>
                       </div>
                     </Card>

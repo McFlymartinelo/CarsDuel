@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { PageHeader } from "@/components/PageHeader";
 import { AccountForms } from "@/components/AccountForms";
 import { PushSettings } from "@/components/PushSettings";
 import { deleteAccount, updateEmail, updatePassword, updateUsername } from "./actions";
@@ -10,8 +11,7 @@ export default async function AccountPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="font-display text-3xl font-bold uppercase">Profil</h1>
-      <p className="text-sm text-zinc-400">Modifiez le pseudo, l&apos;e-mail et le mot de passe.</p>
+      <PageHeader title="Profil" description="Modifiez le pseudo, l'e-mail et le mot de passe." />
       <AccountForms
         username={user.username}
         email={user.email}

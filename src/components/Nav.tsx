@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { formatWalletCoins } from "@/lib/format";
+import { APP_WIDTH } from "@/lib/layout";
 import type { NotificationFeed } from "@/lib/types";
 
 const LINKS = [
@@ -53,7 +54,7 @@ export function Nav({
     <>
       {/* ---------- PC / tablette : en-tête complet + onglets ---------- */}
       <header className="hidden border-b border-zinc-800 bg-[#0d1015] md:block">
-        <div className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-x-8 gap-y-3 px-6 py-3 2xl:px-10">
+        <div className={`${APP_WIDTH} flex flex-wrap items-center gap-x-8 gap-y-3 px-6 py-3 2xl:px-10`}>
           <Link href="/garage" className="flex items-center gap-3 font-display text-2xl font-bold uppercase leading-[0.85] tracking-wide">
             <Logo size={48} />
             <span>
@@ -91,7 +92,7 @@ export function Nav({
         </div>
 
         <nav className="border-t border-zinc-800/80 bg-[#0b0e13]">
-          <div className="mx-auto flex max-w-[1800px] justify-center gap-1 px-6 2xl:px-10">
+          <div className={`${APP_WIDTH} flex justify-center gap-1 px-6 2xl:px-10`}>
             {LINKS.map(({ href, label }) => {
               const active = pathname.startsWith(href);
               return (

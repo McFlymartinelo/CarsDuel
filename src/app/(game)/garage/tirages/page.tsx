@@ -1,7 +1,7 @@
 import { CalendarDays, CalendarRange, History, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { DailyPull } from "@/components/DailyPull";
-import { BackToGarage } from "@/components/garage/BackToGarage";
+import { PageHeader } from "@/components/PageHeader";
 import { formatDateTime, nextParisMidnight, nextParisMonday, parisToday, parisWeekStart } from "@/lib/format";
 import { loadPullHistory, type PullRow } from "@/lib/queries";
 import { claimDailyPull, claimWeeklyPull } from "../actions";
@@ -25,7 +25,11 @@ export default async function PullsPage() {
 
   return (
     <>
-      <BackToGarage />
+      <PageHeader
+        back
+        title="Mes tirages gratuits"
+        description="Un tirage quotidien et un tirage hebdomadaire pour agrandir votre collection."
+      />
       <DailyPull
         dailyClaimed={user.last_daily_pull === parisToday()}
         weeklyClaimed={user.last_weekly_pull === parisWeekStart()}

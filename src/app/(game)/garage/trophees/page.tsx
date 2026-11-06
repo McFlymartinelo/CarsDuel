@@ -1,5 +1,5 @@
 import { TrophyArt } from "@/components/garage/TrophyArt";
-import { BackToGarage } from "@/components/garage/BackToGarage";
+import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
 import { loadTrophyStats } from "@/lib/queries";
 
@@ -77,14 +77,12 @@ export default async function TrophiesPage() {
   const totalWins = stats.attack_wins + stats.defense_wins;
 
   return (
-    <section className="mx-auto max-w-5xl space-y-6">
-      <header className="space-y-2">
-        <BackToGarage />
-        <h1 className="font-display text-3xl font-bold uppercase sm:text-4xl">Ma vitrine de trophées</h1>
-        <p className="text-sm text-zinc-400">
-          Vos victoires, vos titres de meilleur pilote et vos médailles de contre-la-montre et de banc d&apos;essai, réunis au même endroit.
-        </p>
-      </header>
+    <section className="space-y-6">
+      <PageHeader
+        back
+        title="Ma vitrine de trophées"
+        description="Vos victoires, vos titres de meilleur pilote et vos médailles de contre-la-montre et de banc d'essai, réunis au même endroit."
+      />
 
       <div className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-[#0e1117] p-5 sm:p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_0%_0%,rgba(245,158,11,0.14),transparent_60%)]" />

@@ -3,6 +3,7 @@ import { parisToday, parisWeekStart } from "@/lib/format";
 import { getNotifications, touchQuest } from "@/lib/queries";
 import { settleLeaderboardRewards } from "@/lib/rewards";
 import { startPushWorker } from "@/lib/push-worker";
+import { APP_WIDTH } from "@/lib/layout";
 import { Nav } from "@/components/Nav";
 import { PushSync } from "@/components/PushSync";
 import { signOut } from "@/app/auth/actions";
@@ -40,7 +41,7 @@ export default async function GameLayout({ children }: { children: React.ReactNo
         notifications={notifications}
         signOut={signOut}
       />
-      <main className="mx-auto max-w-[1800px] space-y-6 px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 md:space-y-8 md:px-6 md:pb-8 md:pt-6 2xl:px-10">{children}</main>
+      <main className={`${APP_WIDTH} space-y-6 px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 md:space-y-8 md:px-6 md:pb-8 md:pt-6 2xl:px-10`}>{children}</main>
     </>
   );
 }

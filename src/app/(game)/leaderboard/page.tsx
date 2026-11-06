@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { QuestPing } from "@/components/QuestPing";
+import { PageHeader } from "@/components/PageHeader";
 import { LeaderboardBoard, type PeriodBoard } from "@/components/LeaderboardBoard";
 import { getLeaderboard, type LeaderboardRow } from "@/lib/queries";
 
@@ -24,11 +25,9 @@ export default async function LeaderboardPage() {
   const [weekly, monthly] = await Promise.all([getLeaderboard(user.id, "weekly"), getLeaderboard(user.id, "monthly")]);
 
   return (
-    <section className="mx-auto max-w-5xl space-y-6">
+    <section className="space-y-6">
       <QuestPing quest="leaderboard" />
-      <header className="space-y-2">
-        <h1 className="font-display text-3xl font-bold uppercase sm:text-4xl">Classement XP</h1>
-      </header>
+      <PageHeader title="Classement XP" description="Les classements hebdomadaire et mensuel des pilotes, au même endroit." />
       <LeaderboardBoard userId={user.id} weekly={toBoard(weekly)} monthly={toBoard(monthly)} />
     </section>
   );

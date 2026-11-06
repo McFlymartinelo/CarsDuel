@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { Clock3 } from "lucide-react";
 import { GarageTile } from "@/components/GarageTile";
+import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
 import { WelcomeDraw } from "@/components/WelcomeDraw";
 import { parisToday, parisWeekStart } from "@/lib/format";
@@ -43,9 +44,7 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <div>
-        <h1 className="font-display text-3xl font-bold uppercase">Bienvenue dans votre garage {user.username}</h1>
-      </div>
+      <PageHeader title={`Bienvenue dans votre garage ${user.username}`} />
       <div className="grid gap-4 sm:grid-cols-2">
         {TILES.map(({ href, title, text, image, imageFit }) => (
           <GarageTile

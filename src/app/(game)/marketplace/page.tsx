@@ -5,6 +5,7 @@ import { CardView } from "@/components/CardView";
 import { viewMode, type CardViewMode } from "@/components/ViewToggle";
 import { CatalogViewLink, CatalogViewPanels, CatalogViewProvider, CatalogViewToggle } from "@/components/CatalogView";
 import { QuestPing } from "@/components/QuestPing";
+import { PageHeader } from "@/components/PageHeader";
 import { CatalogFilters } from "@/components/CatalogFilters";
 import { readCatalogQuery } from "@/lib/catalog-filters";
 import type { Rarity } from "@/lib/types";
@@ -112,7 +113,7 @@ export default async function MarketplacePage({
   );
 
   const othersGrid = (mode: CardViewMode) => (
-    <div className={mode === "liste" ? "grid gap-2 xl:grid-cols-2" : "grid gap-3 md:grid-cols-2"}>
+    <div className={mode === "liste" ? "grid gap-2 xl:grid-cols-2" : "grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"}>
       {others.map((x) => {
         const myOffer = myOffers.find((m) => m.listing_id === x.id);
         return card(
@@ -162,13 +163,11 @@ export default async function MarketplacePage({
     <>
       <QuestPing quest="marketplace" />
       <section className="space-y-3">
-        <header>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Marketplace</h1>
-            <CatalogViewToggle />
-          </div>
-          <p className="mt-0.5 text-sm text-zinc-400">Achetez et vendez des pièces entre joueurs. Prix et offres à partir de 10 pièces.</p>
-        </header>
+        <PageHeader
+          title="Marketplace"
+          description="Achetez et vendez des pièces entre joueurs. Prix et offres à partir de 10 pièces."
+          actions={<CatalogViewToggle />}
+        />
         <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} preserveCatalogView />
       </section>
 

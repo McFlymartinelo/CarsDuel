@@ -1,6 +1,7 @@
 import { SlotCard } from "@/components/garage/SlotCard";
 import { SlotTabs, type SlotKey } from "@/components/garage/SlotTabs";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
+import { PageHeader } from "@/components/PageHeader";
 import type { TireModifier } from "@/lib/queries";
 import type { UserCard } from "@/lib/types";
 
@@ -27,8 +28,7 @@ export function ConfigBoard({
   const slotWrap = (key: SlotKey) => (key === slot ? "" : "hidden md:block");
   return (
     <section className="space-y-3">
-      <h1 className="font-display text-3xl font-bold uppercase">Ma config</h1>
-      <p className="text-sm text-zinc-400">Choisissez le moteur, la boîte et les pneus de la course.</p>
+      <PageHeader title="Ma config" description="Choisissez le moteur, la boîte et les pneus de la course." />
       <SlotTabs current={slot} cards={{ moteur: engine, boite: gearbox, pneus: tire }} hrefFor={hrefFor} />
       <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 xl:grid-cols-[1fr_1fr_1fr_1.1fr]">
         <div className={slotWrap("moteur")}>

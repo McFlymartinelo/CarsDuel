@@ -59,23 +59,44 @@ const RECYCLE_CENTER_PATHS = [
   "/duel/organises",
 ];
 
+/** Une carte regroupée sous un badge ×N envoie plusieurs champs `card_id`. */
+function formCardIds(fd: FormData): string[] {
+  return [...new Set(fd.getAll("card_id").map((value) => String(value).trim()).filter(Boolean))];
+}
+
 export async function addToRecycleBin(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const cardIds = formCardIds(fd);
+  if (cardIds.length === 0) return { ok: false, message: "Aucune carte sélectionnée." };
+
   const res = await callRpc<{ card_id: string; weight_kg: number }>(
-    "select public.recycle_bin_add($1::uuid, $2::uuid) as r",
-    (id) => [id, str(fd, "card_id")],
+    "select public.recycle_bin_add($1::uuid, c.id) as r from unnest($2::uuid[]) as c(id)",
+    (id) => [id, cardIds],
     RECYCLE_CENTER_PATHS,
   );
-  if (res?.ok) return { ok: true };
+  if (res?.ok) {
+    return {
+      ok: true,
+      message: cardIds.length > 1 ? `${cardIds.length} cartes placées dans la benne.` : undefined,
+    };
+  }
   return res;
 }
 
 export async function removeFromRecycleBin(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const cardIds = formCardIds(fd);
+  if (cardIds.length === 0) return { ok: false, message: "Aucune carte sélectionnée." };
+
   const res = await callRpc<{ card_id: string }>(
-    "select public.recycle_bin_remove($1::uuid, $2::uuid) as r",
-    (id) => [id, str(fd, "card_id")],
+    "select public.recycle_bin_remove($1::uuid, c.id) as r from unnest($2::uuid[]) as c(id)",
+    (id) => [id, cardIds],
     RECYCLE_CENTER_PATHS,
   );
-  if (res?.ok) return { ok: true, message: "Carte retirée de la benne." };
+  if (res?.ok) {
+    return {
+      ok: true,
+      message: cardIds.length > 1 ? `${cardIds.length} cartes retirées de la benne.` : "Carte retirée de la benne.",
+    };
+  }
   return res;
 }
 

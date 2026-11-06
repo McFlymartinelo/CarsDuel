@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BackToGarage } from "@/components/garage/BackToGarage";
+import { PageHeader } from "@/components/PageHeader";
 
 export const metadata = { title: "Règles du jeu — CarsDuel" };
 
@@ -77,12 +77,12 @@ const SUMMARY = [
 
 export default function RulesPage() {
   return (
-    <section className="mx-auto max-w-4xl space-y-4">
-      <BackToGarage />
-      <header className="space-y-1">
-        <h1 className="font-display text-3xl font-bold uppercase">Règles officielles de Cars Duel</h1>
-        <p className="text-sm text-zinc-400">Tout ce qu&apos;il faut savoir pour composer son deck, courir et grimper au classement.</p>
-      </header>
+    <section className="space-y-4">
+      <PageHeader
+        back
+        title="Règles officielles de Cars Duel"
+        description="Tout ce qu'il faut savoir pour composer son deck, courir et grimper au classement."
+      />
 
       <nav aria-label="Sommaire" className="flex flex-wrap gap-2">
         {SUMMARY.map(([id, label]) => (
