@@ -54,7 +54,7 @@
 - `middleware.ts` reste un simple garde-fou de présence du cookie ; la session
   est toujours relue en base par `getCurrentUser()` / `requireUser()`.
 
-## 2026-10-29 — `postcss` embarqué par Next.js (point ouvert)
+## 2026-10-29 — `postcss` embarqué par Next.js (corrigé le 2026-11-06)
 
 Commande de vérification :
 
@@ -70,38 +70,41 @@ npm audit --omit=dev
 - `GHSA-qx2v-qp2m-jg93` / `GHSA-fxqj-rqcc-2cmp` : XSS / divulgation de fichiers
   `.map` (modérée).
 
-**Version cible : `next@16.4.3`** (première version corrigée), avec
-`eslint-config-next@16.4.3`.
+**Version cible : `next@16.4.5`**, avec `eslint-config-next@16.4.5`.
 
-### Tentative de montée majeure (2026-10-29)
+### Montée effectuée (2026-11-06)
 
-La mise à jour vers Next 16.4.3 a été tentée :
+La mise à jour vers Next 16.4.5 a été appliquée :
 
 - `npm audit --omit=dev` → **0 vulnérabilité** ;
 - `npm run typecheck` → OK ;
-- `npm test` → OK ;
+- `npm run lint` → OK (les règles `react-hooks/set-state-in-effect` et
+  `react-hooks/refs`, introduites par `eslint-plugin-react-hooks` v7, restent en
+  avertissement en attendant un refactor dédié) ;
+- `npm test` → 1 échec préexistant sans lien avec la montée
+  (`tests/db/rules.test.mjs` attend `card_not_recyclable`, la fonction renvoie
+  `already_listed` pour une carte déjà en vente) ;
 - `npm run build` → OK (Turbopack).
 
-Elle a été annulée dans ce lot car `eslint-config-next@16` active
-`eslint-plugin-react-hooks` v7, dont les nouvelles règles
-(`react-hooks/set-state-in-effect`, `react-hooks/refs`) remontent **16 erreurs**
-dans des composants existants hors périmètre (AccountForms, CardDraw,
-DailyPull, DuelForm, MobileFilterUi, Modal, OrganizedDuels…).
-Corriger ces effets demanderait un refactor fonctionnel séparé ; désactiver les
-règles masquerait des problèmes réels.
+Cette montée corrige aussi un bug de navigation de l'App Router : Next 15.5
+embarquait React `19.2.0-canary-0bdb9206-20250818`, antérieur au correctif
+[react/react#35839](https://github.com/react/react/pull/35839). En production,
+le prefetch des routes dynamiques laissait la frontière `<Suspense>` de
+`loading.tsx` bloquée : au clic, la requête RSC répondait 200 mais l'URL ne
+changeait jamais. Next 16.4.5 embarque React `19.3.0-canary-278794d7-20261002`,
+qui contient le correctif.
 
 ### Risque résiduel et mitigation
 
 Les vulnérabilités `postcss` concernent le traitement de CSS à la compilation.
 L'application ne compile aucun CSS fourni par un joueur : les styles sont
-statiques (Tailwind). Le risque pratique est donc limité, mais l'upgrade reste à
-planifier.
+statiques (Tailwind). Elles sont désormais corrigées par la montée Next 16.
 
 ### Plan de sortie
 
-1. Lot dédié « Next 16 » : corriger les effets concernés ou ajuster explicitement
-   la configuration React Hooks, puis mettre à jour `next` et
-   `eslint-config-next` vers `16.4.3+`.
-2. Revérifier `npm audit --omit=dev`, `npm run typecheck`, `npm run lint`,
-   `npm test` et `npm run build`.
-3. Supprimer cette note une fois la montée effectuée.
+1. ~~Lot dédié « Next 16 »~~ : effectué le 2026-11-06 (voir ci-dessus).
+2. Refactor séparé des effets signalés par `react-hooks/set-state-in-effect` et
+   `react-hooks/refs`, puis repasser ces règles en `error`.
+3. Corriger le test préexistant `tests/db/rules.test.mjs` (ordre des gardes de
+   `recycle_bin_add`).
+4. Supprimer cette note une fois les points 2 et 3 réglés.

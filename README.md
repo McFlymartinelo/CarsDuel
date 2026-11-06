@@ -1,6 +1,6 @@
 # CarsDuel
 
-Jeu de cartes automobile asynchrone. Next.js 15 (App Router) + PostgreSQL **pur** : aucun service tiers, aucun abonnement.
+Jeu de cartes automobile asynchrone. Next.js 16 (App Router) + PostgreSQL **pur** : aucun service tiers, aucun abonnement.
 
 ## Prérequis
 - Node.js 20+
