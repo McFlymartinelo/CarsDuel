@@ -7,14 +7,16 @@ import { FilterRow } from "@/components/FilterRow";
 import { SortRow } from "@/components/SortRow";
 import { ViewToggle, type CardViewMode } from "@/components/ViewToggle";
 import { PageHeader } from "@/components/PageHeader";
+import { MobileInventoryFilters } from "@/components/garage/MobileInventoryFilters";
 import { SellDialog } from "@/components/garage/SellDialog";
 import { ExtendWarrantyDialog } from "@/components/garage/ExtendWarrantyDialog";
 import { extendWarranty, repairCard } from "@/app/(game)/garage/actions";
 import { cancelListing, listCard } from "@/app/(game)/marketplace/actions";
 import { cardImageUrl } from "@/lib/card-images";
 import { INVENTORY_SORTS, cardGroupKey, groupCards, sortCardGroups, type GroupSort } from "@/lib/card-groups";
+import { RARITY_LABEL } from "@/lib/format";
 import { warrantyState } from "@/lib/game";
-import type { Category, UserCard } from "@/lib/types";
+import type { Category, Rarity, UserCard } from "@/lib/types";
 
 export const TABS: { key: string; label: string; category: Category; icon: LucideIcon }[] = [
   { key: "moteurs", label: "Moteurs", category: "moteur", icon: Cog },
@@ -30,12 +32,24 @@ const seg = (active: boolean) =>
 
 const countClass = (active: boolean) => (active ? "tabular-nums text-black/60" : "tabular-nums text-zinc-500");
 
+const RARITIES = Object.keys(RARITY_LABEL) as Rarity[];
+
+const RARITY_DOT: Record<Rarity, string> = {
+  commune: "bg-zinc-400",
+  rare: "bg-blue-400",
+  tres_rare: "bg-cyan-400",
+  epique: "bg-purple-400",
+  legendaire: "bg-amber-400",
+};
+
 export function Inventory({
   cards,
   tab,
   sort,
+  rarity,
   hrefForTab,
   hrefForSort,
+  hrefForRarity,
   view,
   hrefForView,
   tirePerfs = [],
@@ -45,8 +59,11 @@ export function Inventory({
   tab: string;
   /** Tri demandé dans l'URL, revalidé contre les options de la catégorie. */
   sort: string;
+  /** Niveau (rareté) demandé dans l'URL, revalidé localement. */
+  rarity: string;
   hrefForTab: (tabKey: string) => string;
   hrefForSort: (sortKey: string) => string;
+  hrefForRarity: (rarityKey: string) => string;
   view: CardViewMode;
   hrefForView: (mode: CardViewMode) => string;
   tirePerfs?: TirePerf[];
@@ -54,7 +71,14 @@ export function Inventory({
 }) {
   const compact = view === "liste";
   const current = TABS.find((x) => x.key === tab) ?? TABS[0];
-  const visible = cards.filter((c) => c.card_templates.category === current.category);
+  const categoryCards = cards.filter((c) => c.card_templates.category === current.category);
+  const activeRarity = (RARITIES as string[]).includes(rarity) ? (rarity as Rarity) : "";
+  // Les compteurs de niveau portent sur toute la catégorie, avant le filtre de rareté.
+  const rarityCounts = Object.fromEntries(
+    RARITIES.map((key) => [key, categoryCards.filter((c) => c.card_templates.rarity === key).length]),
+  ) as Record<Rarity, number>;
+  const hasRarity = RARITIES.some((key) => rarityCounts[key] > 0 || activeRarity === key);
+  const visible = activeRarity ? categoryCards.filter((c) => c.card_templates.rarity === activeRarity) : categoryCards;
   const sorts = INVENTORY_SORTS[current.category];
   const activeSort = sorts.some((o) => o.key === sort) ? (sort as GroupSort) : "";
   // Bonus : mêmes cartes interchangeables. Pneus : même modèle ET même gomme restante.
@@ -73,6 +97,31 @@ export function Inventory({
         ? `carte${visible.length === 1 ? "" : "s"} bonus`
         : `pièce${visible.length === 1 ? "" : "s"}`;
 
+  const tabCounts = Object.fromEntries(
+    TABS.map((x) => [x.key, cards.filter((c) => c.card_templates.category === x.category).length]),
+  ) as Record<string, number>;
+  const tabHrefs = Object.fromEntries(TABS.map((x) => [x.key, hrefForTab(x.key)])) as Record<string, string>;
+  const rarityHrefs = { "": hrefForRarity(""), ...Object.fromEntries(RARITIES.map((key) => [key, hrefForRarity(key)])) } as Record<string, string>;
+  const sortHrefs = { "": hrefForSort(""), ...Object.fromEntries(sorts.map((o) => [o.key, hrefForSort(o.key)])) } as Record<string, string>;
+
+  const rarityNav = (
+    <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer l'inventaire par niveau">
+      <Link href={hrefForRarity("")} scroll={false} aria-current={!activeRarity ? "true" : undefined} className={seg(!activeRarity)}>
+        Tous
+      </Link>
+      {RARITIES.filter((key) => rarityCounts[key] > 0 || activeRarity === key).map((key) => {
+        const on = key === activeRarity;
+        return (
+          <Link key={key} href={hrefForRarity(key)} scroll={false} aria-current={on ? "true" : undefined} className={seg(on)}>
+            <span className={`h-2 w-2 shrink-0 rounded-full ${on ? "bg-black/40" : RARITY_DOT[key]}`} />
+            {RARITY_LABEL[key]}
+            <span className={countClass(on)}>{rarityCounts[key]}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <section className="min-w-0 space-y-3">
       <PageHeader
@@ -80,6 +129,20 @@ export function Inventory({
         title="Inventaire"
         description="Toutes les pièces de votre garage, prêtes à être équipées, vendues ou recyclées."
         actions={<ViewToggle current={view} hrefFor={hrefForView} />}
+      />
+      <MobileInventoryFilters
+        tab={current.key}
+        rarity={activeRarity}
+        sort={activeSort}
+        counts={tabCounts}
+        rarityCounts={rarityCounts}
+        sorts={sorts}
+        tabHrefs={tabHrefs}
+        rarityHrefs={rarityHrefs}
+        sortHrefs={sortHrefs}
+        resetHref={hrefForTab(TABS[0].key)}
+        resultCount={visible.length}
+        unitLabel={unitLabel}
       />
       <div className="hidden md:block">
         <FilterRow label="Type">
@@ -98,39 +161,25 @@ export function Inventory({
           </nav>
         </FilterRow>
       </div>
-      <nav className="grid grid-cols-4 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:hidden" aria-label="Catégories de l'inventaire">
-        {TABS.map((x) => {
-          const on = x.key === current.key;
-          const n = cards.filter((c) => c.card_templates.category === x.category).length;
-          return (
-            <Link
-              key={x.key}
-              href={hrefForTab(x.key)}
-              scroll={false}
-              aria-current={on ? "true" : undefined}
-              aria-label={`${x.label}, ${n} carte${n === 1 ? "" : "s"}`}
-              className={`relative inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-1 pt-1 text-[10px] font-semibold ${on ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}
-            >
-              <x.icon size={14} strokeWidth={2} className="shrink-0" />
-              <span className="truncate">{x.label}</span>
-              <span aria-hidden className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#10131a] px-1 text-[10px] font-bold leading-none tabular-nums shadow-sm ${n > 0 ? "bg-amber-500 text-black" : "bg-zinc-700 text-zinc-200"}`}>
-                {n}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
+
+      {hasRarity && (
+        <div className="hidden md:block">
+          <FilterRow label="Niveau">{rarityNav}</FilterRow>
+        </div>
+      )}
 
       {visible.length > 1 && (
-        <SortRow
-          options={sorts}
-          current={activeSort}
-          hrefs={{
-            "": hrefForSort(""),
-            ...Object.fromEntries(sorts.map((o) => [o.key, hrefForSort(activeSort === o.key ? "" : o.key)])),
-          }}
-          ariaLabel="Trier l'inventaire"
-        />
+        <div className="hidden md:block">
+          <SortRow
+            options={sorts}
+            current={activeSort}
+            hrefs={{
+              "": hrefForSort(""),
+              ...Object.fromEntries(sorts.map((o) => [o.key, hrefForSort(activeSort === o.key ? "" : o.key)])),
+            }}
+            ariaLabel="Trier l'inventaire"
+          />
+        </div>
       )}
 
       {visible.length > 0 && (
@@ -157,7 +206,17 @@ export function Inventory({
 
       {entries.length === 0 && (
         <p className="rounded-xl border border-zinc-800 bg-[#0e1117] p-3 text-sm text-zinc-500">
-          Aucune carte dans cette catégorie.
+          {activeRarity ? (
+            <>
+              Aucune carte de niveau <span className="font-semibold text-zinc-300">{RARITY_LABEL[activeRarity]}</span> dans
+              cette catégorie.{" "}
+              <Link href={hrefForRarity("")} scroll={false} className="font-semibold text-amber-300 hover:text-amber-200">
+                Voir tous les niveaux
+              </Link>
+            </>
+          ) : (
+            "Aucune carte dans cette catégorie."
+          )}
         </p>
       )}
       <div

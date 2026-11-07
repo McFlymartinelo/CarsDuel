@@ -25,21 +25,23 @@ import { FilterRow } from "@/components/FilterRow";
 import { SortRow } from "@/components/SortRow";
 import type { CardViewMode } from "@/components/ViewToggle";
 import { BackToGarage } from "@/components/garage/BackToGarage";
+import { MobileRecycleFilters } from "@/components/garage/MobileRecycleFilters";
 import { RecycleExchangeTiers } from "@/components/garage/RecycleExchangeTiers";
 import { RecycleLaunch } from "@/components/garage/RecycleLaunch";
 import { addToRecycleBin, exchangeRecycledCard, removeFromRecycleBin } from "@/app/(game)/garage/actions";
 import { cardGroupKey, groupCards } from "@/lib/card-groups";
 import { ENGINE_SORTS, GEARBOX_SORTS, compareTemplates, type CardSort } from "@/lib/catalog-sort";
+import { RARITY_LABEL } from "@/lib/format";
 import {
   formatCubes,
   formatKg,
   isRecyclableCategory,
   recycleBinSummary,
 } from "@/lib/recycle";
-import type { ActionState, Category, UserCard } from "@/lib/types";
+import type { ActionState, Category, Rarity, UserCard } from "@/lib/types";
 
 export type RecycleTab = "inventaire" | "benne" | "echanges";
-export type RecycleFilter = "toutes" | "moteurs" | "boites" | "pneus" | "detruites";
+export type RecycleFilter = "toutes" | "moteurs" | "boites" | "pneus";
 
 const TABS: { key: RecycleTab; label: string; icon: LucideIcon }[] = [
   { key: "inventaire", label: "Inventaire", icon: LayoutGrid },
@@ -52,13 +54,25 @@ const FILTERS: { key: RecycleFilter; label: string; icon: LucideIcon }[] = [
   { key: "moteurs", label: "Moteurs", icon: Cog },
   { key: "boites", label: "Boîtes", icon: Settings2 },
   { key: "pneus", label: "Pneus", icon: Disc },
-  { key: "detruites", label: "Cartes détruites", icon: TriangleAlert },
 ];
 
 const VIEWS: { key: CardViewMode; label: string; icon: LucideIcon }[] = [
   { key: "cartes", label: "Cartes", icon: LayoutGrid },
   { key: "liste", label: "Liste", icon: List },
 ];
+
+const RARITIES = Object.keys(RARITY_LABEL) as Rarity[];
+
+const RARITY_DOT: Record<Rarity, string> = {
+  commune: "bg-zinc-400",
+  rare: "bg-blue-400",
+  tres_rare: "bg-cyan-400",
+  epique: "bg-purple-400",
+  legendaire: "bg-amber-400",
+};
+
+const isRarity = (value: string | undefined): value is Rarity =>
+  !!value && (RARITIES as string[]).includes(value);
 
 const FILTER_CATEGORY: Partial<Record<RecycleFilter, Category>> = {
   moteurs: "moteur",
@@ -82,7 +96,6 @@ const SORTS: Record<RecycleFilter, readonly { key: RecycleSort; label: string; t
   moteurs: ENGINE_SORTS,
   boites: GEARBOX_SORTS,
   pneus: [{ key: "gomme", label: "Gomme", title: "Plus de gomme restante d'abord" }],
-  detruites: MIXED_SORTS,
 };
 
 const trimSort = (filter: RecycleFilter, sort: string | undefined): string =>
@@ -110,10 +123,19 @@ const segment = (active: boolean) =>
 const countClass = (active: boolean) => (active ? "tabular-nums text-black/60" : "tabular-nums text-zinc-500");
 
 /** URL canonique du centre de recyclage (partage, rechargement). */
-const recycleHref = (tab: RecycleTab, filter: RecycleFilter, view: CardViewMode, sort = "") => {
+const recycleHref = (
+  tab: RecycleTab,
+  filter: RecycleFilter,
+  view: CardViewMode,
+  sort = "",
+  rarity = "",
+  destroyed = false,
+) => {
   const params = new URLSearchParams({ tab });
   if (tab === "inventaire") {
     params.set("cat", filter);
+    if (rarity) params.set("rarity", rarity);
+    if (destroyed) params.set("etat", "detruites");
     if (sort) params.set("sort", sort);
   }
   if (view === "liste") params.set("vue", "liste");
@@ -239,6 +261,8 @@ export function RecycleCenter({
   tab: initialTab,
   filter: initialFilter,
   sort: initialSort,
+  rarity: initialRarity,
+  destroyed: initialDestroyed = false,
   view: initialView,
 }: {
   cubes: number;
@@ -250,6 +274,10 @@ export function RecycleCenter({
   filter: RecycleFilter;
   /** Tri demandé dans l'URL, déjà filtré côté serveur contre les options connues. */
   sort?: string;
+  /** Niveau (rareté) demandé dans l'URL, revalidé localement. */
+  rarity?: string;
+  /** Afficher uniquement les cartes détruites (filtre d'état, comme l'inventaire). */
+  destroyed?: boolean;
   view: CardViewMode;
 }) {
   // Toutes les données du centre sont déjà chargées : les onglets et filtres
@@ -262,6 +290,10 @@ export function RecycleCenter({
   // Tri courant, validé à l'entrée contre les options du filtre initial : une
   // valeur d'URL obsolète retombe sur l'ordre par défaut au lieu de fausser l'affichage.
   const [sort, setSort] = useState<string>(() => trimSort(initialFilter, initialSort));
+  // Niveau (rareté) courant : une valeur d'URL inconnue retombe sur « Tous ».
+  const [rarity, setRarity] = useState<Rarity | "">(() => (isRarity(initialRarity) ? initialRarity : ""));
+  // État « cartes détruites » : filtre indépendant du type, comme l'inventaire.
+  const [destroyedOnly, setDestroyedOnly] = useState(initialDestroyed);
   // Solde local : le débit est reflété immédiatement (header de page) en attendant
   // le rafraîchissement RSC déclenché par la Server Action.
   const [cubeBalance, setCubeBalance] = useState(cubes);
@@ -270,13 +302,27 @@ export function RecycleCenter({
 
   useEffect(() => setCubeBalance(cubes), [cubes]);
 
-  const syncUrl = (nextTab: RecycleTab, nextFilter: RecycleFilter, nextSort: string, nextView: CardViewMode) => {
-    window.history.replaceState(null, "", recycleHref(nextTab, nextFilter, nextView, nextSort));
+  const syncUrl = (
+    nextTab: RecycleTab,
+    nextFilter: RecycleFilter,
+    nextSort: string,
+    nextView: CardViewMode,
+    nextRarity: Rarity | "" = rarity,
+    nextDestroyed = destroyedOnly,
+  ) => {
+    window.history.replaceState(
+      null,
+      "",
+      recycleHref(nextTab, nextFilter, nextView, nextSort, nextRarity, nextDestroyed),
+    );
   };
 
   const selectTab = (next: RecycleTab) => {
     setTab(next);
-    syncUrl(next, filter, "", view);
+    setSort("");
+    setRarity("");
+    setDestroyedOnly(false);
+    syncUrl(next, filter, "", view, "", false);
   };
 
   const selectSort = (next: string) => {
@@ -288,12 +334,32 @@ export function RecycleCenter({
     // Les options de tri dépendent du filtre : on repart de l'ordre par défaut.
     setFilter(next);
     setSort("");
-    syncUrl(tab, next, "", view);
+    setRarity("");
+    syncUrl(tab, next, "", view, "");
+  };
+
+  const selectRarity = (next: Rarity | "") => {
+    setRarity(next);
+    syncUrl(tab, filter, sort, view, next);
+  };
+
+  const selectDestroyed = (next: boolean) => {
+    setDestroyedOnly(next);
+    syncUrl(tab, filter, sort, view, rarity, next);
   };
 
   const selectView = (next: CardViewMode) => {
     setView(next);
     syncUrl(tab, filter, sort, next);
+  };
+
+  /** Vide type, niveau, état et tri pour retrouver tout l'inventaire recyclable. */
+  const resetFilters = () => {
+    setFilter("toutes");
+    setSort("");
+    setRarity("");
+    setDestroyedOnly(false);
+    syncUrl(tab, "toutes", "", view, "", false);
   };
 
   // Moteurs et boîtes par code croissant (M1A, M1B, M2…), pneus par modèle ;
@@ -314,23 +380,34 @@ export function RecycleCenter({
 
   const filterCount = (key: RecycleFilter) => {
     if (key === "toutes") return inventoryCards.length;
-    if (key === "detruites") return inventoryCards.filter((c) => c.is_destroyed).length;
     const category = FILTER_CATEGORY[key];
     return inventoryCards.filter((c) => c.card_templates.category === category).length;
   };
+  const filterCounts = Object.fromEntries(
+    FILTERS.map(({ key }) => [key, filterCount(key)]),
+  ) as Record<RecycleFilter, number>;
 
-  const filtered = inventoryCards.filter((c) => {
+  const typed = inventoryCards.filter((c) => {
     if (filter === "toutes") return true;
-    if (filter === "detruites") return c.is_destroyed;
     return c.card_templates.category === FILTER_CATEGORY[filter];
   });
+  // Les compteurs de niveau portent sur le type sélectionné, avant les filtres de rareté et d'état.
+  const rarityCounts = Object.fromEntries(
+    RARITIES.map((key) => [key, typed.filter((c) => c.card_templates.rarity === key).length]),
+  ) as Record<Rarity, number>;
+  const hasRarity = RARITIES.some((key) => rarityCounts[key] > 0 || rarity === key);
+  const destroyedCount = typed.filter((c) => c.is_destroyed).length;
+  // Les filtres « détruites » et « niveau » se combinent avec le type.
+  const filtered = typed.filter(
+    (c) => (!destroyedOnly || c.is_destroyed) && (!rarity || c.card_templates.rarity === rarity),
+  );
   // Tri explicite (rangée « Trier », même principe que boutique/marketplace) ;
   // sinon les cartes conservent l'ordre par défaut défini ci-dessus.
   const sortOptions = SORTS[filter];
   const activeSort = sortOptions.some((o) => o.key === sort) ? (sort as RecycleSort) : "";
-  // Sur « Toutes » et « Détruites », on garde le regroupement par catégorie
-  // (moteurs, boîtes, pneus) puis on trie à l'intérieur de chacune.
-  const mixed = filter === "toutes" || filter === "detruites";
+  // Sur « Toutes », on garde le regroupement par catégorie (moteurs, boîtes,
+  // pneus) puis on trie à l'intérieur de chacune.
+  const mixed = filter === "toutes";
   const sorted =
     activeSort && filtered.length > 1
       ? filtered.slice().sort(
@@ -364,9 +441,67 @@ export function RecycleCenter({
             aria-current={active ? "true" : undefined}
             className={segment(active)}
           >
-            <Icon size={15} strokeWidth={2} className={key === "detruites" ? "text-red-400" : undefined} />
+            <Icon size={15} strokeWidth={2} />
             {label}
             <span className={countClass(active)}>{filterCount(key)}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+
+  const stateNav = (
+    <nav
+      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:justify-self-start"
+      aria-label="Filtrer l'inventaire recyclable par état"
+    >
+      <button
+        type="button"
+        onClick={() => selectDestroyed(false)}
+        aria-current={!destroyedOnly ? "true" : undefined}
+        className={segment(!destroyedOnly)}
+      >
+        Toutes
+      </button>
+      <button
+        type="button"
+        onClick={() => selectDestroyed(true)}
+        aria-current={destroyedOnly ? "true" : undefined}
+        className={segment(destroyedOnly)}
+      >
+        <TriangleAlert size={15} strokeWidth={2} className={destroyedOnly ? undefined : "text-red-400"} />
+        Cartes détruites
+        <span className={countClass(destroyedOnly)}>{destroyedCount}</span>
+      </button>
+    </nav>
+  );
+
+  const rarityNav = (
+    <nav
+      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:justify-self-start"
+      aria-label="Filtrer l'inventaire recyclable par niveau"
+    >
+      <button
+        type="button"
+        onClick={() => selectRarity("")}
+        aria-current={!rarity ? "true" : undefined}
+        className={segment(!rarity)}
+      >
+        Tous
+      </button>
+      {RARITIES.filter((key) => rarityCounts[key] > 0 || rarity === key).map((key) => {
+        const active = key === rarity;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => selectRarity(key)}
+            aria-current={active ? "true" : undefined}
+            className={segment(active)}
+          >
+            <span className={`h-2 w-2 shrink-0 rounded-full ${active ? "bg-black/40" : RARITY_DOT[key]}`} />
+            {RARITY_LABEL[key]}
+            <span className={countClass(active)}>{rarityCounts[key]}</span>
           </button>
         );
       })}
@@ -431,15 +566,15 @@ export function RecycleCenter({
       {tab === "inventaire" && (
         <section className="space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <h2 className="font-display text-2xl font-bold uppercase">Inventaire recyclable</h2>
-              <p className="text-sm text-zinc-400">
+              <p className="max-w-3xl text-sm text-zinc-400">
                 Moteurs, boîtes et pneus, neufs, usés ou détruits. Une carte déposée quitte votre inventaire actif.
                 Les cartes identiques (même modèle et même gomme ou même risque de casse) sont regroupées sous un badge ×N,
                 et vous choisissez le nombre d’exemplaires à placer dans la benne.
               </p>
             </div>
-            <nav className="inline-flex gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
+            <nav className="inline-flex shrink-0 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
               {VIEWS.map(({ key, label, icon: Icon }) => {
                 const active = key === view;
                 return (
@@ -458,25 +593,47 @@ export function RecycleCenter({
             </nav>
           </div>
 
-          <div className="hidden md:block">
+          <MobileRecycleFilters
+            filter={filter}
+            rarity={rarity}
+            destroyed={destroyedOnly}
+            sort={activeSort}
+            counts={filterCounts}
+            rarityCounts={rarityCounts}
+            destroyedCount={destroyedCount}
+            sorts={sortOptions}
+            resultCount={filtered.length}
+            onFilter={selectFilter}
+            onRarity={selectRarity}
+            onDestroyed={selectDestroyed}
+            onSort={selectSort}
+            onReset={resetFilters}
+          />
+
+          <div className="hidden space-y-3 md:block">
             <FilterRow label="Type">{filterNav}</FilterRow>
+            {hasRarity && <FilterRow label="Niveau">{rarityNav}</FilterRow>}
+            <FilterRow label="État">{stateNav}</FilterRow>
           </div>
-          <div className="md:hidden">{filterNav}</div>
 
           {sortOptions.length > 0 && filtered.length > 1 && (
-            <SortRow
-              options={sortOptions}
-              current={sort}
-              onSelect={(key) => selectSort(sort === key ? "" : key)}
-              ariaLabel="Trier l'inventaire recyclable"
-            />
+            <div className="hidden md:block">
+              <SortRow
+                options={sortOptions}
+                current={sort}
+                onSelect={(key) => selectSort(sort === key ? "" : key)}
+                ariaLabel="Trier l'inventaire recyclable"
+              />
+            </div>
           )}
 
           {filtered.length === 0
             ? emptyState(
                 "Aucune carte à recycler",
                 "Ce filtre ne contient aucune carte. Les cartes en vente sont exclues de la benne.",
-                filter !== "toutes" ? { label: "Voir toutes les cartes", onClick: () => selectFilter("toutes") } : undefined,
+                rarity || destroyedOnly || filter !== "toutes"
+                  ? { label: "Voir toutes les cartes", onClick: resetFilters }
+                  : undefined,
               )
             : (
               <div className={gridClass}>
@@ -537,9 +694,12 @@ export function RecycleCenter({
                 {
                   label: "Ouvrir l'inventaire",
                   onClick: () => {
-                    setFilter("toutes");
                     setTab("inventaire");
-                    syncUrl("inventaire", "toutes", "", view);
+                    setFilter("toutes");
+                    setSort("");
+                    setRarity("");
+                    setDestroyedOnly(false);
+                    syncUrl("inventaire", "toutes", "", view, "", false);
                   },
                 },
               )
