@@ -1,8 +1,35 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { Cog, Disc, PackageSearch, Settings2, X, Zap, type LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  Cog,
+  Disc,
+  Layers,
+  PackageSearch,
+  RotateCcw,
+  Settings2,
+  X,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { FilterRow } from "@/components/FilterRow";
+import {
+  FILTER_BODY_CLASS,
+  FILTER_CHIPS_CLASS,
+  FILTER_COUNT_OFF,
+  FILTER_COUNT_ON,
+  FILTER_FOOTER_CLASS,
+  FILTER_RESET_CLASS,
+  FILTER_SUBMIT_CLASS,
+  FILTER_TYPE_OFF,
+  FILTER_TYPE_ON,
+  FILTER_TYPE_TILE,
+  FilterChip,
+  FilterSectionTitle,
+  FilterSheet,
+  FilterTrigger,
+} from "@/components/MobileFilterUi";
 import { Modal } from "@/components/Modal";
 import { SearchInput } from "@/components/SearchBox";
 import { SortRow } from "@/components/SortRow";
@@ -34,56 +61,113 @@ function compareCards(a: TradeCard, b: TradeCard, sort: SortKey): number {
   return compareTemplates(a.card_templates, b.card_templates, sort) || byName;
 }
 
-const FILTERS: { key: Category | "toutes"; label: string; icon?: LucideIcon }[] = [
-  { key: "toutes", label: "Toutes" },
+const FILTERS: { key: Category | "toutes"; label: string; icon: LucideIcon }[] = [
+  { key: "toutes", label: "Toutes", icon: Layers },
   { key: "moteur", label: "Moteurs", icon: Cog },
   { key: "boite", label: "Boîtes", icon: Settings2 },
   { key: "pneus", label: "Pneus", icon: Disc },
   { key: "bonus", label: "Bonus", icon: Zap },
 ];
 
-/** Onglets de type : segments de la collection sur desktop, grille compacte dans la modale mobile. */
-function CategoryTabs({
+/** Barre mobile standard : bouton « Filtres » + tri, puces des filtres actifs et feuille de filtres. */
+function TradeMobileFilters({
   category,
   counts,
-  onSelect,
-  compact = false,
+  sorts,
+  sort,
+  resultCount,
+  open,
+  onOpen,
+  onClose,
+  onCategory,
+  onSort,
+  onReset,
 }: {
   category: Category | "toutes";
   counts: Record<string, number>;
-  onSelect: (key: Category | "toutes") => void;
-  compact?: boolean;
+  sorts: readonly { key: string; label: string; title: string }[];
+  sort: string;
+  resultCount: number;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  onCategory: (value: Category | "toutes") => void;
+  onSort: (value: string) => void;
+  onReset: () => void;
 }) {
+  const active = category === "toutes" ? undefined : FILTERS.find((filter) => filter.key === category);
+  const activeCount = active ? 1 : 0;
+
   return (
-    <nav
-      className={
-        compact
-          ? "grid grid-cols-5 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1"
-          : "inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1"
-      }
-      aria-label="Catégories de l'inventaire"
-    >
-      {FILTERS.map(({ key, label, icon: Icon }) => {
-        const on = category === key;
-        return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => onSelect(key)}
-            aria-pressed={on}
-            className={`inline-flex font-medium transition-colors ${
-              compact
-                ? "flex-col justify-center gap-0.5 rounded-lg px-1 py-1.5 text-xs"
-                : "shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm"
-            } ${on ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}
-          >
-            {!compact && Icon && <Icon size={15} strokeWidth={2} />}
-            {label}
-            <span className={`tabular-nums ${on ? "text-black/60" : "text-zinc-500"}`}>{counts[key] ?? 0}</span>
+    <div className="w-full md:hidden">
+      <FilterTrigger
+        activeCount={activeCount}
+        open={open}
+        onOpen={onOpen}
+        sorts={sorts}
+        sort={sort}
+        onSortChange={(key) => onSort(key ?? "")}
+      />
+
+      {active && (
+        <div className={FILTER_CHIPS_CLASS}>
+          <FilterChip label={active.label} icon={active.icon} onClick={() => onCategory("toutes")} />
+        </div>
+      )}
+
+      <FilterSheet
+        open={open}
+        onClose={onClose}
+        labelId="trade-inventory-filters-title"
+        activeCount={activeCount}
+        zClass="z-[90]"
+        reset={
+          <button type="button" onClick={onReset} className={FILTER_RESET_CLASS}>
+            <RotateCcw size={12} strokeWidth={2.25} />
+            Réinitialiser
           </button>
-        );
-      })}
-    </nav>
+        }
+      >
+        <div className={FILTER_BODY_CLASS}>
+          <section>
+            <FilterSectionTitle hint={`${counts.toutes ?? 0}`}>Type</FilterSectionTitle>
+            <div className="grid grid-cols-2 gap-2">
+              {FILTERS.map(({ key, label, icon: Icon }) => {
+                const selected = key === category;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onCategory(key)}
+                    aria-pressed={selected}
+                    className={`${FILTER_TYPE_TILE} ${selected ? FILTER_TYPE_ON : FILTER_TYPE_OFF} ${key === "toutes" ? "col-span-2" : ""}`}
+                  >
+                    <Icon
+                      size={17}
+                      strokeWidth={2}
+                      className={selected ? "shrink-0 text-black/75" : "shrink-0 text-amber-400/80"}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-left text-sm font-semibold">{label}</span>
+                    <span
+                      className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${selected ? FILTER_COUNT_ON : FILTER_COUNT_OFF}`}
+                    >
+                      {counts[key] ?? 0}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+
+        <div className={FILTER_FOOTER_CLASS}>
+          <button type="button" onClick={onClose} className={FILTER_SUBMIT_CLASS}>
+            Afficher {resultCount} carte{resultCount > 1 ? "s" : ""}
+            <ArrowRight size={18} strokeWidth={2.25} className="transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
+      </FilterSheet>
+    </div>
   );
 }
 
@@ -106,6 +190,7 @@ export function TradeInventoryPicker({
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | "toutes">("toutes");
   const [sort, setSort] = useState<SortKey | "">("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const sorts = SORTS[category];
   const activeSort = sorts.some((option) => option.key === sort) ? sort : "";
 
@@ -134,7 +219,12 @@ export function TradeInventoryPicker({
   }, [available]);
 
   return (
-    <Modal labelledBy={titleId} size="lg" onClose={onClose}>
+    <Modal
+      labelledBy={titleId}
+      size="lg"
+      // La feuille de filtres mobile gère elle-même Échap, sinon elle fermerait aussi la modale.
+      onClose={filtersOpen ? undefined : onClose}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-amber-400/90">Sélection de carte</p>
@@ -161,13 +251,50 @@ export function TradeInventoryPicker({
         />
       </div>
 
-      <div className="mt-3 md:hidden">
-        <CategoryTabs category={category} counts={counts} onSelect={chooseCategory} compact />
+      <div className="mt-3">
+        <TradeMobileFilters
+          category={category}
+          counts={counts}
+          sorts={sorts}
+          sort={activeSort}
+          resultCount={visible.length}
+          open={filtersOpen}
+          onOpen={() => setFiltersOpen(true)}
+          onClose={() => setFiltersOpen(false)}
+          onCategory={chooseCategory}
+          onSort={(key) => setSort(key as SortKey | "")}
+          onReset={() => {
+            setCategory("toutes");
+            setSort("");
+          }}
+        />
       </div>
 
-      <div className="mt-3 space-y-3">
-        <FilterRow label="Type" className="hidden md:grid">
-          <CategoryTabs category={category} counts={counts} onSelect={chooseCategory} />
+      <div className="hidden md:mt-3 md:block md:space-y-3">
+        <FilterRow label="Type">
+          <nav
+            className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1"
+            aria-label="Catégories de l'inventaire"
+          >
+            {FILTERS.map(({ key, label, icon: Icon }) => {
+              const on = category === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => chooseCategory(key)}
+                  aria-pressed={on}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    on ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  }`}
+                >
+                  <Icon size={15} strokeWidth={2} />
+                  {label}
+                  <span className={`tabular-nums ${on ? "text-black/60" : "text-zinc-500"}`}>{counts[key] ?? 0}</span>
+                </button>
+              );
+            })}
+          </nav>
         </FilterRow>
         <SortRow
           options={sorts}

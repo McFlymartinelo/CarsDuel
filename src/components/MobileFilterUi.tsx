@@ -131,6 +131,7 @@ export function FilterSheet({
   labelId,
   activeCount,
   reset,
+  zClass = "z-[70]",
   children,
 }: {
   open: boolean;
@@ -138,6 +139,8 @@ export function FilterSheet({
   labelId: string;
   activeCount: number;
   reset: ReactNode;
+  /** Au-dessus d'une modale (z-[80]) quand la feuille est ouverte depuis celle-ci. */
+  zClass?: string;
   children: ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -201,7 +204,7 @@ export function FilterSheet({
   if (!mounted || !open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex items-end">
+    <div className={`fixed inset-0 ${zClass} flex items-end`}>
       <button
         type="button"
         onClick={() => closeRef.current()}
