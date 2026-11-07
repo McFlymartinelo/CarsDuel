@@ -48,32 +48,32 @@ export default async function PullsPage() {
             <p className="mt-1 text-sm text-zinc-400">Les cartes obtenues aux tirages quotidiens et hebdomadaires.</p>
           </div>
           {history.length > 0 && (
-            <span className="rounded-full border border-zinc-700 bg-[#10131a] px-3 py-1 text-xs font-semibold text-zinc-300">
+            <span className="rounded-full border border-line-strong bg-panel px-3 py-1 text-xs font-semibold text-zinc-300">
               {history.length} tirage{history.length > 1 ? "s" : ""}
             </span>
           )}
         </div>
 
         {history.length === 0 ? (
-          <div className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-zinc-700 bg-[#0e1117] px-4 py-10 text-center">
+          <div className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-line-strong bg-panel-mid px-4 py-10 text-center">
             <Sparkles size={26} className="text-amber-400/60" aria-hidden />
             <p className="text-sm text-zinc-400">Aucun tirage pour le moment.</p>
             <p className="text-xs text-zinc-500">Lancez un tirage quotidien ou hebdomadaire pour remplir votre historique.</p>
           </div>
         ) : (
-          <ul className="overflow-hidden rounded-xl border border-zinc-800 bg-[#0e1117]">
+          <ul className="overflow-hidden rounded-xl border border-line bg-panel-mid">
             {history.map((h) => {
               const weekly = h.source === "weekly_pull";
               const Icon = weekly ? CalendarRange : CalendarDays;
               return (
                 <li
                   key={h.key}
-                  className={`flex items-start gap-3 border-b border-zinc-800/80 px-4 py-3 last:border-0 ${weekly ? "bg-amber-500/[0.04]" : ""}`}
+                  className={`flex items-start gap-3 border-b border-line/80 px-4 py-3 last:border-0 ${weekly ? "bg-amber-500/[0.04]" : ""}`}
                 >
                   <span
                     aria-hidden
                     className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg border ${
-                      weekly ? "border-amber-400/40 bg-amber-500/10 text-amber-300" : "border-zinc-700 bg-zinc-800/50 text-zinc-300"
+                      weekly ? "border-amber-400/40 bg-amber-500/10 text-amber-300" : "border-line-strong bg-zinc-800/50 text-zinc-300"
                     }`}
                   >
                     <Icon size={16} />
@@ -87,7 +87,7 @@ export default async function PullsPage() {
                     </div>
                     <ul className="mt-1.5 flex flex-wrap gap-1.5">
                       {h.labels.map((label, i) => (
-                        <li key={i} className="rounded-md border border-zinc-700/70 bg-black/30 px-2 py-0.5 text-xs text-zinc-300">
+                        <li key={i} className="rounded-md border border-line-strong/70 bg-black/30 px-2 py-0.5 text-xs text-zinc-300">
                           {label}
                         </li>
                       ))}

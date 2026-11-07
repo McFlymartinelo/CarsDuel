@@ -87,7 +87,7 @@ export function AuthPanel({
 
   return (
     <div className="grid gap-6 sm:grid-cols-2">
-      <section className="rounded-lg border border-zinc-800 bg-[#10131a] p-5">
+      <section className="rounded-lg border border-line bg-panel p-5">
         <h2 className="mb-3 font-display text-xl font-bold uppercase tracking-wide">Connexion</h2>
         <ActionForm
           action={signIn}
@@ -123,7 +123,7 @@ export function AuthPanel({
         </p>
       </section>
 
-      <section className="rounded-lg border border-zinc-800 bg-[#10131a] p-5">
+      <section className="rounded-lg border border-line bg-panel p-5">
         <h2 className="mb-1 font-display text-xl font-bold uppercase tracking-wide">Créer un compte</h2>
         <p className="mb-3 text-sm text-zinc-400">
           Le garage démarre vide. Vous tirez ensuite un moteur commun, une boîte commune, 5 cartes

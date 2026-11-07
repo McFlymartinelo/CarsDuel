@@ -40,7 +40,7 @@ export function NotificationBell({ feed }: { feed: NotificationFeed }) {
     <details ref={details} onToggle={onToggle} className="relative">
       <summary
         aria-label={feed.unread > 0 ? `Notifications : ${feed.unread} nouvelle(s)` : "Notifications"}
-        className="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 [&::-webkit-details-marker]:hidden"
+        className="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-line-strong text-zinc-300 hover:bg-zinc-800 [&::-webkit-details-marker]:hidden"
       >
         <Bell size={20} strokeWidth={1.8} />
         {feed.unread > 0 && (
@@ -49,7 +49,7 @@ export function NotificationBell({ feed }: { feed: NotificationFeed }) {
           </span>
         )}
       </summary>
-      <div className="absolute right-0 z-40 mt-2 max-h-[min(30rem,calc(100vh-6rem))] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-2 text-sm shadow-xl">
+      <div className="absolute right-0 z-40 mt-2 max-h-[min(30rem,calc(100vh-6rem))] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-line-strong bg-zinc-900 p-2 text-sm shadow-xl">
         <p className="px-2 pb-1 pt-1 font-display text-xs font-semibold uppercase tracking-wider text-zinc-500">Notifications</p>
         {feed.items.length === 0 && <p className="px-2 py-3 text-zinc-500">Rien de neuf pour l&apos;instant.</p>}
         <ul>
@@ -71,7 +71,7 @@ export function NotificationBell({ feed }: { feed: NotificationFeed }) {
         </ul>
         <Link
           href="/compte#notifications"
-          className="mt-1 flex items-center gap-2 rounded-lg border-t border-zinc-800 px-2 pb-1 pt-2 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+          className="mt-1 flex items-center gap-2 rounded-lg border-t border-line px-2 pb-1 pt-2 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
         >
           <Bell size={14} strokeWidth={1.9} />
           Recevoir les alertes hors app

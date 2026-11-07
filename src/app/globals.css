@@ -4,6 +4,29 @@
   --font-display: var(--font-rajdhani), ui-sans-serif, system-ui, sans-serif;
 }
 
+/*
+ * Tokens sémantiques de l'interface (Tailwind v4).
+ * Les surfaces et les filets sont volontairement nommés par usage : un écran
+ * peut changer de teinte sans que les composants soient retouchés un par un.
+ */
+@theme {
+  --color-page: #07090d;
+  --color-ink: #0a0c10;
+  --color-header: #0d1015;
+  --color-panel: #10131a;
+  --color-panel-deep: #0b0d12;
+  --color-panel-mid: #0e1117;
+  --color-panel-soft: #0f1218;
+  --color-panel-raised: #12151c;
+  --color-panel-alt: #151922;
+  --color-line: #27272a;
+  --color-line-strong: #3f3f46;
+  --color-accent: #f59e0b;
+  --color-accent-light: #fbbf24;
+  --color-success: #34d399;
+  --color-danger: #f87171;
+}
+
 :root {
   color-scheme: dark;
 }
@@ -1100,9 +1123,6 @@ html {
   touch-action: none;
   animation: launch-splash-cycle 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-
-/* Session déjà démarrée (script inline du layout) : on ne rejoue pas l'écran. */
-html[data-launch-splash="skip"] .launch-splash { display: none; }
 
 /* Ordinateur : inutile de retarder l'affichage. */
 @media (hover: hover) and (pointer: fine) {

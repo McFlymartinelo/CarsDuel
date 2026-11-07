@@ -31,8 +31,8 @@ const RARITY_DOT: Record<Rarity, string> = {
 function CollectionRow({ card_templates: template, image, obtained }: Entry) {
   const badge = template.rarity ? RARITY_LABEL[template.rarity]
     : template.category === "pneus" ? TIRE_LABEL[template.tire_type ?? ""] ?? "Pneus" : null;
-  return <article className="flex min-w-0 flex-wrap items-center gap-3 rounded-xl border border-zinc-700/80 bg-[#0b0d12] p-2.5 sm:flex-nowrap sm:gap-4">
-    <div className="relative flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700 bg-gradient-to-b from-[#171a21] to-[#0a0c10]">
+  return <article className="flex min-w-0 flex-wrap items-center gap-3 rounded-xl border border-line-strong/80 bg-panel-deep p-2.5 sm:flex-nowrap sm:gap-4">
+    <div className="relative flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-line-strong bg-gradient-to-b from-[#171a21] to-[#0a0c10]">
       {image ? <img src={image} alt="" loading="lazy" className="h-full w-full object-contain p-1 mix-blend-lighten" /> : <Cog aria-hidden className="h-8 w-8 text-zinc-500" strokeWidth={1.2} />}
     </div>
     <div className="min-w-0 flex-1 basis-40">
@@ -96,7 +96,7 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
       />
       <div className="hidden space-y-3 md:block">
         <FilterRow label="Type">
-          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Type de carte">
+          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1" aria-label="Type de carte">
             {CATEGORIES.map((item) => {
               const active = category === item.key;
               const Icon = CATEGORY_ICONS[item.key];
@@ -107,7 +107,7 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
           </nav>
         </FilterRow>
         {mechanical && <FilterRow label="Niveau">
-          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer par rareté">
+          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1" aria-label="Filtrer par rareté">
             <button type="button" aria-pressed={!rarity} onClick={() => setRarity("")} className={`${SEGMENT} shrink-0 ${!rarity ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>Tous</button>
             {RARITIES.filter((value) => rarityCounts[value] > 0 || rarity === value).map((value) => {
               const active = rarity === value;
@@ -126,7 +126,7 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
           />
         )}
         <FilterRow label="Possession">
-          <div className="inline-flex justify-self-start rounded-xl border border-zinc-800 bg-[#10131a] p-1">
+          <div className="inline-flex justify-self-start rounded-xl border border-line bg-panel p-1">
             <button type="button" aria-pressed={ownedOnly} onClick={() => setOwnedOnly((value) => !value)} className={`inline-flex items-center gap-1.5 ${SEGMENT} ${ownedOnly ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>
               <Ticket size={15} strokeWidth={1.8} aria-hidden="true" />Déjà obtenue
             </button>
@@ -151,7 +151,7 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
         list={<div className="grid min-w-0 gap-2">
           {shown.map((entry) => <CollectionRow key={entry.card_templates.id} {...entry} />)}
         </div>}
-      /> : <p className="rounded-xl border border-zinc-800 bg-[#10131a] p-6 text-center text-sm text-zinc-400">Aucune carte dans cette sélection.</p>}
+      /> : <p className="rounded-xl border border-line bg-panel p-6 text-center text-sm text-zinc-400">Aucune carte dans cette sélection.</p>}
     </div>
   );
 }

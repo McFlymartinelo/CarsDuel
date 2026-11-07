@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 
 const FIELD =
-  "h-11 w-full rounded-xl border border-zinc-800 bg-[#10131a] pl-10 pr-10 text-sm text-white placeholder:text-zinc-500 transition-colors focus:border-amber-400/60 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden";
+  "h-11 w-full rounded-xl border border-line bg-panel pl-10 pr-10 text-sm text-white placeholder:text-zinc-500 transition-colors focus:border-amber-400/60 focus:outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden";
 
 function FieldIcon() {
   return <Search size={16} strokeWidth={2} aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />;

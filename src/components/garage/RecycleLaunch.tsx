@@ -35,7 +35,7 @@ async function recycleWithCrush(prev: ActionState, fd: FormData): Promise<Action
 function CrushAnimation() {
   return (
     <div className="mt-5">
-      <div className="relative h-44 overflow-hidden rounded-xl border border-zinc-800 bg-[#07090d]">
+      <div className="relative h-44 overflow-hidden rounded-xl border border-line bg-[#07090d]">
         <div className="crush-box absolute inset-0">
           <div
             className="crush-pile absolute inset-x-2 bottom-2 grid grid-cols-[repeat(17,minmax(0,1fr))] grid-rows-[repeat(5,22px)]"
@@ -112,7 +112,7 @@ export function RecycleLaunch({
             Les cartes de la benne seront définitivement détruites. Cette action est irréversible.
           </p>
 
-          <dl className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-zinc-800 bg-[#0b0d12] p-3 text-center">
+          <dl className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-line bg-panel-deep p-3 text-center">
             <div>
               <dt className="text-[11px] uppercase tracking-wide text-zinc-500">Cartes</dt>
               <dd className="font-display text-xl font-bold tabular-nums text-white">{cardCount}</dd>

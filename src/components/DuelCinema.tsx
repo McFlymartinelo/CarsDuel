@@ -31,7 +31,7 @@ function StepBar({ phase }: { phase: Phase }) {
 
 function Stat({ icon: Icon, label, value, hint }: { icon: typeof Cog; label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-black/30 p-3">
+    <div className="rounded-xl border border-line bg-black/30 p-3">
       <p className="flex items-center gap-1.5 text-xs uppercase text-zinc-500">
         <Icon size={14} className="text-amber-300" />
         {label}
@@ -45,7 +45,7 @@ function Stat({ icon: Icon, label, value, hint }: { icon: typeof Cog; label: str
 function GhostStep({ r }: { r: DuelReport }) {
   const ghostTire = TIRE_LABEL[r.ghostTireType] ?? (r.ghostTireType || "Pneus");
   return (
-    <div className="duel-from-right rounded-xl border border-zinc-700 bg-[#10131a] p-5">
+    <div className="duel-from-right rounded-xl border border-line-strong bg-panel p-5">
       <p className="font-display text-xs uppercase tracking-widest text-zinc-400">Config adverse</p>
       <p className="mt-1 truncate font-display text-3xl font-bold">{r.defenderName}</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -66,7 +66,7 @@ const LIGHTS_DELAY = FIRST_LIGHT + 5 * LIGHT_STEP + LIGHTS_HOLD;
 
 function StartLights({ lit, go }: { lit: number; go: boolean }) {
   return (
-    <div aria-hidden className="flex items-center gap-2 rounded-lg border border-zinc-700/80 bg-black/70 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+    <div aria-hidden className="flex items-center gap-2 rounded-lg border border-line-strong/80 bg-black/70 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
       {[1, 2, 3, 4, 5].map((i) => {
         const red = !go && lit >= i;
         return (
@@ -154,7 +154,7 @@ function Lane({
 
       <div
         className={`race-lane relative h-14 overflow-hidden rounded-lg border ${
-          winner ? "border-amber-400/70" : you ? "border-amber-500/30" : "border-zinc-700"
+          winner ? "border-amber-400/70" : you ? "border-amber-500/30" : "border-line-strong"
         } ${winner ? "is-winner" : ""}`}
       >
         <span aria-hidden className="race-asphalt" />
@@ -226,7 +226,7 @@ function RaceStep({ r }: { r: DuelReport }) {
   const youWin = done && r.win;
 
   return (
-    <div className="duel-rise relative overflow-hidden rounded-xl border border-zinc-700 bg-[#0b0e14] p-4">
+    <div className="duel-rise relative overflow-hidden rounded-xl border border-line-strong bg-[#0b0e14] p-4">
       <div aria-hidden className={`race-weather ${wet ? "is-wet" : "is-dry"}`} />
       {go && <div aria-hidden className="race-start-flash" />}
 
@@ -297,7 +297,7 @@ export function DuelCinema({ r, busy = false, onReplay, onReplaceBrokenPart, onC
       <div className="flex flex-wrap items-center justify-between gap-3">
         <StepBar phase={phase} />
         {phase < 4 && (
-          <button type="button" onClick={() => setPhase(4)} className="min-h-11 rounded-lg border border-zinc-700 px-3 text-xs uppercase tracking-wider text-zinc-300 hover:bg-zinc-800">
+          <button type="button" onClick={() => setPhase(4)} className="min-h-11 rounded-lg border border-line-strong px-3 text-xs uppercase tracking-wider text-zinc-300 hover:bg-zinc-800">
             Passer
           </button>
         )}

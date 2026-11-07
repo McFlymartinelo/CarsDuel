@@ -84,7 +84,7 @@ export function SortRow({
       <div className="hidden grid-cols-[6.5rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 md:grid">
         <span className="pt-2 font-display text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">{label}</span>
         <nav
-          className="inline-flex max-w-full flex-wrap justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1"
+          className="inline-flex max-w-full flex-wrap justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1"
           aria-label={ariaLabel ?? label}
         >
           {options.map((option) => {

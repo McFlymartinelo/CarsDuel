@@ -236,7 +236,7 @@ export function TradeInventoryPicker({
           type="button"
           onClick={onClose}
           aria-label="Fermer l'inventaire"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line-strong text-zinc-400 hover:bg-zinc-800 hover:text-white"
         >
           <X size={18} />
         </button>
@@ -273,7 +273,7 @@ export function TradeInventoryPicker({
       <div className="hidden md:mt-3 md:block md:space-y-3">
         <FilterRow label="Type">
           <nav
-            className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1"
+            className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1"
             aria-label="Catégories de l'inventaire"
           >
             {FILTERS.map(({ key, label, icon: Icon }) => {
@@ -305,7 +305,7 @@ export function TradeInventoryPicker({
       </div>
 
       {visible.length === 0 ? (
-        <div className="mt-5 rounded-xl border border-zinc-800 bg-[#0e1117] px-4 py-10 text-center">
+        <div className="mt-5 rounded-xl border border-line bg-panel-mid px-4 py-10 text-center">
           <PackageSearch size={34} strokeWidth={1.4} className="mx-auto text-zinc-600" />
           <p className="mt-3 text-sm text-zinc-400">
             {available.length === 0 ? "Aucune carte disponible pour cet échange." : "Aucune carte ne correspond à cette recherche."}

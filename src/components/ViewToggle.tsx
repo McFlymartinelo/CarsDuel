@@ -13,7 +13,7 @@ const OPTIONS: { key: CardViewMode; label: string; icon: typeof List }[] = [
 
 export function ViewToggle({ current, hrefFor }: { current: CardViewMode; hrefFor: (mode: CardViewMode) => string }) {
   return (
-    <nav className="inline-flex gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
+    <nav className="inline-flex gap-1 rounded-xl border border-line bg-panel p-1" aria-label="Affichage">
       {OPTIONS.map((o) => {
         const on = o.key === current;
         return (

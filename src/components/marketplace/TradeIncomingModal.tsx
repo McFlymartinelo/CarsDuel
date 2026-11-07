@@ -15,7 +15,7 @@ const TAX = 10;
 
 function CardGrid({ cards }: { cards: TradeOffer["items"][number]["user_cards"][] }) {
   if (cards.length === 0) {
-    return <p className="rounded-lg border border-dashed border-zinc-700 bg-[#0b0e13] px-3 py-6 text-center text-xs text-zinc-500">Aucune carte.</p>;
+    return <p className="rounded-lg border border-dashed border-line-strong bg-[#0b0e13] px-3 py-6 text-center text-xs text-zinc-500">Aucune carte.</p>;
   }
   return (
     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
@@ -121,7 +121,7 @@ export function TradeIncomingModal({
           onClick={onClose}
           disabled={busy}
           aria-label="Fermer le détail de l'offre"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line-strong text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
         >
           <X size={18} />
         </button>
@@ -154,7 +154,7 @@ export function TradeIncomingModal({
           <div className="mt-3">
             <CardGrid cards={requested} />
           </div>
-          <p className="mt-3 rounded-lg border border-zinc-700 bg-[#0b0e13] px-3 py-2 text-sm text-zinc-400">
+          <p className="mt-3 rounded-lg border border-line-strong bg-[#0b0e13] px-3 py-2 text-sm text-zinc-400">
             Aucune pièce demandée. Les pièces ne peuvent venir que de l&apos;initiateur de la proposition.
           </p>
         </section>

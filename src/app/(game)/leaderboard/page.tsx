@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
 import { QuestPing } from "@/components/QuestPing";
 import { PageHeader } from "@/components/PageHeader";
 import { LeaderboardBoard, type PeriodBoard } from "@/components/LeaderboardBoard";
+import { LeaderboardSkeleton } from "@/components/leaderboard/LeaderboardSkeleton";
 import { getLeaderboard, type LeaderboardRow } from "@/lib/queries";
 
 export const metadata = { title: "Classement — CarsDuel" };
@@ -22,13 +24,20 @@ function toBoard(rows: LeaderboardRow[]): PeriodBoard {
 
 export default async function LeaderboardPage() {
   const { user } = await requireUser();
-  const [weekly, monthly] = await Promise.all([getLeaderboard(user.id, "weekly"), getLeaderboard(user.id, "monthly")]);
 
   return (
     <section className="space-y-6">
       <QuestPing quest="leaderboard" />
       <PageHeader title="Classement XP" description="Les classements hebdomadaire et mensuel des pilotes, au même endroit." />
-      <LeaderboardBoard userId={user.id} weekly={toBoard(weekly)} monthly={toBoard(monthly)} />
+      <Suspense fallback={<LeaderboardSkeleton />}>
+        <Leaderboards userId={user.id} />
+      </Suspense>
     </section>
   );
+}
+
+/** Chargé dans son propre Suspense : l'en-tête de page s'affiche immédiatement. */
+async function Leaderboards({ userId }: { userId: string }) {
+  const [weekly, monthly] = await Promise.all([getLeaderboard(userId, "weekly"), getLeaderboard(userId, "monthly")]);
+  return <LeaderboardBoard userId={userId} weekly={toBoard(weekly)} monthly={toBoard(monthly)} />;
 }

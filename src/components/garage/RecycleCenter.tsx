@@ -144,7 +144,7 @@ const recycleHref = (
 
 function emptyState(title: string, text: string, action?: { label: string; onClick: () => void }) {
   return (
-    <div className="rounded-xl border border-dashed border-zinc-700 bg-[#0e1117] px-4 py-8 text-center">
+    <div className="rounded-xl border border-dashed border-line-strong bg-panel-mid px-4 py-8 text-center">
       <Recycle size={34} strokeWidth={1.5} className="mx-auto text-zinc-600" />
       <p className="mt-3 font-display text-lg font-bold uppercase text-zinc-300">{title}</p>
       <p className="mx-auto mt-1 max-w-md text-sm text-zinc-500">{text}</p>
@@ -163,7 +163,7 @@ function emptyState(title: string, text: string, action?: { label: string; onCli
 
 function Stat({ label, value, icon: Icon, tone = "text-white" }: { label: string; value: string; icon: LucideIcon; tone?: string }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-[#10131a] p-3 sm:p-4">
+    <div className="rounded-xl border border-line bg-panel p-3 sm:p-4">
       <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
         <Icon size={14} strokeWidth={2} />
         {label}
@@ -174,9 +174,9 @@ function Stat({ label, value, icon: Icon, tone = "text-white" }: { label: string
 }
 
 const binStepBtn =
-  "flex size-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-[#12151b] text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-300 disabled:opacity-40 disabled:hover:border-zinc-700 disabled:hover:text-zinc-200";
+  "flex size-9 shrink-0 items-center justify-center rounded-lg border border-line-strong bg-[#12151b] text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-300 disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-zinc-200";
 const binField =
-  "min-w-0 flex-1 rounded-lg border border-zinc-700 bg-[#12151b] px-2 py-1.5 text-center text-sm font-semibold tabular-nums text-white [appearance:textfield] focus:border-amber-500/60 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  "min-w-0 flex-1 rounded-lg border border-line-strong bg-[#12151b] px-2 py-1.5 text-center text-sm font-semibold tabular-nums text-white [appearance:textfield] focus:border-amber-500/60 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
 /**
  * Dépose un ou plusieurs exemplaires d'un groupe dans la benne.
@@ -428,7 +428,7 @@ export function RecycleCenter({
 
   const filterNav = (
     <nav
-      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:justify-self-start"
+      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1 md:justify-self-start"
       aria-label="Filtrer l'inventaire recyclable"
     >
       {FILTERS.map(({ key, label, icon: Icon }) => {
@@ -452,7 +452,7 @@ export function RecycleCenter({
 
   const stateNav = (
     <nav
-      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:justify-self-start"
+      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1 md:justify-self-start"
       aria-label="Filtrer l'inventaire recyclable par état"
     >
       <button
@@ -478,7 +478,7 @@ export function RecycleCenter({
 
   const rarityNav = (
     <nav
-      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1 md:justify-self-start"
+      className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1 md:justify-self-start"
       aria-label="Filtrer l'inventaire recyclable par niveau"
     >
       <button
@@ -510,7 +510,7 @@ export function RecycleCenter({
 
   return (
     <section className="space-y-4">
-      <div className="relative min-h-[14rem] overflow-hidden rounded-2xl border border-zinc-800 bg-black sm:min-h-[16rem]">
+      <div className="relative min-h-[14rem] overflow-hidden rounded-2xl border border-line bg-black sm:min-h-[16rem]">
         <Image
           src="/garage/recyclage.webp"
           alt=""
@@ -541,7 +541,7 @@ export function RecycleCenter({
         </div>
       </div>
 
-      <nav className="grid grid-cols-3 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Sections du centre de recyclage">
+      <nav className="grid grid-cols-3 gap-1 rounded-xl border border-line bg-panel p-1" aria-label="Sections du centre de recyclage">
         {TABS.map(({ key, label, icon: Icon }) => {
           const active = key === tab;
           const count = key === "inventaire" ? inventoryCards.length : key === "benne" ? binCards.length : null;
@@ -574,7 +574,7 @@ export function RecycleCenter({
                 et vous choisissez le nombre d’exemplaires à placer dans la benne.
               </p>
             </div>
-            <nav className="inline-flex shrink-0 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
+            <nav className="inline-flex shrink-0 gap-1 rounded-xl border border-line bg-panel p-1" aria-label="Affichage">
               {VIEWS.map(({ key, label, icon: Icon }) => {
                 const active = key === view;
                 return (
@@ -672,7 +672,7 @@ export function RecycleCenter({
             <Stat label="Cartes dans la benne" value={summary.cards.toLocaleString("fr-FR")} icon={Recycle} />
           </div>
 
-          <div className="flex flex-col gap-4 rounded-xl border border-zinc-800 bg-[#10131a] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 rounded-xl border border-line bg-panel p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-display text-2xl font-bold uppercase">Benne</h2>
               <p className="max-w-xl text-sm text-zinc-400">

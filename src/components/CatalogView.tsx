@@ -48,7 +48,7 @@ export function useCatalogViewIfAvailable() {
 export function CatalogViewToggle() {
   const { view, setView } = useCatalogView();
   return (
-      <nav className="inline-flex gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Affichage">
+      <nav className="inline-flex gap-1 rounded-xl border border-line bg-panel p-1" aria-label="Affichage">
         <button
           type="button"
           onClick={() => setView("cartes")}

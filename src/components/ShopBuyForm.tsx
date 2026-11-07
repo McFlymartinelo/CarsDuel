@@ -9,13 +9,13 @@ import type { ActionState } from "@/lib/types";
 const MAX_QUANTITY = 999;
 
 const stepBtn =
-  "flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-[#12151b] text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-300 disabled:opacity-40 disabled:hover:border-zinc-700 disabled:hover:text-zinc-200";
+  "flex size-10 shrink-0 items-center justify-center rounded-lg border border-line-strong bg-[#12151b] text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-300 disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-zinc-200";
 const field =
-  "min-w-0 flex-1 rounded-lg border border-zinc-700 bg-[#12151b] px-2 py-1.5 text-center text-sm font-semibold tabular-nums text-white [appearance:textfield] focus:border-amber-500/60 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  "min-w-0 flex-1 rounded-lg border border-line-strong bg-[#12151b] px-2 py-1.5 text-center text-sm font-semibold tabular-nums text-white [appearance:textfield] focus:border-amber-500/60 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 const buyBtn =
   "inline-flex min-h-9 w-full items-center justify-center rounded-full bg-amber-500 px-3 py-1.5 text-sm font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50";
 const disabledBtn =
-  "inline-flex min-h-9 w-full items-center justify-center rounded-full border border-zinc-700 px-3 py-1.5 text-sm font-medium text-zinc-500";
+  "inline-flex min-h-9 w-full items-center justify-center rounded-full border border-line-strong px-3 py-1.5 text-sm font-medium text-zinc-500";
 
 const coins = (n: number) => n.toLocaleString("fr-FR");
 

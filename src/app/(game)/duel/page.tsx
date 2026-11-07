@@ -1,6 +1,8 @@
-import Link from "next/link";
-import { Coins, Swords } from "lucide-react";
+import { Suspense } from "react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionTitle } from "@/components/ui/SectionTitle";
 import { DailyQuests } from "@/components/DailyQuests";
 import { DuelForm } from "@/components/DuelForm";
 import { ClmForm } from "@/components/ClmForm";
@@ -8,25 +10,30 @@ import { DynoForm } from "@/components/DynoForm";
 import { ConfigConstructeurForm } from "@/components/ConfigConstructeurForm";
 import { ChallengeList, ProposeDuel } from "@/components/OrganizedDuels";
 import { ConfigBoard } from "@/components/garage/ConfigBoard";
+import { ConfigDisclosure } from "@/components/garage/ConfigDisclosure";
+import { ConfigSummary } from "@/components/garage/ConfigSummary";
 import { SummaryPanel } from "@/components/garage/SummaryPanel";
 import { type SlotKey } from "@/components/garage/SlotTabs";
-import { WEATHER_LABEL, formatDateTime } from "@/lib/format";
+import { DuelHistory, DuelHistorySkeleton } from "@/components/duel/DuelHistory";
 import { cardImageUrl } from "@/lib/card-images";
 import { parsePage } from "@/lib/pagination";
-import { DUEL_PAGE_SIZE, getDailyQuests, loadClmChallenge, loadConfigChallenge, loadDuelPage, loadDynoChallenge, loadOrganizedChallenges } from "@/lib/queries";
+import { getDailyQuests, loadClmChallenge, loadConfigChallenge, loadDuelPage, loadDynoChallenge, loadOrganizedChallenges } from "@/lib/queries";
 import { launchClm, launchDuel, launchDyno, validateConfigPair } from "./actions";
 
 export const metadata = { title: "Jouer — CarsDuel" };
 
 const SLOTS: SlotKey[] = ["moteur", "boite", "pneus"];
 
-export default async function DuelPage({ searchParams }: { searchParams: Promise<{ page?: string; slot?: string }> }) {
-  const { page: pageParam, slot: slotParam } = await searchParams;
+export default async function DuelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; slot?: string; config?: string }>;
+}) {
+  const { page: pageParam, slot: slotParam, config: configParam } = await searchParams;
   const page = parsePage(pageParam);
-  const nextPage = parsePage(page + 1);
   const { user } = await requireUser();
-  const [{ cards: allCards, decks: allDecks, modifiers, history, names: nameOf }, quests, organized, clm, dyno, configs] = await Promise.all([
-    loadDuelPage(user.id, page),
+  const [{ cards: allCards, decks: allDecks, modifiers }, quests, organized, clm, dyno, configs] = await Promise.all([
+    loadDuelPage(user.id),
     getDailyQuests(user.id).catch((e) => {
       console.error("défis indisponibles :", e);
       return null;
@@ -66,190 +73,111 @@ export default async function DuelPage({ searchParams }: { searchParams: Promise
     if (page > 1) q.set("page", String(page));
     return `/duel?${q.toString()}`;
   };
-  const pageHref = (n: number) => {
-    const q = new URLSearchParams({ slot });
-    if (n > 1) q.set("page", String(n));
-    return `/duel?${q.toString()}`;
-  };
   const alternatives = (cat: string, current?: string) => cards.filter((c) => c.card_templates.category === cat && c.id !== current);
+  const otherModeCount = 1 + Number(Boolean(clm)) + Number(Boolean(dyno)) + Number(Boolean(configs));
 
   return (
     <>
-      <ConfigBoard
-        slot={slot}
-        hrefFor={(s) => href({ slot: s })}
-        engine={engine}
-        gearbox={gearbox}
-        tire={tire}
-        alternatives={alternatives}
-        deckId={config?.id}
-        modifiers={modifiers}
+      <PageHeader
+        title="Jouer"
+        description="Choisissez votre course, le reste est prêt."
+        actions={
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${
+              playable
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+            }`}
+          >
+            <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${playable ? "bg-emerald-400" : "bg-amber-400"}`} />
+            {playable ? "Config prête" : "Config à compléter"}
+          </span>
+        }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <DailyQuests state={quests} />
-        <DuelForm action={launchDuel} deckId={playable ? config?.id : undefined} bonuses={bonuses} tirePerfs={modifiers}>
-          <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
-        </DuelForm>
-        <ProposeDuel />
-        {clm && (
-          <ClmForm
-            action={launchClm}
-            deckId={playable ? config?.id : undefined}
-            challenge={clm}
-            bonuses={bonuses}
-            tirePerfs={modifiers}
-          />
-        )}
-        {dyno && (
-          <DynoForm
-            action={launchDyno}
-            deckId={playable ? config?.id : undefined}
-            challenge={dyno}
-            engine={engine}
-            gearbox={gearbox}
-            tire={tire}
-          />
-        )}
-        {configs && <ConfigConstructeurForm action={validateConfigPair} challenge={configs} />}
-      </div>
-      {!playable && <p className="text-sm text-zinc-500">Complétez Ma config avec un moteur, une boîte et des pneus disponibles.</p>}
-
-      {organized && <ChallengeList
-        incoming={organized.challenges.filter((c) => c.target_id === user.id).map((c) => ({ id: c.id, name: organized.names.get(c.challenger_id) ?? "?", at: c.created_at }))}
-        outgoing={organized.challenges.filter((c) => c.challenger_id === user.id).map((c) => ({ id: c.id, name: organized.names.get(c.target_id) ?? "?", at: c.created_at }))}
-      />}
+      <ConfigDisclosure defaultOpen={configParam === "1"} summary={<ConfigSummary engine={engine} gearbox={gearbox} tire={tire} />}>
+        <ConfigBoard
+          bare
+          slot={slot}
+          hrefFor={(s) => href({ slot: s })}
+          engine={engine}
+          gearbox={gearbox}
+          tire={tire}
+          alternatives={alternatives}
+          deckId={config?.id}
+          modifiers={modifiers}
+        />
+      </ConfigDisclosure>
 
       <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2 className="flex items-center gap-2 font-display text-xl font-bold uppercase">
-              <Swords size={18} className="text-amber-400" aria-hidden />
-              Historique des duels
-            </h2>
-            <p className="mt-1 text-sm text-zinc-400">Vos dernières courses, en attaque comme en défense.</p>
-          </div>
-          {history.length > 0 && (
-            <span className="rounded-full border border-zinc-700 bg-[#10131a] px-3 py-1 text-xs font-semibold text-zinc-300">
-              {history.length} duel{history.length > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
-
-        {history.length === 0 ? (
-          <div className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-zinc-700 bg-[#0e1117] px-4 py-10 text-center">
-            <Swords size={26} className="text-amber-400/60" aria-hidden />
-            <p className="text-sm text-zinc-400">Aucun duel pour l&apos;instant.</p>
-            <p className="text-xs text-zinc-500">Lancez votre première course depuis Ma config.</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-2 md:hidden">
-              {history.map((x) => {
-                const attacker = x.attacker_id === user.id;
-                const won = attacker ? x.result === "attacker_win" : x.result === "defender_win";
-                const coins = attacker ? x.attacker_coins : x.defender_coins;
-                const xp = attacker ? x.attacker_xp : x.defender_xp;
-                return (
-                  <div
-                    key={x.id}
-                    className={`rounded-xl border border-zinc-800 border-l-2 bg-[#10131a] p-3 ${won ? "border-l-emerald-400" : "border-l-red-500"}`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`rounded-md px-2 py-0.5 font-display text-[11px] font-bold uppercase tracking-wide ${
-                          won ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"
-                        }`}
-                      >
-                        {won ? "Victoire" : "Défaite"}
-                      </span>
-                      <span className="text-[11px] text-zinc-500">{formatDateTime(x.created_at)}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-zinc-200">
-                      <span className="text-zinc-500">{attacker ? "Attaque vs" : "Défense vs"}</span>{" "}
-                      <span className="font-semibold">{nameOf.get(attacker ? x.defender_id : x.attacker_id) ?? "?"}</span>
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
-                      <span className="rounded border border-zinc-700/70 px-1.5 py-0.5 text-zinc-400">{WEATHER_LABEL[x.weather]}</span>
-                      {attacker || x.defender_rewarded ? (
-                        <span className="inline-flex items-center gap-1 text-amber-300">
-                          <Coins size={12} aria-hidden />
-                          {coins} pièces · {xp} XP
-                        </span>
-                      ) : (
-                        <span className="text-zinc-500">Plafond de défenses atteint</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="hidden overflow-x-auto rounded-xl border border-zinc-800 md:block">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-zinc-900/70 font-display text-[11px] uppercase tracking-wider text-zinc-400">
-                  <tr>
-                    <th className="px-3 py-2 font-semibold">Date</th>
-                    <th className="px-3 py-2 font-semibold">Rôle</th>
-                    <th className="px-3 py-2 font-semibold">Adversaire</th>
-                    <th className="px-3 py-2 font-semibold">Météo</th>
-                    <th className="px-3 py-2 font-semibold">Résultat</th>
-                    <th className="px-3 py-2 font-semibold">Gains</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800">
-                  {history.map((x) => {
-                    const attacker = x.attacker_id === user.id;
-                    const won = attacker ? x.result === "attacker_win" : x.result === "defender_win";
-                    const coins = attacker ? x.attacker_coins : x.defender_coins;
-                    const xp = attacker ? x.attacker_xp : x.defender_xp;
-                    return (
-                      <tr key={x.id} className="transition-colors hover:bg-white/[0.03]">
-                        <td className="px-3 py-2 text-zinc-400">{formatDateTime(x.created_at)}</td>
-                        <td className="px-3 py-2 text-zinc-300">{attacker ? "Attaque" : "Défense"}</td>
-                        <td className="px-3 py-2 font-medium text-zinc-200">{nameOf.get(attacker ? x.defender_id : x.attacker_id) ?? "?"}</td>
-                        <td className="px-3 py-2 text-zinc-400">{WEATHER_LABEL[x.weather]}</td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
-                              won ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"
-                            }`}
-                          >
-                            {won ? "Victoire" : "Défaite"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          {attacker || x.defender_rewarded ? (
-                            <span className="inline-flex items-center gap-1 text-amber-300">
-                              <Coins size={13} aria-hidden />
-                              {coins} · {xp} XP
-                            </span>
-                          ) : (
-                            <span className="text-zinc-500">— plafond atteint</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-
-        <div className="flex flex-wrap gap-3 text-sm">
-          {page > 1 && (
-            <Link href={pageHref(page - 1)} className="rounded-lg border border-zinc-700 px-3 py-1.5 text-zinc-300 transition-colors hover:border-amber-400/50 hover:text-amber-300">
-              ← Page précédente
-            </Link>
-          )}
-          {history.length === DUEL_PAGE_SIZE && nextPage > page && (
-            <Link href={pageHref(nextPage)} className="rounded-lg border border-zinc-700 px-3 py-1.5 text-zinc-300 transition-colors hover:border-amber-400/50 hover:text-amber-300">
-              Voir plus →
-            </Link>
-          )}
+        <SectionTitle title="Modes de jeu" description="Deux façons de courir maintenant." />
+        <div className="grid gap-3 lg:grid-cols-2">
+          <DuelForm
+            variant="hero"
+            action={launchDuel}
+            deckId={playable ? config?.id : undefined}
+            bonuses={bonuses}
+            tirePerfs={modifiers}
+          >
+            <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
+          </DuelForm>
+          <DailyQuests state={quests} layout="hero" />
         </div>
       </section>
+
+      <details className="group rounded-2xl border border-line bg-panel-deep">
+        <summary className="flex cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden">
+          <span className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-panel text-zinc-300">
+            <SlidersHorizontal size={17} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-base font-bold uppercase">Autres modes</span>
+            <span className="block text-xs text-zinc-500">Contre-la-montre · banc d&apos;essai · config constructeur</span>
+          </span>
+          <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold text-zinc-400">{otherModeCount}</span>
+          <ChevronDown size={16} className="text-zinc-500 transition group-open:rotate-180" />
+        </summary>
+        <div className="grid gap-3 border-t border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ProposeDuel />
+          {clm && (
+            <ClmForm
+              action={launchClm}
+              deckId={playable ? config?.id : undefined}
+              challenge={clm}
+              bonuses={bonuses}
+              tirePerfs={modifiers}
+            />
+          )}
+          {dyno && (
+            <DynoForm
+              action={launchDyno}
+              deckId={playable ? config?.id : undefined}
+              challenge={dyno}
+              engine={engine}
+              gearbox={gearbox}
+              tire={tire}
+            />
+          )}
+          {configs && <ConfigConstructeurForm action={validateConfigPair} challenge={configs} />}
+        </div>
+      </details>
+
+      {!playable && (
+        <p className="text-sm text-zinc-500">
+          Complétez Ma config avec un moteur, une boîte et des pneus disponibles.
+        </p>
+      )}
+
+      {organized && (
+        <ChallengeList
+          incoming={organized.challenges.filter((c) => c.target_id === user.id).map((c) => ({ id: c.id, name: organized.names.get(c.challenger_id) ?? "?", at: c.created_at }))}
+          outgoing={organized.challenges.filter((c) => c.challenger_id === user.id).map((c) => ({ id: c.id, name: organized.names.get(c.target_id) ?? "?", at: c.created_at }))}
+        />
+      )}
+
+      <Suspense fallback={<DuelHistorySkeleton />}>
+        <DuelHistory userId={user.id} page={page} slot={slot} />
+      </Suspense>
     </>
   );
 }

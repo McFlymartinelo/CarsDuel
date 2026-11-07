@@ -39,7 +39,7 @@ function CardChips({ items }: { items: TradeOffer["items"] }) {
         const t = item.user_cards.card_templates;
         const accent = t.rarity ? RARITY_THEME[t.rarity].label : "text-cyan-300";
         return (
-          <li key={item.id} className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border border-zinc-700 bg-[#0b0e13] px-2 py-1 text-xs">
+          <li key={item.id} className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border border-line-strong bg-[#0b0e13] px-2 py-1 text-xs">
             <span className={`shrink-0 font-display font-semibold uppercase ${accent}`}>{CATEGORY_LABEL[t.category]}</span>
             <span className="truncate text-zinc-200">{t.name}</span>
           </li>
@@ -54,15 +54,15 @@ function SectionTitle({ icon, title, count }: { icon: React.ReactNode; title: st
     <div className="flex items-center gap-2">
       <span className="text-amber-400">{icon}</span>
       <h2 className="font-display text-xl font-bold uppercase tracking-wide">{title}</h2>
-      <span className="rounded-full border border-zinc-700 bg-[#10131a] px-2 py-0.5 text-xs font-semibold tabular-nums text-zinc-400">{count}</span>
+      <span className="rounded-full border border-line-strong bg-panel px-2 py-0.5 text-xs font-semibold tabular-nums text-zinc-400">{count}</span>
     </div>
   );
 }
 
 function EmptyList({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-zinc-800 bg-[#10131a]/70 px-4 py-8 text-center">
-      <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-zinc-700 bg-[#0b0e13] text-zinc-500">
+    <div className="rounded-xl border border-dashed border-line bg-panel/70 px-4 py-8 text-center">
+      <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-[#0b0e13] text-zinc-500">
         {icon}
       </span>
       <p className="mt-3 text-sm text-zinc-500">{children}</p>
@@ -272,7 +272,7 @@ export function TradeCenter({
               Les pièces ne peuvent venir que de l&apos;initiateur de la proposition.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-[#0b0e13]/80 px-3 py-1.5 text-sm text-zinc-300">
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-[#0b0e13]/80 px-3 py-1.5 text-sm text-zinc-300">
             <Coins size={16} strokeWidth={1.8} className="text-amber-400" />
             <b className="tabular-nums text-white">{me.coins.toLocaleString("fr-FR")}</b> pièces
           </span>
@@ -332,7 +332,7 @@ export function TradeCenter({
                   id={suggestionListId}
                   role="listbox"
                   aria-label="Joueurs correspondants"
-                  className="absolute inset-x-0 top-full z-40 mt-1 overflow-hidden rounded-xl border border-zinc-700 bg-[#10131a] shadow-2xl shadow-black/50"
+                  className="absolute inset-x-0 top-full z-40 mt-1 overflow-hidden rounded-xl border border-line-strong bg-panel shadow-2xl shadow-black/50"
                 >
                   {suggestions.length === 0 ? (
                     <p className="flex items-center gap-2 px-3 py-2.5 text-sm text-zinc-500">
@@ -366,7 +366,7 @@ export function TradeCenter({
                               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border font-display text-xs font-bold uppercase ${
                                 active
                                   ? "border-amber-400/70 bg-amber-500/20 text-amber-200"
-                                  : "border-zinc-700 bg-[#0b0e13] text-zinc-400"
+                                  : "border-line-strong bg-[#0b0e13] text-zinc-400"
                               }`}
                             >
                               {suggestion.username.slice(0, 1).toUpperCase()}
@@ -414,7 +414,7 @@ export function TradeCenter({
               const offered = offer.items.filter((item) => item.side === "proposer");
               const requested = offer.items.filter((item) => item.side === "recipient");
               return (
-                <article key={offer.id} className="rounded-xl border border-zinc-800 bg-[#10131a] p-3 sm:p-4">
+                <article key={offer.id} className="rounded-xl border border-line bg-panel p-3 sm:p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-display text-base font-bold uppercase tracking-wide">
@@ -472,7 +472,7 @@ export function TradeCenter({
             {incoming.map((offer) => (
               <article
                 key={offer.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-[#10131a] p-3 sm:p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel p-3 sm:p-4"
               >
                 <div className="min-w-0">
                   <p className="font-display text-base font-bold uppercase tracking-wide">

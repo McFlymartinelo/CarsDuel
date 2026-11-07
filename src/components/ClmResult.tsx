@@ -56,7 +56,7 @@ function Chrono({ seconds, countUp = false }: { seconds: number; countUp?: boole
 
 function Stat({ label, value, hint, tone = "text-zinc-100" }: { label: string; value: string; hint?: string; tone?: string }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-black/25 p-3">
+    <div className="rounded-xl border border-line bg-black/25 p-3">
       <p className="text-[11px] uppercase tracking-wide text-zinc-500">{label}</p>
       <p className={`mt-1 font-display text-xl font-bold leading-tight tabular-nums ${tone}`}>{value}</p>
       {hint && <p className="text-xs text-zinc-400">{hint}</p>}
@@ -93,7 +93,7 @@ export function ClmResult({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-zinc-700 bg-[#10131a] p-5 text-center">
+      <div className="rounded-2xl border border-line-strong bg-panel p-5 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-400">Contre-la-montre solo</p>
         <p className="mt-1 font-display text-xl font-bold uppercase">{r.circuitName}</p>
         <p className="text-sm text-zinc-400">{WEATHER_LABEL[r.weather]}</p>
@@ -157,12 +157,12 @@ export function ClmResult({
               )}
             </div>
           ) : achievedModel ? (
-            <p className="rounded-xl border border-zinc-700 bg-[#10131a] p-3 text-center text-sm text-zinc-300">
+            <p className="rounded-xl border border-line-strong bg-panel p-3 text-center text-sm text-zinc-300">
               Médaille <span className={`font-semibold ${achievedModel.text}`}>{achievedModel.label}</span> déjà validée aujourd&apos;hui.
               Améliorez encore votre chrono !
             </p>
           ) : (
-            <p className="rounded-xl border border-zinc-700 bg-[#10131a] p-3 text-center text-sm text-zinc-400">
+            <p className="rounded-xl border border-line-strong bg-panel p-3 text-center text-sm text-zinc-400">
               Pas de médaille cette fois. Continuez à peaufiner votre configuration !
             </p>
           )}
@@ -170,7 +170,7 @@ export function ClmResult({
       )}
 
       {!broken && (
-        <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-3">
+        <div className="rounded-xl border border-line-strong bg-panel p-3">
           <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Objectifs des médailles</p>
           <div className="mt-2 grid grid-cols-3 gap-2">
             {CLM_MEDALS.map((m) => {
@@ -179,7 +179,7 @@ export function ClmResult({
                 <div
                   key={m.key}
                   className={`rounded-lg border px-2 py-1.5 text-center ${
-                    won ? "border-emerald-500/40 bg-emerald-500/5" : "border-zinc-800 bg-black/20"
+                    won ? "border-emerald-500/40 bg-emerald-500/5" : "border-line bg-black/20"
                   }`}
                 >
                   <div className="flex items-center justify-center gap-1">
@@ -198,7 +198,7 @@ export function ClmResult({
         </div>
       )}
 
-      <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-4 text-center">
+      <div className="rounded-xl border border-line-strong bg-panel p-4 text-center">
         <p className={`font-display text-2xl font-bold ${r.coins > 0 ? "text-amber-300" : "text-zinc-500"}`}>
           +{n(r.coins, 0)} pièces
         </p>
@@ -222,7 +222,7 @@ export function ClmResult({
         />
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-black/20 p-3 text-xs text-zinc-400">
+      <div className="rounded-xl border border-line bg-black/20 p-3 text-xs text-zinc-400">
         <p>
           Config : <span className="text-zinc-200">{r.engineName}</span>
           <span className="mx-1 text-zinc-600">·</span>

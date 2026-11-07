@@ -39,8 +39,8 @@ export function SlotTabs({
             key={slot}
             href={hrefFor(slot)}
             scroll={false}
-            className={`flex min-h-20 flex-col items-center justify-center gap-0.5 rounded-xl border-2 bg-[#10131a] px-1 py-2 text-center ${
-              slot === current ? active : "border-zinc-800"
+            className={`flex min-h-20 flex-col items-center justify-center gap-0.5 rounded-xl border-2 bg-panel px-1 py-2 text-center ${
+              slot === current ? active : "border-line"
             }`}
           >
             {img ? (

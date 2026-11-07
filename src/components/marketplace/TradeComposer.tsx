@@ -163,7 +163,7 @@ export function TradeComposer({
             onClick={onClose}
             disabled={pending}
             aria-label="Fermer la composition"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line-strong text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
           >
             <X size={18} />
           </button>

@@ -9,7 +9,7 @@ export function BackToGarage({ overlay = false }: { overlay?: boolean }) {
       className={
         overlay
           ? "inline-flex w-fit items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-300 hover:text-white"
-          : "inline-flex w-fit items-center gap-1.5 rounded-lg border border-zinc-800 bg-[#10131a] px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 transition-colors hover:border-amber-500/40 hover:text-amber-300"
+          : "inline-flex w-fit items-center gap-1.5 rounded-lg border border-line bg-panel px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 transition-colors hover:border-amber-500/40 hover:text-amber-300"
       }
     >
       <ArrowLeft size={14} aria-hidden />

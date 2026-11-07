@@ -112,7 +112,7 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
               className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border p-3 text-left transition ${
                 active
                   ? "border-amber-400/60 bg-amber-500/10 shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_8px_24px_-12px_rgba(245,158,11,0.55)]"
-                  : "border-zinc-800 bg-[#0e1117] hover:border-zinc-700 hover:bg-zinc-900/60"
+                  : "border-line bg-panel-mid hover:border-line-strong hover:bg-zinc-900/60"
               }`}
             >
               <Image
@@ -134,7 +134,7 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
         })}
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-[#0e1117] p-5 sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-panel-mid p-5 sm:p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_0%_0%,rgba(245,158,11,0.14),transparent_60%)]" />
         <div className="relative flex items-center gap-5">
           <div className="min-w-0 flex-1 space-y-2">
@@ -162,7 +162,7 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-zinc-800 bg-[#0e1117] p-4 lg:col-span-2">
+        <div className="rounded-xl border border-line bg-panel-mid p-4 lg:col-span-2">
           <p className="font-display text-sm font-semibold uppercase tracking-wide text-zinc-300">Podium</p>
           {/* Visuel du podium en fond, libellés positionnés par-dessus au pourcentage du conteneur */}
           <div role="group" aria-label="Podium du classement" className="duel-rise relative mx-auto mt-4 aspect-[1536/826] w-full max-w-md @container">
@@ -232,9 +232,9 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-800 bg-[#0e1117] p-4">
+        <div className="rounded-xl border border-line bg-panel-mid p-4">
           <p className="font-display text-sm font-semibold uppercase tracking-wide text-zinc-300">{config.short}</p>
-          <ul className="mt-2 divide-y divide-zinc-800">
+          <ul className="mt-2 divide-y divide-line">
             {config.prizes.map(([place, reward]) => (
               <li key={place} className="flex items-baseline justify-between gap-3 py-2 text-sm">
                 <span className="text-zinc-400">{place}</span>
@@ -250,8 +250,8 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-800 bg-[#0e1117]">
-        <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
+      <div className="overflow-hidden rounded-xl border border-line bg-panel-mid">
+        <div className="flex items-center gap-2 border-b border-line px-4 py-3">
           <BarChart3 size={16} aria-hidden className="text-amber-400" />
           <p className="font-display text-sm font-semibold uppercase tracking-wide text-zinc-300">Tableau complet</p>
         </div>
@@ -270,7 +270,7 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
                 {board.rows.map((r) => {
                   const isMe = r.user_id === userId;
                   return (
-                    <tr key={r.user_id} className={`border-t border-zinc-800 ${isMe ? "bg-amber-500/10" : ""}`}>
+                    <tr key={r.user_id} className={`border-t border-line ${isMe ? "bg-amber-500/10" : ""}`}>
                       <td className={`px-4 py-2 font-display font-semibold tabular-nums ${r.rank <= 3 ? "text-amber-300" : "text-zinc-500"}`}>{r.rank}</td>
                       <td className={`px-4 py-2 ${isMe ? "font-semibold text-amber-200" : "text-zinc-200"}`}>
                         {r.username}

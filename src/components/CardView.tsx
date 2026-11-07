@@ -1,7 +1,8 @@
 import { ArrowUp, CloudDrizzle, CloudRain, CloudSun, Cog, Flag, Gauge, Joystick, Shield, ShieldCheck, Sun, Timer, TrendingDown, TriangleAlert, Trophy, Weight, Zap, type LucideIcon } from "lucide-react";
 import { bonusEffectText, CATEGORY_LABEL, GEARBOX_LABEL, RARITY_LABEL, TIRE_THEME, WEATHER_LABEL } from "@/lib/format";
 import { currentBreakRisk, warrantyState } from "@/lib/game";
-import type { CardTemplate, Rarity, UserCard, Weather } from "@/lib/types";
+import { RARITY_PALETTE } from "@/lib/rarity-theme";
+import type { CardTemplate, UserCard, Weather } from "@/lib/types";
 
 const TIRE_WEATHERS: { weather: Weather; icon: LucideIcon }[] = [
   { weather: "sunny_hot", icon: Sun },
@@ -10,22 +11,9 @@ const TIRE_WEATHERS: { weather: Weather; icon: LucideIcon }[] = [
   { weather: "rain_cool", icon: CloudDrizzle },
 ];
 
-// Classes complètes (Tailwind ne détecte pas les noms assemblés dynamiquement).
-export interface Theme {
-  frame: string; // cadre extérieur + lueur
-  inner: string; // liseré intérieur et séparateurs
-  accent: string; // texte / icônes d'accent
-  glow: string; // halo derrière l'image
-}
-
-export const THEME: Record<Rarity | "neutre", Theme> = {
-  commune: { frame: "border-zinc-300/70 shadow-[0_0_22px_rgba(212,212,216,0.18)]", inner: "border-zinc-300/30", accent: "text-zinc-200", glow: "from-zinc-300/10" },
-  rare: { frame: "border-blue-400/80 shadow-[0_0_22px_rgba(96,165,250,0.30)]", inner: "border-blue-400/30", accent: "text-blue-300", glow: "from-blue-400/15" },
-  tres_rare: { frame: "border-cyan-400/80 shadow-[0_0_22px_rgba(34,211,238,0.30)]", inner: "border-cyan-400/30", accent: "text-cyan-300", glow: "from-cyan-400/15" },
-  epique: { frame: "border-purple-400/80 shadow-[0_0_22px_rgba(192,132,252,0.35)]", inner: "border-purple-400/30", accent: "text-purple-300", glow: "from-purple-400/15" },
-  legendaire: { frame: "border-orange-400/90 shadow-[0_0_26px_rgba(251,146,60,0.45)]", inner: "border-orange-400/35", accent: "text-orange-300", glow: "from-orange-400/20" },
-  neutre: { frame: "border-zinc-500/70", inner: "border-zinc-500/30", accent: "text-zinc-300", glow: "from-zinc-400/10" },
-};
+// Palette unique (src/lib/rarity-theme.ts). `THEME` reste exporté pour les
+// composants qui affichent une carte compacte avec le même habillage.
+export const THEME = RARITY_PALETTE;
 
 interface Stat {
   icon: LucideIcon;
@@ -183,7 +171,7 @@ export function CardView({
   const warranty = warrantyState(template, card);
 
   return (
-    <div className={`relative h-full rounded-2xl border-2 bg-[#0b0d12] p-1.5 ${theme.frame}`}>
+    <div className={`relative h-full rounded-2xl border-2 bg-panel-deep p-1.5 ${theme.frame}`}>
       <div className={`relative flex h-full min-h-[26rem] flex-col overflow-hidden rounded-xl border bg-gradient-to-b from-[#12151c] to-[#0a0c10] p-4 ${theme.inner}`}>
         {img ? (
           <>

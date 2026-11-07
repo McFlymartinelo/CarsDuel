@@ -32,15 +32,15 @@ export function ProfileMenu({
       <summary
         aria-label={`Profil de ${username}`}
         title={username}
-        className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-zinc-700 bg-[#252831] font-display text-lg font-bold uppercase [&::-webkit-details-marker]:hidden"
+        className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-amber-200/50 bg-[radial-gradient(circle_at_30%_20%,#fcd34d,#f59e0b_55%,#b45309)] font-display text-lg font-bold uppercase text-[#1a0f02] shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_6px_16px_-8px_rgba(245,158,11,0.9)] [&::-webkit-details-marker]:hidden"
       >
         {username.slice(0, 1)}
       </summary>
-      <div className="absolute right-0 z-40 mt-2 max-h-[min(32rem,calc(100vh-5rem))] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm shadow-xl">
+      <div className="absolute right-0 z-40 mt-2 max-h-[min(32rem,calc(100vh-5rem))] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-line-strong bg-zinc-900 p-3 text-sm shadow-xl">
         <p className="font-display text-xs font-semibold uppercase tracking-wider text-zinc-500">Profil</p>
         <Link href="/compte" className="block truncate font-display text-lg font-bold hover:text-amber-300">{username}</Link>
 
-        <div className={`mt-3 rounded-lg border border-zinc-800 px-3 py-2.5 ${rank.row}`}>
+        <div className={`mt-3 rounded-lg border border-line px-3 py-2.5 ${rank.row}`}>
           <div className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${rank.dot}`} />
             <p className={`font-display text-xl font-bold leading-tight ${rank.text}`}>{rank.name}</p>
@@ -53,7 +53,7 @@ export function ProfileMenu({
           </p>
         </div>
 
-        <dl className="mt-3 space-y-2 rounded-lg border border-zinc-800 px-3 py-2">
+        <dl className="mt-3 space-y-2 rounded-lg border border-line px-3 py-2">
           <div className="flex items-baseline justify-between gap-3">
             <dt className="text-zinc-400">Mes XP de la semaine</dt>
             <dd className="font-display text-lg font-bold tabular-nums text-amber-400">{xp(xpWeek)}</dd>

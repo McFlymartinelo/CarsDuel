@@ -59,7 +59,7 @@ function Face({ card }: { card: DrawnCard }) {
   const frame = tire?.frame ?? RARITY_FRAME[card.rarity ?? ""] ?? "border-zinc-500/70";
   const badge = card.rarity ? RARITY_LABEL[card.rarity] : card.tireType ? (TIRE_LABEL[card.tireType] ?? card.tireType) : null;
   return (
-    <div className={`flex h-full flex-col overflow-hidden rounded-2xl border-2 bg-[#0b0d12] p-4 ${frame}`}>
+    <div className={`flex h-full flex-col overflow-hidden rounded-2xl border-2 bg-panel-deep p-4 ${frame}`}>
       <p className="font-display text-xs font-semibold uppercase tracking-wider text-zinc-400">{CATEGORY_LABEL[card.category]}</p>
       {card.image ? (
         // eslint-disable-next-line @next/next/no-img-element

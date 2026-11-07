@@ -161,7 +161,7 @@ export function OtpForm({
   const tone = success ? "success" : error ? "error" : "idle";
 
   return (
-    <section className="mx-auto w-full max-w-md rounded-xl border border-zinc-800 bg-[#10131a] p-4 text-center sm:p-6">
+    <section className="mx-auto w-full max-w-md rounded-xl border border-line bg-panel p-4 text-center sm:p-6">
       <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-amber-500">
         Vérification
       </p>
@@ -255,7 +255,7 @@ export function OtpForm({
               {/* Moyeu central : ambre par défaut, émeraude après succès. */}
               <div
                 aria-hidden="true"
-                className={`absolute left-1/2 top-1/2 z-10 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 bg-[#0b0d12] transition-colors ${
+                className={`absolute left-1/2 top-1/2 z-10 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 bg-panel-deep transition-colors ${
                   tone === "success"
                     ? "border-emerald-400 text-emerald-400 shadow-[0_0_28px_rgba(52,211,153,0.45)]"
                     : tone === "error"
@@ -286,10 +286,10 @@ export function OtpForm({
                       success
                         ? "border-emerald-400/80 bg-emerald-400/10 text-emerald-300"
                         : digit
-                          ? "border-amber-500/70 bg-[#10131a] text-amber-300"
+                          ? "border-amber-500/70 bg-panel text-amber-300"
                           : isActive
                             ? "border-amber-400 bg-amber-500/10 text-amber-200"
-                            : "border-zinc-700 bg-[#0b0d12] text-zinc-500"
+                            : "border-line-strong bg-panel-deep text-zinc-500"
                     }`}
                   >
                     {digit || (isActive ? "·" : "")}
@@ -343,7 +343,7 @@ export function OtpForm({
             type="button"
             onClick={onBack}
             disabled={pending || success}
-            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 px-3 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-line-strong px-3 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
           >
             <ArrowLeft size={15} aria-hidden="true" />
             {flow === "register" ? "Retour à l'inscription" : "Retour à la connexion"}

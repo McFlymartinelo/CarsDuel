@@ -259,19 +259,25 @@ export const getDailyQuests = (uid: string) =>
     return { second: row.second, third: row.third, progress, claimed: row.claimed ?? [] };
   });
 
-/** Duel : inventaire, historique paginé et pseudos des adversaires. */
-export const loadDuelPage = (uid: string, page = 1) =>
+/** Duel : inventaire, decks et modificateurs pneus. L'historique est chargé à part (Suspense). */
+export const loadDuelPage = (uid: string) =>
   withUser(uid, async (c) => {
-    const p = parsePage(page);
     const cards = await qCards(c, uid);
     const decks = await qDecks(c, uid);
+    const modifiers = await qModifiers(c);
+    return { cards, decks, modifiers };
+  });
+
+/** Historique paginé et pseudos des adversaires (bloc streamé de la page /duel). */
+export const loadDuelHistory = (uid: string, page = 1) =>
+  withUser(uid, async (c) => {
+    const p = parsePage(page);
     const history = (await c.query<DuelRow>(
       "select * from duels_history order by created_at desc limit $1 offset $2",
       [DUEL_PAGE_SIZE, (p - 1) * DUEL_PAGE_SIZE],
     )).rows;
-    const modifiers = await qModifiers(c);
     const ids = [...new Set(history.map((x) => (x.attacker_id === uid ? x.defender_id : x.attacker_id)))];
-    return { cards, decks, modifiers, history, names: await qNames(c, ids), page: p };
+    return { history, names: await qNames(c, ids), page: p };
   });
 
 /** Contre-La-Montre solo : défi du jour, record personnel et récompenses déjà validées. */

@@ -34,11 +34,11 @@ export function ProposeDuel() {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-400">Défi direct</p>
               <h3 id="propose-title" className="mt-1 font-display text-2xl font-bold uppercase">Proposer un duel</h3>
             </div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg border border-zinc-700 p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white">
+            <button type="button" onClick={() => setOpen(false)} aria-label="Fermer" className="rounded-lg border border-line-strong p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white">
               <X size={18} aria-hidden />
             </button>
           </div>
-          <p className="mt-3 rounded-lg border border-zinc-800 bg-black/20 p-3 text-sm leading-relaxed text-zinc-300">
+          <p className="mt-3 rounded-lg border border-line bg-black/20 p-3 text-sm leading-relaxed text-zinc-300">
             Votre adversaire jouera avec la configuration qu&apos;il aura équipée au moment d&apos;accepter.
           </p>
           <form action={formAction} className="mt-5 space-y-5">
@@ -52,14 +52,14 @@ export function ProposeDuel() {
                 maxLength={24}
                 autoComplete="username"
                 autoFocus
-                className="mt-2 min-h-12 w-full rounded-lg border border-zinc-600 bg-[#0b0d12] px-3 text-base text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25"
+                className="mt-2 min-h-12 w-full rounded-lg border border-zinc-600 bg-panel-deep px-3 text-base text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25"
                 placeholder="Ex. AlexRacer"
                 aria-describedby="duel-username-hint"
               />
               <span id="duel-username-hint" className="mt-1.5 block text-xs font-normal text-zinc-500">Entre 3 et 24 caractères.</span>
             </label>
             {state && !state.ok && <p role="alert" className="rounded-lg border border-red-500/30 bg-red-950/30 p-3 text-sm text-red-300">{state.message}</p>}
-            <div className="grid grid-cols-2 gap-3 border-t border-zinc-800 pt-4">
+            <div className="grid grid-cols-2 gap-3 border-t border-line pt-4">
               <button type="button" onClick={() => setOpen(false)} className="min-h-12 rounded-xl border border-zinc-600 font-display text-base font-bold uppercase text-zinc-200 transition hover:border-zinc-400 hover:bg-zinc-800">
                 Annuler
               </button>
@@ -139,7 +139,7 @@ export function ChallengeList({
         {incoming.length === 0 && <p className="text-sm text-zinc-500">Aucune demande en attente.</p>}
         <ul className="space-y-2">
           {incoming.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-[#10131a] p-3">
+            <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel p-3">
               <div>
                 <p className="font-semibold">Demande de duel par {c.name}</p>
                 <p className="text-xs text-zinc-500">{formatDateTime(c.at)}</p>
@@ -162,7 +162,7 @@ export function ChallengeList({
           <h2 className="font-display text-xl font-bold uppercase">Demandes envoyées</h2>
           <ul className="space-y-2">
             {outgoing.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-[#10131a] p-3 text-sm">
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel p-3 text-sm">
                 <span>En attente de {c.name} · {formatDateTime(c.at)}</span>
                 <form action={cancelDuel}>
                   <input type="hidden" name="challenge_id" value={c.id} />
@@ -180,7 +180,7 @@ export function ChallengeList({
             <div className="space-y-4 py-8 text-center">
               <p className="font-display text-xl uppercase text-amber-300">Duel en cours…</p>
               {slow && (
-                <div className="space-y-2 border-t border-zinc-800 pt-4">
+                <div className="space-y-2 border-t border-line pt-4">
                   <p className="text-xs text-zinc-500">Le serveur tarde à répondre. Votre duel est peut-être déjà enregistré.</p>
                   <button
                     type="button"

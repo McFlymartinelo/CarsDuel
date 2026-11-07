@@ -105,7 +105,7 @@ export function Inventory({
   const sortHrefs = { "": hrefForSort(""), ...Object.fromEntries(sorts.map((o) => [o.key, hrefForSort(o.key)])) } as Record<string, string>;
 
   const rarityNav = (
-    <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer l'inventaire par niveau">
+    <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1" aria-label="Filtrer l'inventaire par niveau">
       <Link href={hrefForRarity("")} scroll={false} aria-current={!activeRarity ? "true" : undefined} className={seg(!activeRarity)}>
         Tous
       </Link>
@@ -146,7 +146,7 @@ export function Inventory({
       />
       <div className="hidden md:block">
         <FilterRow label="Type">
-          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Catégories de l'inventaire">
+          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1" aria-label="Catégories de l'inventaire">
             {TABS.map((x) => {
               const on = x.key === current.key;
               const n = cards.filter((c) => c.card_templates.category === x.category).length;
@@ -205,7 +205,7 @@ export function Inventory({
       )}
 
       {entries.length === 0 && (
-        <p className="rounded-xl border border-zinc-800 bg-[#0e1117] p-3 text-sm text-zinc-500">
+        <p className="rounded-xl border border-line bg-panel-mid p-3 text-sm text-zinc-500">
           {activeRarity ? (
             <>
               Aucune carte de niveau <span className="font-semibold text-zinc-300">{RARITY_LABEL[activeRarity]}</span> dans

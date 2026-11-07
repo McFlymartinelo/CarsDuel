@@ -44,9 +44,9 @@ export function SlotCard({
     const e = EMPTY[slot];
     const available = alternatives.length;
     return (
-      <div className="flex flex-col rounded-2xl border-2 border-dashed border-amber-500/40 bg-[#10131a] p-3">
+      <div className="flex flex-col rounded-2xl border-2 border-dashed border-amber-500/40 bg-panel p-3">
         <span className="font-display text-sm uppercase tracking-wide text-zinc-300">{SLOT_LABEL[slot]}</span>
-        <div className="my-3 flex min-h-72 flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-zinc-800 px-4 text-center">
+        <div className="my-3 flex min-h-72 flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-line px-4 text-center">
           <e.icon aria-hidden strokeWidth={1} className="h-24 w-24 text-zinc-700" />
           <p className="font-display text-xl font-bold uppercase leading-tight text-zinc-200">{e.title}</p>
           {available > 0 ? (

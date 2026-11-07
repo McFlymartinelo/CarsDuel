@@ -212,7 +212,7 @@ export default async function MarketplacePage({
       <section className="space-y-3">
         <h2 className="font-display text-xl font-bold uppercase tracking-wide">Mes annonces</h2>
         {mine.length === 0 && (
-          <p className="rounded-xl border border-zinc-800 bg-[#10131a] px-4 py-6 text-center text-sm text-zinc-500">
+          <p className="rounded-xl border border-line bg-panel px-4 py-6 text-center text-sm text-zinc-500">
             Aucune de vos annonces dans cette sélection.
           </p>
         )}
@@ -222,7 +222,7 @@ export default async function MarketplacePage({
       <section className="space-y-3">
         <h2 className="font-display text-xl font-bold uppercase tracking-wide">Annonces</h2>
         {others.length === 0 && (
-          <p className="rounded-xl border border-zinc-800 bg-[#10131a] px-4 py-6 text-center text-sm text-zinc-500">
+          <p className="rounded-xl border border-line bg-panel px-4 py-6 text-center text-sm text-zinc-500">
             {query.q ? `Aucune annonce ne correspond à « ${query.q} ».` : "Aucune annonce pour le moment."}
           </p>
         )}
@@ -235,12 +235,12 @@ export default async function MarketplacePage({
       </div>
 
       {history.length > 0 && (
-        <details className="group rounded-xl border border-zinc-800 bg-[#0e1117]">
+        <details className="group rounded-xl border border-line bg-panel-mid">
           <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-display text-lg font-bold uppercase [&::-webkit-details-marker]:hidden">
             Mes transactions
             <span className="text-sm font-normal normal-case text-zinc-500 group-open:hidden">{history.length} dernières</span>
           </summary>
-          <ul className="divide-y divide-zinc-800 border-t border-zinc-800 px-4 text-sm">
+          <ul className="divide-y divide-line border-t border-line px-4 text-sm">
             {history.map((h) => (
               <li key={h.id} className="flex items-center justify-between gap-3 py-2.5">
                 <span className="min-w-0">

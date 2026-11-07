@@ -59,7 +59,7 @@ export function AccountForms({
   return (
     <>
     <div className="grid max-w-xl gap-4">
-      <form action={nameAction} className="space-y-3 rounded-xl border border-zinc-800 bg-[#10131a] p-4">
+      <form action={nameAction} className="space-y-3 rounded-xl border border-line bg-panel p-4">
         <h2 className="font-display text-xl font-bold uppercase">Pseudo</h2>
         <label className={field}>
           <span className={label}>Pseudo</span>
@@ -69,7 +69,7 @@ export function AccountForms({
         <Status state={nameState} />
       </form>
 
-      <form action={mailAction} className="space-y-3 rounded-xl border border-zinc-800 bg-[#10131a] p-4">
+      <form action={mailAction} className="space-y-3 rounded-xl border border-line bg-panel p-4">
         <h2 className="font-display text-xl font-bold uppercase">E-mail</h2>
         <label className={field}>
           <span className={label}>E-mail</span>
@@ -83,7 +83,7 @@ export function AccountForms({
         <Status state={mailState} />
       </form>
 
-      <form action={pwAction} className="space-y-3 rounded-xl border border-zinc-800 bg-[#10131a] p-4">
+      <form action={pwAction} className="space-y-3 rounded-xl border border-line bg-panel p-4">
         <h2 className="font-display text-xl font-bold uppercase">Mot de passe</h2>
         <label className={field}>
           <span className={label}>Mot de passe actuel</span>
@@ -123,7 +123,7 @@ export function AccountForms({
         aria-modal
         aria-labelledby="delete-title"
       >
-        <form action={deleteAction} className="my-auto w-full max-w-md space-y-4 rounded-2xl border border-red-500/40 bg-[#10131a] p-5 shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:p-6">
+        <form action={deleteAction} className="my-auto w-full max-w-md space-y-4 rounded-2xl border border-red-500/40 bg-panel p-5 shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:p-6">
           <div className="space-y-1">
             <h3 id="delete-title" className="font-display text-2xl font-bold uppercase text-red-300">Supprimer le compte</h3>
             <p className="text-sm text-zinc-400">

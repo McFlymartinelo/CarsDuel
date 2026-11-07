@@ -166,7 +166,7 @@ export function DynoForm({
                 <p className="font-display text-2xl font-bold uppercase text-amber-400">Passage au banc…</p>
                 <p className="text-sm text-zinc-400">L&apos;aiguille monte en régime sur le banc du jour.</p>
                 {slow && (
-                  <div className="space-y-2 border-t border-zinc-800 pt-4">
+                  <div className="space-y-2 border-t border-line pt-4">
                     <p className="text-xs text-zinc-500">Le serveur tarde à répondre. Votre passage est peut-être déjà enregistré.</p>
                     <button
                       type="button"
@@ -201,13 +201,13 @@ export function DynoForm({
                   type="button"
                   onClick={close}
                   aria-label="Fermer"
-                  className="rounded-lg border border-zinc-700 p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white"
+                  className="rounded-lg border border-line-strong p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white"
                 >
                   <X size={18} aria-hidden />
                 </button>
               </div>
 
-              <div className="rounded-xl border border-amber-500/40 bg-[#10131a] p-4">
+              <div className="rounded-xl border border-amber-500/40 bg-panel p-4">
                 <div className="grid gap-3 sm:grid-cols-[1.35fr_1fr]">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-zinc-400">Défi du banc du jour</p>
@@ -290,7 +290,7 @@ export function DynoForm({
                     return (
                       <div
                         key={m.key}
-                        className={`relative overflow-hidden rounded-xl border p-3 ${claimed ? "border-emerald-500/40" : m.border} bg-[#10131a]`}
+                        className={`relative overflow-hidden rounded-xl border p-3 ${claimed ? "border-emerald-500/40" : m.border} bg-panel`}
                       >
                         <div aria-hidden className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full blur-2xl ${m.glow}`} />
                         <div className="relative flex items-center gap-2">

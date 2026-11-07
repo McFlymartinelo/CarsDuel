@@ -5,7 +5,7 @@ export const metadata = { title: "Règles du jeu — CarsDuel" };
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-4 space-y-3 rounded-xl border border-zinc-800 bg-[#10131a] p-4 sm:p-5">
+    <section id={id} className="scroll-mt-4 space-y-3 rounded-xl border border-line bg-panel p-4 sm:p-5">
       <h2 className="font-display text-xl font-bold uppercase tracking-wide text-amber-400">{title}</h2>
       {children}
     </section>
@@ -19,7 +19,7 @@ const H3 = ({ children }: { children: ReactNode }) => (
 const P = ({ children }: { children: ReactNode }) => <p className="text-sm leading-relaxed text-zinc-300">{children}</p>;
 
 const Formula = ({ children }: { children: ReactNode }) => (
-  <p className="overflow-x-auto rounded-lg border border-zinc-800 bg-[#0a0c10] px-3 py-2 font-mono text-sm text-amber-200">{children}</p>
+  <p className="overflow-x-auto rounded-lg border border-line bg-ink px-3 py-2 font-mono text-sm text-amber-200">{children}</p>
 );
 
 const List = ({ items }: { items: ReactNode[] }) => (
@@ -32,7 +32,7 @@ const List = ({ items }: { items: ReactNode[] }) => (
 
 function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-800">
+    <div className="overflow-x-auto rounded-lg border border-line">
       <table className="w-full min-w-[32rem] text-left text-sm">
         <thead className="bg-zinc-900/80 font-display text-xs uppercase tracking-wider text-zinc-400">
           <tr>
@@ -43,7 +43,7 @@ function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-800 text-zinc-300">
+        <tbody className="divide-y divide-line text-zinc-300">
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
@@ -86,7 +86,7 @@ export default function RulesPage() {
 
       <nav aria-label="Sommaire" className="flex flex-wrap gap-2">
         {SUMMARY.map(([id, label]) => (
-          <a key={id} href={`#${id}`} className="rounded-lg border border-zinc-800 bg-[#10131a] px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white">
+          <a key={id} href={`#${id}`} className="rounded-lg border border-line bg-panel px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white">
             {label}
           </a>
         ))}

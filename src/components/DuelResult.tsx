@@ -6,7 +6,7 @@ const f = (n: number, d = 1) => n.toLocaleString("fr-FR", { minimumFractionDigit
 
 function Row({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-1.5 border-t border-zinc-800 py-1.5 text-[13px] leading-tight sm:text-sm">
+    <div className="flex items-center justify-between gap-1.5 border-t border-line py-1.5 text-[13px] leading-tight sm:text-sm">
       <span className="min-w-0 text-zinc-300">{label}</span>
       <span className="whitespace-nowrap font-semibold tabular-nums">{children}</span>
     </div>
@@ -41,7 +41,7 @@ export function DuelResult({ r, busy = false, onReplay, onReplaceBrokenPart, onC
       <TrackCard weather={r.weather} lines={r.weatherLines} />
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border-2 border-amber-500 bg-[#10131a] p-3">
+        <div className="rounded-xl border-2 border-amber-500 bg-panel p-3">
           <p className="font-display text-sm font-bold uppercase text-amber-400">Vous</p>
           {r.attackerSp !== null ? (
             <p className="font-display text-4xl font-bold leading-tight text-amber-400 sm:text-5xl">{f(r.attackerSp)}</p>
@@ -55,7 +55,7 @@ export function DuelResult({ r, busy = false, onReplay, onReplaceBrokenPart, onC
           {r.bonus && <Row label="Bonus"><span className="text-amber-300">{BONUS_LABEL[r.bonus] ?? r.bonus}</span></Row>}
         </div>
 
-        <div className="rounded-xl border border-zinc-700 bg-[#10131a] p-3">
+        <div className="rounded-xl border border-line-strong bg-panel p-3">
           <p className="font-display text-sm font-bold uppercase text-zinc-400">Adversaire</p>
           <p className="truncate text-sm text-zinc-300">{r.defenderName}</p>
           {r.defenderSp !== null ? (

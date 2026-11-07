@@ -53,7 +53,7 @@ function TradeCondition({ template, card }: { template: CardTemplate; card: Trad
     const state = tireState(gum);
     const tone = TIRE_TONE[state.tone];
     return (
-      <div className="mt-auto border-t border-zinc-800/70 pt-1.5">
+      <div className="mt-auto border-t border-line/70 pt-1.5">
         <div className="flex items-center justify-between gap-1 text-[9px] font-semibold uppercase tracking-wide @min-[7rem]:text-[10px]">
           <span className="inline-flex items-center gap-0.5 whitespace-nowrap text-zinc-400 @min-[7rem]:gap-1">
             <Disc size={10} aria-hidden /> <span className="hidden @min-[7rem]:inline">Gomme</span>
@@ -88,7 +88,7 @@ function TradeCondition({ template, card }: { template: CardTemplate; card: Trad
   const warrantyPct = warranty && warranty.limit > 0 ? Math.max(0, Math.min(100, (warranty.remaining / warranty.limit) * 100)) : 0;
 
   return (
-    <div className="mt-auto space-y-1 border-t border-zinc-800/70 pt-1.5">
+    <div className="mt-auto space-y-1 border-t border-line/70 pt-1.5">
       <div className="flex items-center justify-between gap-1 text-[9px] font-semibold uppercase tracking-wide text-zinc-500 @min-[7rem]:text-[10px]">
         <span
           className="inline-flex items-center gap-0.5 whitespace-nowrap @min-[7rem]:gap-1"
@@ -208,12 +208,12 @@ export function TradeCardTile({
           type="button"
           onClick={onClick}
           aria-label={label ?? `Modifier l'emplacement : ${t.name}`}
-          className="flex h-full w-full flex-col rounded-lg border border-zinc-700/80 bg-[#0d1016] p-1.5 text-left transition-colors hover:border-amber-500/70 hover:bg-[#141820] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+          className="flex h-full w-full flex-col rounded-lg border border-line-strong/80 bg-[#0d1016] p-1.5 text-left transition-colors hover:border-amber-500/70 hover:bg-[#141820] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
         >
           {content}
         </button>
       ) : (
-        <div className="flex h-full w-full flex-col rounded-lg border border-zinc-700/80 bg-[#0d1016] p-1.5">{content}</div>
+        <div className="flex h-full w-full flex-col rounded-lg border border-line-strong/80 bg-[#0d1016] p-1.5">{content}</div>
       )}
       {onRemove && (
         <button
@@ -238,7 +238,7 @@ export function TradeEmptySlot({ onClick, label }: { onClick: () => void; label:
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-[8.75rem] w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-700 bg-[#0b0e13] px-1 text-center text-zinc-500 transition-colors hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+      className="flex min-h-[8.75rem] w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line-strong bg-[#0b0e13] px-1 text-center text-zinc-500 transition-colors hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
     >
       <Plus size={20} strokeWidth={1.7} />
       <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>

@@ -25,7 +25,7 @@ function VisitCollectionDialog({ onClose, tirePerfs }: { onClose: () => void; ti
           type="button"
           onClick={onClose}
           aria-label="Fermer"
-          className="rounded-lg border border-zinc-700 p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white"
+          className="rounded-lg border border-line-strong p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white"
         >
           <X size={18} aria-hidden />
         </button>
@@ -44,7 +44,7 @@ function VisitCollectionDialog({ onClose, tirePerfs }: { onClose: () => void; ti
               ))}
             </div>
           ) : (
-            <p className="rounded-xl border border-zinc-800 bg-[#10131a] p-6 text-center text-sm text-zinc-400">
+            <p className="rounded-xl border border-line bg-panel p-6 text-center text-sm text-zinc-400">
               Ce pilote n&apos;a encore aucune carte.
             </p>
           )}
@@ -58,7 +58,7 @@ function VisitCollectionDialog({ onClose, tirePerfs }: { onClose: () => void; ti
         </div>
       ) : (
         <>
-          <p className="mt-3 rounded-lg border border-zinc-800 bg-black/20 p-3 text-sm leading-relaxed text-zinc-300">
+          <p className="mt-3 rounded-lg border border-line bg-black/20 p-3 text-sm leading-relaxed text-zinc-300">
             Saisissez le pseudo du collectionneur dont vous voulez parcourir la collection.
           </p>
           <form action={formAction} className="mt-5 space-y-5">
@@ -72,12 +72,12 @@ function VisitCollectionDialog({ onClose, tirePerfs }: { onClose: () => void; ti
                 maxLength={24}
                 autoComplete="username"
                 autoFocus
-                className="mt-2 min-h-12 w-full rounded-lg border border-zinc-600 bg-[#0b0d12] px-3 text-base text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25"
+                className="mt-2 min-h-12 w-full rounded-lg border border-zinc-600 bg-panel-deep px-3 text-base text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/25"
                 placeholder="Ex. AlexRacer"
               />
             </label>
             {error && <p role="alert" className="rounded-lg border border-red-500/30 bg-red-950/30 p-3 text-sm text-red-300">{error}</p>}
-            <div className="grid grid-cols-2 gap-3 border-t border-zinc-800 pt-4">
+            <div className="grid grid-cols-2 gap-3 border-t border-line pt-4">
               <button
                 type="button"
                 onClick={onClose}

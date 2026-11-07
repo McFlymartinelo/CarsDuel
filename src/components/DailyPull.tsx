@@ -94,7 +94,7 @@ function PullCard({
             </div>
             <div className="grid grid-cols-2 gap-3">
               {(["moteur", "boite"] as const).map((item) => (
-                <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)} className={`flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border p-3 font-display text-lg font-bold uppercase transition ${category === item ? "border-amber-400 bg-amber-500/10 text-amber-200 shadow-[0_0_24px_rgba(245,158,11,0.13)]" : "border-zinc-700 bg-black/20 text-zinc-300 hover:border-zinc-500 hover:bg-white/5"}`}>
+                <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)} className={`flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border p-3 font-display text-lg font-bold uppercase transition ${category === item ? "border-amber-400 bg-amber-500/10 text-amber-200 shadow-[0_0_24px_rgba(245,158,11,0.13)]" : "border-line-strong bg-black/20 text-zinc-300 hover:border-zinc-500 hover:bg-white/5"}`}>
                   {item === "boite" ? <Settings2 size={28} strokeWidth={1.6} /> : <Cog size={28} strokeWidth={1.6} />}
                   {item === "boite" ? "Boîte" : "Moteur"}
                 </button>

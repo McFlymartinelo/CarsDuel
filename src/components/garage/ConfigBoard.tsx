@@ -15,6 +15,7 @@ export function ConfigBoard({
   alternatives,
   deckId,
   modifiers,
+  bare = false,
 }: {
   slot: SlotKey;
   hrefFor: (slot: SlotKey) => string;
@@ -24,11 +25,13 @@ export function ConfigBoard({
   alternatives: (cat: string, current?: string) => UserCard[];
   deckId?: string;
   modifiers: TireModifier[];
+  /** True quand l'en-tête est déjà fourni par le conteneur (ex. page Jouer). */
+  bare?: boolean;
 }) {
   const slotWrap = (key: SlotKey) => (key === slot ? "" : "hidden md:block");
   return (
     <section className="space-y-3">
-      <PageHeader title="Ma config" description="Choisissez le moteur, la boîte et les pneus de la course." />
+      {!bare && <PageHeader title="Ma config" description="Choisissez le moteur, la boîte et les pneus de la course." />}
       <SlotTabs current={slot} cards={{ moteur: engine, boite: gearbox, pneus: tire }} hrefFor={hrefFor} />
       <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 xl:grid-cols-[1fr_1fr_1fr_1.1fr]">
         <div className={slotWrap("moteur")}>

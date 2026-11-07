@@ -99,7 +99,7 @@ export function Modal({
         ref={panelRef}
         tabIndex={-1}
         onKeyDown={trapTab}
-        className={`max-h-[min(88dvh,52rem)] w-full overflow-y-auto overscroll-contain rounded-2xl border border-zinc-700 bg-[#12151c] p-5 shadow-2xl ${size === "xl" ? "max-w-6xl" : size === "lg" || wide ? "max-w-3xl" : "max-w-md"}`}
+        className={`max-h-[min(88dvh,52rem)] w-full overflow-y-auto overscroll-contain rounded-2xl border border-line-strong bg-panel-raised p-5 shadow-2xl ${size === "xl" ? "max-w-6xl" : size === "lg" || wide ? "max-w-3xl" : "max-w-md"}`}
       >
         {children}
       </div>

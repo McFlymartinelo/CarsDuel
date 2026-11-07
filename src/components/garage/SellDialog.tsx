@@ -11,7 +11,7 @@ const openBtn =
 const cancelBtn =
   "flex min-h-11 w-full items-center justify-center rounded-lg border border-zinc-600 px-3 py-1.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800";
 const stepBtn =
-  "flex size-11 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-[#12151b] text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-300 disabled:opacity-40 disabled:hover:border-zinc-700 disabled:hover:text-zinc-200";
+  "flex size-11 shrink-0 items-center justify-center rounded-lg border border-line-strong bg-[#12151b] text-zinc-200 transition hover:border-amber-500/60 hover:text-amber-300 disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-zinc-200";
 const field = "ring-amber-500/40 focus:outline-none focus:ring-2";
 const TAX_RATE = 0.1;
 const PRICE_PRESETS = [10, 15, 25, 50, 100];
@@ -124,7 +124,7 @@ export function SellDialog({
                     className={`min-h-10 min-w-14 rounded-lg border px-3 text-sm font-semibold tabular-nums transition ${
                       price === String(p)
                         ? "border-amber-500 bg-amber-500/15 text-amber-300"
-                        : "border-zinc-700 bg-[#12151b] text-zinc-300 hover:border-zinc-500"
+                        : "border-line-strong bg-[#12151b] text-zinc-300 hover:border-zinc-500"
                     }`}
                   >
                     {p}
@@ -149,7 +149,7 @@ export function SellDialog({
 
             <label
               className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                offers ? "border-amber-500/60 bg-amber-500/10" : "border-zinc-700 hover:bg-zinc-800/50"
+                offers ? "border-amber-500/60 bg-amber-500/10" : "border-line-strong hover:bg-zinc-800/50"
               }`}
             >
               <input

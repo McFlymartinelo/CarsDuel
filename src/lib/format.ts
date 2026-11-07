@@ -1,4 +1,5 @@
 import { currentBreakRisk } from "./game";
+import { RARITY_KEYS, RARITY_PALETTE } from "./rarity-theme";
 import type { Category, CardTemplate, Rarity, UserCard, Weather } from "./types";
 
 export const RARITY_LABEL: Record<Rarity, string> = {
@@ -9,22 +10,22 @@ export const RARITY_LABEL: Record<Rarity, string> = {
   legendaire: "Légendaire",
 };
 
-export const RARITY_STYLE: Record<Rarity, string> = {
-  commune: "border-zinc-500 text-zinc-300",
-  rare: "border-blue-500 text-blue-300",
-  tres_rare: "border-cyan-500 text-cyan-300",
-  epique: "border-purple-500 text-purple-300",
-  legendaire: "border-amber-400 text-amber-300",
-};
+export const RARITY_STYLE = Object.fromEntries(
+  RARITY_KEYS.map((key) => [key, RARITY_PALETTE[key].plain]),
+) as Record<Rarity, string>;
 
 /** Habillage des cartes de slot (garage) : cadre, lueur, pastille de rareté, couleur des valeurs. */
-export const RARITY_THEME: Record<Rarity, { frame: string; glow: string; badge: string; label: string }> = {
-  commune: { frame: "border-zinc-500", glow: "from-zinc-500/15", badge: "bg-zinc-600 text-white", label: "text-zinc-300" },
-  rare: { frame: "border-blue-500", glow: "from-blue-500/20", badge: "bg-blue-500 text-white", label: "text-blue-400" },
-  tres_rare: { frame: "border-cyan-500", glow: "from-cyan-500/20", badge: "bg-cyan-600 text-white", label: "text-cyan-400" },
-  epique: { frame: "border-purple-500", glow: "from-purple-500/25", badge: "bg-purple-500 text-white", label: "text-purple-400" },
-  legendaire: { frame: "border-amber-400", glow: "from-amber-400/25", badge: "bg-amber-500 text-black", label: "text-amber-400" },
-};
+export const RARITY_THEME = Object.fromEntries(
+  RARITY_KEYS.map((key) => [
+    key,
+    {
+      frame: RARITY_PALETTE[key].slotFrame,
+      glow: RARITY_PALETTE[key].slotGlow,
+      badge: RARITY_PALETTE[key].badge,
+      label: RARITY_PALETTE[key].label,
+    },
+  ]),
+) as Record<Rarity, { frame: string; glow: string; badge: string; label: string }>;
 
 export const WEATHER_SHORT: Record<Weather, string> = {
   sunny_hot: "Soleil chaud",

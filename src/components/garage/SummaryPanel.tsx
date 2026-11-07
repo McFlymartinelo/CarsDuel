@@ -26,7 +26,7 @@ export function SummaryPanel({
 }) {
   if (!engine || !gearbox) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-[#0e1117] p-4 text-sm text-zinc-500">
+      <div className="rounded-xl border border-line bg-panel-mid p-4 text-sm text-zinc-500">
         Équipez un moteur et une boîte pour voir le résumé de votre config.
       </div>
     );
@@ -38,7 +38,7 @@ export function SummaryPanel({
   const malus = tire ? tireMalus(gum) : 0;
 
   return (
-    <div className="space-y-3 rounded-xl border border-zinc-800 bg-[#0e1117] p-4">
+    <div className="space-y-3 rounded-xl border border-line bg-panel-mid p-4">
       <h2 className="font-display text-lg font-bold uppercase">Résumé de votre config</h2>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -63,7 +63,7 @@ export function SummaryPanel({
               const sp = meca * tireModifier(mod.perf_bonus_pct, gum);
               const bonus = Number(mod.perf_bonus_pct);
               return (
-                <div key={id} className="rounded-xl border border-zinc-800 bg-[#10131a] p-2.5">
+                <div key={id} className="rounded-xl border border-line bg-panel p-2.5">
                   <p className="flex items-center gap-1.5 text-xs text-zinc-300">
                     <Icon size={14} className="shrink-0 text-amber-300" />
                     <span className="leading-tight">{WEATHER_LABEL[id]}</span>

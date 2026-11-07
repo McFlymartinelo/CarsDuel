@@ -19,7 +19,7 @@ type Props = {
   icon: ReactNode;
 };
 
-const CARD_IDLE = "border-zinc-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+const CARD_IDLE = "border-line-strong/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 const CARD_READY = "border-amber-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_0_0_1px_rgba(251,191,36,0.12),0_18px_34px_-24px_rgba(251,191,36,0.5)]";
 const CARD_CLAIMED = "border-emerald-400/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 

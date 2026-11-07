@@ -103,7 +103,7 @@ export function CatalogFilters({
     <div className="hidden space-y-3 md:block">
       <div className={row}>
         <span className={label}>Type</span>
-        <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Type de carte">
+        <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1" aria-label="Type de carte">
           {FILTER_TABS.map((t) => {
             const on = t.key === query.tab.key;
             const Icon = ICONS[t.key];
@@ -121,7 +121,7 @@ export function CatalogFilters({
       {mechanical && (
         <div className={row}>
           <span className={label}>Niveau</span>
-          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-zinc-800 bg-[#10131a] p-1" aria-label="Filtrer par rareté">
+          <nav className="inline-flex max-w-full justify-self-start gap-1 overflow-x-auto rounded-xl border border-line bg-panel p-1" aria-label="Filtrer par rareté">
             <Link href={href({ rarity: null })} scroll={false} aria-current={!query.rarity ? "true" : undefined} className={seg(!query.rarity)}>
               Tous
             </Link>
@@ -148,7 +148,7 @@ export function CatalogFilters({
         {query.q && <input type="hidden" name="q" value={query.q} />}
         {Object.entries(effectiveExtra ?? {}).map(([key, value]) => value ? <input key={key} type="hidden" name={key} value={value} /> : null)}
         <span className={label}>{showRisk && mechanical ? "Limites" : "Prix"}</span>
-        <div className="inline-flex max-w-full flex-wrap items-center justify-self-start gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1">
+        <div className="inline-flex max-w-full flex-wrap items-center justify-self-start gap-1 rounded-xl border border-line bg-panel p-1">
           <label className={field}>
             <Coins size={15} strokeWidth={2} />
             Prix mini

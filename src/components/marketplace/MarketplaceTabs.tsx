@@ -19,7 +19,7 @@ export function MarketplaceTabs({
   incomingCount: number;
 }) {
   return (
-    <nav className="grid grid-cols-2 gap-1 rounded-xl border border-zinc-800 bg-[#10131a] p-1 sm:inline-flex" aria-label="Sections de la marketplace">
+    <nav className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-panel p-1 sm:inline-flex" aria-label="Sections de la marketplace">
       <Link href={marketHref} scroll={false} aria-current={current === "marche" ? "page" : undefined} className={tab(current === "marche")}>
         <Store size={17} strokeWidth={2} />
         Marché de l&apos;occasion

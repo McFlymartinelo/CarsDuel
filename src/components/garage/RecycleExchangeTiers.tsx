@@ -225,9 +225,9 @@ export function RecycleExchangeTiers({
               type="button"
               onClick={() => openTier(config)}
               disabled={disabled}
-              className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-b from-[#141821] to-[#0b0d12] text-left transition ${ui.ring} hover:bg-[#171b24] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-zinc-800`}
+              className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-[#141821] to-[#0b0d12] text-left transition ${ui.ring} hover:bg-[#171b24] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-line`}
             >
-              <span className="relative block w-full overflow-hidden border-b border-zinc-800/70 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05),transparent_70%)] px-2 pt-2">
+              <span className="relative block w-full overflow-hidden border-b border-line/70 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05),transparent_70%)] px-2 pt-2">
                 <Image
                   src={config.image}
                   alt=""
@@ -256,7 +256,7 @@ export function RecycleExchangeTiers({
 
                 <span className="mt-3 block text-xs leading-relaxed text-zinc-400">{config.tagline}</span>
 
-                <span className="mt-3 block rounded-xl border border-zinc-800/80 bg-black/25 p-2.5">
+                <span className="mt-3 block rounded-xl border border-line/80 bg-black/25 p-2.5">
                   <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                     Probabilités de rareté
                   </span>
@@ -291,12 +291,12 @@ export function RecycleExchangeTiers({
               onClick={close}
               disabled={pending}
               aria-label="Fermer"
-              className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-700 bg-[#0d1015] text-zinc-400 transition hover:border-zinc-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line-strong bg-header text-zinc-400 transition hover:border-zinc-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <X size={18} />
             </button>
 
-            <div className="relative -mx-4 -mt-4 mb-4 overflow-hidden rounded-t-3xl border-b border-zinc-800/80 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06),transparent_70%)] px-2 py-2 sm:-mx-6 sm:-mt-6 sm:px-4">
+            <div className="relative -mx-4 -mt-4 mb-4 overflow-hidden rounded-t-3xl border-b border-line/80 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06),transparent_70%)] px-2 py-2 sm:-mx-6 sm:-mt-6 sm:px-4">
               <Image
                 src={tier.image}
                 alt=""
@@ -329,7 +329,7 @@ export function RecycleExchangeTiers({
 
             {step === "category" ? (
               <>
-                <div className="mt-4 rounded-xl border border-zinc-800 bg-black/25 p-3">
+                <div className="mt-4 rounded-xl border border-line bg-black/25 p-3">
                   <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Probabilités de rareté</p>
                   <OddsTable odds={tier.odds} />
                 </div>
@@ -345,10 +345,10 @@ export function RecycleExchangeTiers({
                         aria-pressed={active}
                         onClick={() => setCategory(key)}
                         className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
-                          active ? "border-amber-400 bg-amber-500/10" : "border-zinc-700 bg-[#10131a] hover:border-zinc-500"
+                          active ? "border-amber-400 bg-amber-500/10" : "border-line-strong bg-panel hover:border-zinc-500"
                         }`}
                       >
-                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${active ? "border-amber-400/50 bg-amber-500/10" : "border-zinc-700 bg-black/30"} ${accent}`}>
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${active ? "border-amber-400/50 bg-amber-500/10" : "border-line-strong bg-black/30"} ${accent}`}>
                           <Icon size={21} strokeWidth={1.9} />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -389,7 +389,7 @@ export function RecycleExchangeTiers({
               </>
             ) : (
               <>
-                <div className="mt-4 space-y-2 rounded-xl border border-zinc-700 bg-[#10131a] p-4">
+                <div className="mt-4 space-y-2 rounded-xl border border-line-strong bg-panel p-4">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="text-zinc-400">Palier</span>
                     <span className={`font-display font-semibold ${tierUi.accent}`}>{tier.label}</span>
@@ -401,7 +401,7 @@ export function RecycleExchangeTiers({
                       {selectedCategory?.label}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-3 border-t border-zinc-800 pt-2 text-sm">
+                  <div className="flex items-center justify-between gap-3 border-t border-line pt-2 text-sm">
                     <span className="text-zinc-400">Montant débité</span>
                     <span className="inline-flex items-center gap-1.5 font-display text-lg font-bold text-orange-300">
                       <Boxes size={17} strokeWidth={2.1} />

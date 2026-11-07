@@ -4,16 +4,13 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ArrowUpDown, ChevronDown, SlidersHorizontal, X, type LucideIcon } from "lucide-react";
+import { RARITY_KEYS, RARITY_PALETTE } from "@/lib/rarity-theme";
 import type { Rarity } from "@/lib/types";
 
-/** Teinte de chaque rareté, reprise des cartes, pour retrouver le code couleur du jeu. */
-export const RARITY_TONE: Record<Rarity, { dot: string; on: string }> = {
-  commune: { dot: "bg-zinc-400", on: "border-zinc-400/60 bg-zinc-400/10 text-zinc-100" },
-  rare: { dot: "bg-blue-400", on: "border-blue-400/60 bg-blue-400/10 text-blue-100" },
-  tres_rare: { dot: "bg-cyan-400", on: "border-cyan-400/60 bg-cyan-400/10 text-cyan-100" },
-  epique: { dot: "bg-purple-400", on: "border-purple-400/60 bg-purple-400/10 text-purple-100" },
-  legendaire: { dot: "bg-amber-400", on: "border-amber-400/60 bg-amber-400/10 text-amber-100" },
-};
+/** Teinte de chaque rareté, reprise de la palette unique des cartes. */
+export const RARITY_TONE = Object.fromEntries(
+  RARITY_KEYS.map((key) => [key, { dot: RARITY_PALETTE[key].dot, on: RARITY_PALETTE[key].chip }]),
+) as Record<Rarity, { dot: string; on: string }>;
 
 export const FILTER_RESET_CLASS = "inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 text-[11px] font-semibold text-zinc-300 transition active:bg-white/10";
 export const FILTER_CHIPS_CLASS = "mt-2 flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
@@ -28,7 +25,7 @@ export const FILTER_COUNT_ON = "bg-black/15 text-black/70";
 export const FILTER_COUNT_OFF = "bg-white/[0.05] text-zinc-500";
 
 export const FILTER_RARITY_TILE = "flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm transition active:scale-[0.98]";
-export const FILTER_RARITY_OFF = "border-white/[0.07] bg-[#151922] text-zinc-300";
+export const FILTER_RARITY_OFF = "border-white/[0.07] bg-panel-alt text-zinc-300";
 export const FILTER_RARITY_ON = "border-amber-400/60 bg-amber-400/10 font-semibold text-amber-100";
 
 export function FilterSectionTitle({ children, hint }: { children: ReactNode; hint?: string }) {
@@ -59,7 +56,7 @@ export function FilterTrigger({
   onSortChange: (key: string | null) => void;
 }) {
   return (
-    <div className="flex items-stretch gap-1.5 rounded-2xl border border-white/[0.07] bg-[#0f1218] p-1.5 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.9)]">
+    <div className="flex items-stretch gap-1.5 rounded-2xl border border-white/[0.07] bg-panel-soft p-1.5 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.9)]">
       <button
         type="button"
         onClick={onOpen}

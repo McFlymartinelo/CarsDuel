@@ -84,7 +84,7 @@ export default async function TrophiesPage() {
         description="Vos victoires, vos titres de meilleur pilote et vos médailles de contre-la-montre et de banc d'essai, réunis au même endroit."
       />
 
-      <div className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-[#0e1117] p-5 sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-panel-mid p-5 sm:p-6">
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_0%_0%,rgba(245,158,11,0.14),transparent_60%)]" />
         <div className="relative flex flex-wrap items-end gap-x-10 gap-y-3">
           <div>
@@ -102,7 +102,7 @@ export default async function TrophiesPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {trophies.map(({ value, label, detail, image, kind, accent, text, glow }) => (
-          <article key={label} className={`relative overflow-hidden rounded-xl border ${accent} bg-[#0e1117] p-4`}>
+          <article key={label} className={`relative overflow-hidden rounded-xl border ${accent} bg-panel-mid p-4`}>
             <div aria-hidden className={`pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full blur-2xl ${glow}`} />
             <div className="relative flex items-center gap-4">
               <div className="relative h-20 w-20 shrink-0">

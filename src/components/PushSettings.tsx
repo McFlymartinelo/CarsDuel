@@ -118,13 +118,13 @@ export function PushSettings() {
   const hint = hintFor(status);
 
   return (
-    <div id="notifications" className="rounded-xl border border-zinc-800 bg-[#10131a] p-4">
+    <div id="notifications" className="rounded-xl border border-line bg-panel p-4">
       <div className="flex items-start gap-3">
         <span
           className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${
             subscribed
               ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-              : "border-zinc-700 bg-zinc-900 text-zinc-400"
+              : "border-line-strong bg-zinc-900 text-zinc-400"
           }`}
         >
           {subscribed ? <Bell size={20} strokeWidth={1.9} /> : <BellOff size={20} strokeWidth={1.9} />}
@@ -146,7 +146,7 @@ export function PushSettings() {
           </p>
 
           {hint ? (
-            <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/70 px-2.5 py-2 text-xs leading-snug text-zinc-400">
+            <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-line bg-zinc-900/70 px-2.5 py-2 text-xs leading-snug text-zinc-400">
               <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {hint}
             </p>
@@ -158,7 +158,7 @@ export function PushSettings() {
                 type="button"
                 disabled={busy}
                 onClick={() => void disable()}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-zinc-700 px-4 font-display text-base font-bold uppercase text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line-strong px-4 font-display text-base font-bold uppercase text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
               >
                 {busy ? <Loader2 size={16} className="animate-spin" /> : <BellOff size={16} />}
                 Désactiver
@@ -179,7 +179,7 @@ export function PushSettings() {
               type="button"
               disabled={busy || !subscribed}
               onClick={() => void test()}
-              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-zinc-700 px-4 font-display text-base font-bold uppercase text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-line-strong px-4 font-display text-base font-bold uppercase text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
             >
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               Tester

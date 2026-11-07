@@ -146,8 +146,8 @@ export function ConfigConstructeurForm({
           : phase === "done" && error
             ? "border-red-500/60 bg-red-500/5"
             : scanning
-              ? "border-amber-500/40 bg-[#0b0d12]"
-              : "border-zinc-700 bg-[#0b0d12]";
+              ? "border-amber-500/40 bg-panel-deep"
+              : "border-line-strong bg-panel-deep";
 
   function openModal() {
     setPhase("idle");
@@ -204,14 +204,14 @@ export function ConfigConstructeurForm({
                 onClick={close}
                 disabled={scanning}
                 aria-label="Fermer"
-                className="rounded-lg border border-zinc-700 p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white disabled:opacity-40"
+                className="rounded-lg border border-line-strong p-2 text-zinc-400 transition hover:border-zinc-500 hover:text-white disabled:opacity-40"
               >
                 <X size={18} aria-hidden />
               </button>
             </div>
 
             {challenge.challenge ? (
-              <div className="rounded-xl border border-amber-500/40 bg-[#10131a] p-4">
+              <div className="rounded-xl border border-amber-500/40 bg-panel p-4">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">Énigme du constructeur</p>
                 <p className="mt-1 font-display text-2xl font-bold leading-tight text-amber-300">
                   « {challenge.challenge.riddle} »
@@ -221,7 +221,7 @@ export function ConfigConstructeurForm({
                 </p>
               </div>
             ) : (
-              <p className="rounded-xl border border-zinc-700 p-4 text-sm text-zinc-400">
+              <p className="rounded-xl border border-line-strong p-4 text-sm text-zinc-400">
                 Aucun défi n&apos;est disponible cette semaine.
               </p>
             )}
@@ -241,7 +241,7 @@ export function ConfigConstructeurForm({
                       {shownFound}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-zinc-700 bg-[#10131a] px-4 py-3">
+                  <div className="rounded-xl border border-line-strong bg-panel px-4 py-3">
                     <p className="text-xs uppercase tracking-wide text-zinc-400">Configs possibles</p>
                     <p className="font-display text-3xl font-bold leading-tight tabular-nums text-zinc-100">{total}</p>
                   </div>
@@ -259,7 +259,7 @@ export function ConfigConstructeurForm({
               </div>
             )}
 
-            <div className="rounded-xl border border-zinc-800 p-3 text-xs text-zinc-400">
+            <div className="rounded-xl border border-line p-3 text-xs text-zinc-400">
               <p className="uppercase tracking-wide text-zinc-500">Configuration équipée</p>
               {equipped ? (
                 <p className="mt-1 text-zinc-300">
@@ -290,7 +290,7 @@ export function ConfigConstructeurForm({
                 <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Validées cette semaine</p>
                 <ul className="flex flex-wrap gap-2">
                   {challenge.history.map((h) => (
-                    <li key={`${h.engine}-${h.gearbox}`} className="rounded-md border border-zinc-700 px-2 py-0.5 font-mono text-xs text-zinc-300">
+                    <li key={`${h.engine}-${h.gearbox}`} className="rounded-md border border-line-strong px-2 py-0.5 font-mono text-xs text-zinc-300">
                       {h.engine} &amp; {h.gearbox}
                     </li>
                   ))}
