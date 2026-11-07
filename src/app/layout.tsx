@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Rajdhani } from "next/font/google";
+import { LaunchSplash } from "@/components/LaunchSplash";
 import "./globals.css";
 
 const rajdhani = Rajdhani({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-rajdhani" });
@@ -38,7 +39,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={rajdhani.variable}>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {/* Une seule fois par session : évite de rejouer l'écran à chaque rafraîchissement. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{if(sessionStorage.getItem("carsduel-launch-splash")==="1"){document.documentElement.dataset.launchSplash="skip"}else{sessionStorage.setItem("carsduel-launch-splash","1")}}catch(e){}',
+          }}
+        />
+        <LaunchSplash />
+        {children}
+      </body>
     </html>
   );
 }

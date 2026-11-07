@@ -1075,3 +1075,201 @@ html {
   .crush-pile, .crush-plate { animation: none; opacity: 0; }
   .crush-cube { animation-duration: 0.01s; animation-delay: 0s; }
 }
+
+/* ---------------------------------------------------------------------------
+ * Écran de lancement (téléphone) : la vitre du garage s'allume, le logo prend
+ * forme, les feux de départ défilent puis passent au vert et la barre se
+ * remplit. Purement CSS : il se retire seul après ~1,6 s.
+ * ------------------------------------------------------------------------ */
+
+.launch-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #07090d;
+  background-image:
+    radial-gradient(ellipse 75% 55% at 50% 42%, rgba(225, 128, 50, 0.18), transparent 70%),
+    linear-gradient(180deg, rgba(7, 9, 13, 0.8), rgba(7, 9, 13, 0.96)),
+    url("/backgrounds/pit-garage.webp");
+  background-position: center;
+  background-size: cover;
+  touch-action: none;
+  animation: launch-splash-cycle 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Session déjà démarrée (script inline du layout) : on ne rejoue pas l'écran. */
+html[data-launch-splash="skip"] .launch-splash { display: none; }
+
+/* Ordinateur : inutile de retarder l'affichage. */
+@media (hover: hover) and (pointer: fine) {
+  .launch-splash { display: none; }
+}
+
+@media (min-width: 1024px) {
+  .launch-splash { display: none; }
+}
+
+.launch-splash-glow {
+  position: absolute;
+  width: min(80vw, 22rem);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 138, 31, 0.3), rgba(255, 138, 31, 0.08) 42%, transparent 68%);
+  filter: blur(10px);
+  animation: launch-splash-glow 1.5s ease-in-out both;
+}
+
+.launch-splash-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  animation: launch-splash-content 0.5s cubic-bezier(0.22, 0.9, 0.3, 1) 0.05s both;
+}
+
+.launch-logo {
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 0 26px rgba(255, 138, 31, 0.5));
+  animation: launch-logo 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.launch-wordmark {
+  margin: 0;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 0 22px rgba(255, 138, 31, 0.4);
+}
+
+.launch-lights {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.launch-lights span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9999px;
+  background: #202530;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+  animation:
+    launch-light-red 0.22s ease-out var(--launch-delay, 0ms) both,
+    launch-light-green 0.35s ease-out 0.78s forwards;
+}
+
+.launch-lights span:nth-child(1) { --launch-delay: 0ms; }
+.launch-lights span:nth-child(2) { --launch-delay: 90ms; }
+.launch-lights span:nth-child(3) { --launch-delay: 180ms; }
+.launch-lights span:nth-child(4) { --launch-delay: 270ms; }
+.launch-lights span:nth-child(5) { --launch-delay: 360ms; }
+
+.launch-bar {
+  width: 9rem;
+  height: 3px;
+  margin-top: 0.25rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.launch-bar span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+  transform-origin: left center;
+  animation: launch-bar 0.95s cubic-bezier(0.3, 0.7, 0.3, 1) 0.05s both;
+}
+
+.launch-caption {
+  margin: 0;
+  color: #9aa0ab;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  animation: launch-caption 0.6s ease-out 0.3s both;
+}
+
+@keyframes launch-splash-cycle {
+  0%, 70% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes launch-splash-content {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes launch-logo {
+  0% { opacity: 0; transform: scale(0.82); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes launch-splash-glow {
+  0% { opacity: 0; transform: scale(0.8); }
+  45% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.7; transform: scale(1.1); }
+}
+
+@keyframes launch-light-red {
+  from { background: #202530; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8); }
+  to {
+    border-color: rgba(251, 191, 36, 0.6);
+    background: #f59e0b;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.9), inset 0 0 3px rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes launch-light-green {
+  from {
+    border-color: rgba(251, 191, 36, 0.6);
+    background: #f59e0b;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.9);
+  }
+  to {
+    border-color: rgba(110, 231, 183, 0.7);
+    background: #34d399;
+    box-shadow: 0 0 14px rgba(52, 211, 153, 0.95);
+  }
+}
+
+@keyframes launch-bar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes launch-caption {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-splash { animation: launch-splash-cycle 0.7s linear both; }
+  .launch-splash-glow,
+  .launch-splash-content,
+  .launch-logo,
+  .launch-lights span,
+  .launch-bar span,
+  .launch-caption { animation: none !important; }
+  .launch-lights span {
+    border-color: rgba(110, 231, 183, 0.7);
+    background: #34d399;
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.85);
+  }
+}
