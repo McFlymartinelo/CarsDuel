@@ -133,6 +133,8 @@ export function DynoResult({
   const achievedModel = r.medal ? dynoMedalModel(r.medal) : undefined;
   const tireTone = TIRE_THEME[r.tireType]?.text ?? "text-zinc-200";
   const gaugeMax = Math.max(100, Math.ceil(Math.max(thresholds.gold * 1.12, r.spFinal * 1.08) / 10) * 10);
+  // Le multiplicateur de rang ne touche que les pièces : l'XP reste le montant de base.
+  const rankedCoins = (base: number) => Math.round(base * r.rankMultiplier);
 
   return (
     <div className="space-y-4">
@@ -174,7 +176,7 @@ export function DynoResult({
                   <Image src={m.image} alt="" width={44} height={44} className="h-11 w-11 object-contain drop-shadow-[0_0_12px_rgba(245,158,11,0.45)]" />
                   <div>
                     <p className={`font-display text-lg font-bold uppercase leading-none ${m.text}`}>{m.label}</p>
-                    <p className="text-xs text-amber-200">+{m.coins} pièces</p>
+                    <p className="text-xs text-amber-200">+{n(rankedCoins(m.coins), 0)} pièces</p>
                   </div>
                 </div>
               ))}
@@ -214,7 +216,7 @@ export function DynoResult({
                   <span className={`font-display text-xs font-bold uppercase ${m.text}`}>{m.label}</span>
                 </div>
                 <p className="mt-1 font-display text-sm font-bold tabular-nums">{n(thresholds[m.key], 0)} SP</p>
-                <p className="text-[11px] font-semibold text-amber-300">+{m.coins} 🪙</p>
+                <p className="text-[11px] font-semibold text-amber-300">+{n(rankedCoins(m.coins), 0)} 🪙</p>
                 <p className="text-[11px] font-semibold text-sky-300">+{m.coins} XP</p>
               </div>
             );
@@ -233,6 +235,11 @@ export function DynoResult({
           {r.participationCoins > 0 && <>Prime de participation : +{n(r.participationCoins, 0)}</>}
           {r.coins === 0 && "Aucune récompense supplémentaire aujourd'hui."}
         </p>
+        {r.coins > 0 && r.rankMultiplier > 1 && (
+          <p className="mt-1 text-[11px] font-semibold text-amber-400/80">
+            Multiplicateur de rang ×{n(r.rankMultiplier, 2)} appliqué aux pièces
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -262,7 +269,7 @@ export function DynoResult({
         </p>
       </div>
 
-      <p className="text-center font-display text-lg font-bold text-sky-300">Total XP récupérés : +{n(r.coins, 0)} XP</p>
+      <p className="text-center font-display text-lg font-bold text-sky-300">Total XP récupérés : +{n(r.xpGained, 0)} XP</p>
 
       <div className={onReplay ? "grid grid-cols-2 gap-3" : ""}>
         {onReplay && (

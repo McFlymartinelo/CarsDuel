@@ -108,7 +108,7 @@ export function DuelForm({
           type="button"
           disabled={!deckId}
           onClick={openModal}
-          className="group relative flex min-h-56 w-full flex-col justify-end overflow-hidden rounded-2xl border border-amber-500/30 bg-panel p-4 text-left transition hover:border-amber-400/60 disabled:cursor-not-allowed disabled:opacity-70"
+          className="group relative flex min-h-56 w-full flex-col justify-center overflow-hidden rounded-2xl border border-amber-500/30 bg-panel p-4 text-left transition hover:border-amber-400/60 disabled:cursor-not-allowed disabled:opacity-70"
         >
           <Image
             src="/duel/hasard.webp"
@@ -121,7 +121,7 @@ export function DuelForm({
           <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-panel via-panel/75 to-transparent" />
           <span className="relative z-10 flex flex-col items-start gap-2">
             <span className="font-display text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
-              Mode principal
+              Mode rapide
             </span>
             <span className="font-display text-2xl font-bold uppercase leading-none text-white">Duel au hasard</span>
             <span className="max-w-sm text-xs leading-relaxed text-zinc-400">
@@ -129,16 +129,10 @@ export function DuelForm({
             </span>
             <span className="flex flex-wrap gap-1.5">
               <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] text-zinc-300">
-                Bonus : <b className="text-white">{effect ?? "aucun"}</b>
-              </span>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] text-zinc-300">
-                Gains : 25–60 pièces
+                Gains : 2–10 pièces
               </span>
             </span>
-            <span className={buttonClass({ size: "md", className: "mt-1" })}>
-              <Swords size={16} aria-hidden />
-              {deckId ? "Lancer le duel" : "Complétez votre config"}
-            </span>
+            
           </span>
         </button>
       ) : (

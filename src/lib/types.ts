@@ -259,6 +259,10 @@ export interface ClmReport {
   medalsCoins: number;
   participationCoins: number;
   coins: number;
+  /** XP réellement créditée, calée sur les montants de base (jamais multipliés). */
+  xpGained: number;
+  /** Coefficient de rang appliqué aux pièces au moment du gain (×1 à ×3). */
+  rankMultiplier: number;
   claimed: ClmMedal[];
   participationClaimed: boolean;
   tireGumBefore: number;
@@ -332,6 +336,10 @@ export interface DynoReport {
   medalsCoins: number;
   participationCoins: number;
   coins: number;
+  /** XP réellement créditée, calée sur les montants de base (jamais multipliés). */
+  xpGained: number;
+  /** Coefficient de rang appliqué aux pièces au moment du gain (×1 à ×3). */
+  rankMultiplier: number;
   claimed: DynoMedal[];
   participationClaimed: boolean;
   tireType: string;

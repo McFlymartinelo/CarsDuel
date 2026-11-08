@@ -280,7 +280,10 @@ export default function RulesPage() {
 
       <Section id="economie" title="6. Récompenses, tirages et recyclage">
         <H3>Barème de gains par duel</H3>
-        <P>Les gains en pièces équivalent point par point aux points d&apos;expérience (XP) accordés.</P>
+        <P>
+          Les gains en pièces et les points d&apos;expérience (XP) accordés suivent le même barème de base, mais seul le montant en
+          pièces est ensuite multiplié par le coefficient de rang (voir section 7). L&apos;XP n&apos;est jamais multipliée.
+        </P>
         <Table
           head={["Statut", "Issue", "Pièces", "XP", "Modalités"]}
           rows={[
@@ -353,10 +356,11 @@ export default function RulesPage() {
           ]}
         />
         <P>
-          Le {b("multiplicateur de pièces")} du rang atteint sur l&apos;XP du mois s&apos;applique uniquement aux {b("récompenses en pièces")}
-          obtenues après l&apos;obtention du rang : primes de classement hebdomadaires et mensuelles, montant arrondi à la pièce.
+          Le {b("multiplicateur de pièces")} du rang atteint sur l&apos;XP du mois s&apos;applique aux {b("récompenses en pièces")}
+          obtenues après l&apos;obtention du rang : duels (attaque comme défense), Contre-La-Montre, Banc d&apos;essai, Configs
+          Constructeur, ainsi que les primes de classement hebdomadaires et mensuelles. Le montant est arrondi à la pièce.
           Il ne multiplie jamais l&apos;XP et n&apos;a aucun effet rétroactif sur les gains déjà versés. Il est figé sur l&apos;XP du mois
-          où la période se termine, au moment du versement.
+          au moment du versement.
         </P>
         <H3>Classements calendaires (fuseau Europe/Paris)</H3>
         <List

@@ -51,7 +51,7 @@ export function DailyQuests({
   layout = "tile",
 }: {
   state: DailyQuestState | null;
-  layout?: "tile" | "row" | "hero";
+  layout?: "tile" | "row" | "hero" | "detail";
 }) {
   const [open, setOpen] = useState(false);
   const ids = state ? ["pointage", state.second, state.third] : [];
@@ -134,6 +134,37 @@ export function DailyQuests({
             <ChevronRight size={16} className="mt-1 shrink-0 text-zinc-600" />
           </span>
         </button>
+      ) : layout === "detail" ? (
+        <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-zinc-400">
+              Trois défis, renouvelés à minuit (heure de Paris). Chacun rapporte 5 pièces.
+            </p>
+            <span
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+                claimable > 0
+                  ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
+                  : "border-line text-zinc-400"
+              }`}
+            >
+              {claimable > 0 ? `${claimable} à récupérer` : `${done}/3 terminés`}
+            </span>
+          </div>
+          <span className="block h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+            <span
+              className={`block h-full rounded-full ${claimable > 0 ? "bg-emerald-400" : "bg-amber-500"}`}
+              style={{ width: `${(done / 3) * 100}%` }}
+            />
+          </span>
+          {!state && <p className="text-sm text-zinc-500">Les défis ne sont pas disponibles pour le moment.</p>}
+          {state && (
+            <ul className="space-y-2">
+              {ids.map((id) => (
+                <QuestLine key={id} id={id} progress={state.progress} claimed={state.claimed} />
+              ))}
+            </ul>
+          )}
+        </div>
       ) : (
         <button type="button" onClick={() => setOpen(true)} className={tileClass()}>
           <TileBody title="Défis quotidiens" text="3 défis par jour · 5 pièces chacun" image="/duel/defis.webp" />

@@ -227,6 +227,8 @@ interface ClmOutcome {
   medals_coins: number;
   participation_coins: number;
   coins: number;
+  xp_gained: number;
+  rank_multiplier: number;
   claimed: ClmMedal[];
   participation_claimed: boolean;
   tire_gum_before: number;
@@ -264,6 +266,8 @@ function buildClmReport(o: ClmOutcome): ClmReport {
     medalsCoins: o.medals_coins,
     participationCoins: o.participation_coins,
     coins: o.coins,
+    xpGained: o.xp_gained,
+    rankMultiplier: o.rank_multiplier,
     claimed: o.claimed ?? [],
     participationClaimed: o.participation_claimed,
     tireGumBefore: o.tire_gum_before,
@@ -353,6 +357,8 @@ interface DynoOutcome {
   medals_coins: number;
   participation_coins: number;
   coins: number;
+  xp_gained: number;
+  rank_multiplier: number;
   claimed: DynoMedal[];
   participation_claimed: boolean;
   tire_type: string;
@@ -386,6 +392,8 @@ function buildDynoReport(o: DynoOutcome): DynoReport {
     medalsCoins: o.medals_coins,
     participationCoins: o.participation_coins,
     coins: o.coins,
+    xpGained: o.xp_gained,
+    rankMultiplier: o.rank_multiplier,
     claimed: o.claimed ?? [],
     participationClaimed: o.participation_claimed,
     tireType: o.tire_type,

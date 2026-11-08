@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { withUser } from "@/lib/db";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { DailyQuests } from "@/components/DailyQuests";
@@ -8,6 +9,7 @@ import { DuelForm } from "@/components/DuelForm";
 import { ClmForm } from "@/components/ClmForm";
 import { DynoForm } from "@/components/DynoForm";
 import { ConfigConstructeurForm } from "@/components/ConfigConstructeurForm";
+import { ReconditioningWorkshop } from "./ReconditioningWorkshop";
 import { ChallengeList, ProposeDuel } from "@/components/OrganizedDuels";
 import { ConfigBoard } from "@/components/garage/ConfigBoard";
 import { ConfigDisclosure } from "@/components/garage/ConfigDisclosure";
@@ -32,7 +34,7 @@ export default async function DuelPage({
   const { page: pageParam, slot: slotParam, config: configParam } = await searchParams;
   const page = parsePage(pageParam);
   const { user } = await requireUser();
-  const [{ cards: allCards, decks: allDecks, modifiers }, quests, organized, clm, dyno, configs] = await Promise.all([
+  const [{ cards: allCards, decks: allDecks, modifiers }, quests, organized, clm, dyno, configs, workshopStock] = await Promise.all([
     loadDuelPage(user.id),
     getDailyQuests(user.id).catch((e) => {
       console.error("défis indisponibles :", e);
@@ -54,6 +56,18 @@ export default async function DuelPage({
       console.error("configs constructeur indisponibles :", e);
       return null;
     }),
+    withUser(user.id, async (c) => {
+      const { rows } = await c.query<{ category: string; count: number }>(
+        `select t.category::text as category, count(*)::int as count
+           from user_cards uc join card_templates t on t.id = uc.template_id
+          where uc.owner_id = $1 and not uc.is_destroyed
+            and (t.category <> 'pneus' or coalesce(uc.tire_wear, 0) > 0)
+          group by t.category`, [user.id]);
+      return Object.fromEntries(rows.map((r) => [r.category, r.count]));
+    }).catch((e) => {
+      console.error("patrimoine atelier indisponible :", e);
+      return { moteur: -1, boite: -1, pneus: -1 } as Record<string, number>;
+    }),
   ]);
   const cards = allCards.filter((x) => !x.is_destroyed && !x.is_listed);
   const alive = new Set(cards.map((x) => x.id));
@@ -74,7 +88,7 @@ export default async function DuelPage({
     return `/duel?${q.toString()}`;
   };
   const alternatives = (cat: string, current?: string) => cards.filter((c) => c.card_templates.category === cat && c.id !== current);
-  const otherModeCount = 1 + Number(Boolean(clm)) + Number(Boolean(dyno)) + Number(Boolean(configs));
+  const otherModeCount = Number(Boolean(clm)) + Number(Boolean(dyno)) + Number(Boolean(configs));
 
   return (
     <>
@@ -110,7 +124,7 @@ export default async function DuelPage({
       </ConfigDisclosure>
 
       <section className="space-y-3">
-        <SectionTitle title="Modes de jeu" description="Deux façons de courir maintenant." />
+        <SectionTitle title="Modes de jeu de base" />
         <div className="grid gap-3 lg:grid-cols-2">
           <DuelForm
             variant="hero"
@@ -121,24 +135,40 @@ export default async function DuelPage({
           >
             <SummaryPanel engine={engine} gearbox={gearbox} tire={tire} modifiers={modifiers} />
           </DuelForm>
-          <DailyQuests state={quests} layout="hero" />
+          <ProposeDuel variant="hero" />
         </div>
       </section>
 
-      <details className="group rounded-2xl border border-line bg-panel-deep">
-        <summary className="flex cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden">
-          <span className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-panel text-zinc-300">
-            <SlidersHorizontal size={17} />
+      <section className="space-y-3">
+        <SectionTitle title="Défis quotidiens" />
+        <DailyQuests state={quests} layout="detail" />
+      </section>
+
+      <details className="group overflow-hidden rounded-2xl border border-line bg-panel-deep">
+        <summary className="flex cursor-pointer list-none items-center gap-3 p-4 transition hover:bg-panel [&::-webkit-details-marker]:hidden">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-300">
+            <SlidersHorizontal size={18} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-display text-base font-bold uppercase">Autres modes</span>
-            <span className="block text-xs text-zinc-500">Contre-la-montre · banc d&apos;essai · config constructeur</span>
+            <span className="font-display text-base font-bold uppercase tracking-wide">Autres modes de jeu</span>
+            <span className="mt-1.5 flex flex-wrap gap-1.5">
+              <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[10px] text-zinc-400">
+                Contre-la-montre
+              </span>
+              <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[10px] text-zinc-400">
+                Banc d&apos;essai
+              </span>
+              <span className="rounded-full border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[10px] text-zinc-400">Config constructeur</span>
+            </span>
           </span>
-          <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold text-zinc-400">{otherModeCount}</span>
-          <ChevronDown size={16} className="text-zinc-500 transition group-open:rotate-180" />
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="rounded-full border border-line bg-black/30 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-zinc-400">
+              {otherModeCount}
+            </span>
+            <ChevronDown size={16} className="text-zinc-500 transition group-open:rotate-180" />
+          </span>
         </summary>
         <div className="grid gap-3 border-t border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
-          <ProposeDuel />
           {clm && (
             <ClmForm
               action={launchClm}
@@ -161,6 +191,12 @@ export default async function DuelPage({
           {configs && <ConfigConstructeurForm action={validateConfigPair} challenge={configs} />}
         </div>
       </details>
+
+      <ReconditioningWorkshop available={{
+        moteur: (workshopStock.moteur ?? 0) === 0,
+        boite: (workshopStock.boite ?? 0) === 0,
+        pneus: (workshopStock.pneus ?? 0) === 0,
+      }} />
 
       {!playable && (
         <p className="text-sm text-zinc-500">

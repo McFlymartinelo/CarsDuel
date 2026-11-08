@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup — Garage + navigation mobile</title>
+  <link rel="stylesheet" href="./mockup.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r=".6" fill="currentColor"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-3"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9.6 9.4h4a2 2 0 0 1 0 4h-4"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5v8l9 5 9-5Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 17 9"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/><circle cx="12" cy="14" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2-1.2.5-2 2-2 3.8M14 14.7V17c0 .6.5 1 1 1.2 1.2.5 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+  </svg>
+
+  <div class="layout">
+    <div class="notes">
+      <p class="kicker">Mockup 2 / proposition</p>
+      <h1>Garage + nav mobile</h1>
+      <p class="intro">Un accueil qui répond à « je fais quoi maintenant ? » au lieu d’une grille de six tuiles équivalentes.</p>
+
+      <h2>Navigation</h2>
+      <ul>
+        <li>4 onglets + <strong>bouton central « Jouer »</strong> surélevé, pour mettre la boucle principale au premier plan.</li>
+        <li>Onglet actif plus lisible, avec halo ambre.</li>
+        <li>Header mobile allégé : wallet compact, cloche et avatar.</li>
+      </ul>
+
+      <h2>Accueil</h2>
+      <ul>
+        <li><strong>Carte « prochaine action »</strong> : état de la config et lancement direct d’un duel.</li>
+        <li>Bandeau tirage disponible, stats rapides (pièces, cubes, XP).</li>
+        <li>Les tuiles secondaires restent disponibles, mais passent au second niveau.</li>
+      </ul>
+
+      <p class="foot">Maquette statique — rien n’est encore implémenté. Les visuels sont ceux de l’app.</p>
+      <span class="legend">390 × 844 · mobile</span>
+    </div>
+
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="app">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span>
+          </div>
+
+          <header class="topbar">
+            <a class="brand" href="#">
+              <img src="/logo.svg" alt="">
+              <span>Cars<br><span class="dim">Duel</span></span>
+            </a>
+            <span class="spacer"></span>
+            <span class="wallet" title="Pièces et cubes">
+              <span class="coins"><svg><use href="#i-coin"/></svg><b>1 250</b></span>
+              <span class="wallet-sep"></span>
+              <span class="cubes"><svg><use href="#i-box"/></svg><b>18</b></span>
+            </span>
+            <a class="icon-btn" href="#" aria-label="Notifications"><svg><use href="#i-bell"/></svg></a>
+            <span class="avatar">AM</span>
+          </header>
+
+          <main class="content">
+            <div class="greeting">
+              <h1>Bienvenue au garage</h1>
+              <p>Prêt à reprendre la piste, <span class="pilot">Alex</span> ?</p>
+            </div>
+
+            <section class="hero" style="--hero-img:url('/duel/hasard.webp')">
+              <div class="hero-art"></div>
+              <p class="eyebrow">Prochaine action</p>
+              <h2>Votre config est prête</h2>
+              <p class="desc">V8 atmosphérique, boîte DCT et pneus sport : tout est aligné pour un duel au hasard.</p>
+              <div class="chips">
+                <span class="chip ok">Prêt à rouler</span>
+                <span class="chip"><b>520</b> ch</span>
+                <span class="chip"><b>1 320</b> kg</span>
+                <span class="chip"><b>4 %</b> risque</span>
+              </div>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="#"><svg><use href="#i-swords"/></svg>Lancer un duel</a>
+                <a class="btn btn-ghost" href="#">Modifier</a>
+              </div>
+            </section>
+
+            <section class="pull">
+              <span class="pull-icon"><svg><use href="#i-gift"/></svg></span>
+              <div>
+                <h3>Tirage quotidien disponible</h3>
+                <p>Une carte offerte aujourd’hui · hebdo dans 2 j</p>
+              </div>
+              <a class="btn btn-primary" href="#">Ouvrir</a>
+            </section>
+
+            <section class="stats">
+              <div class="stat">
+                <span class="label"><svg><use href="#i-coin"/></svg>Pièces</span>
+                <span class="value amber">1 250</span>
+              </div>
+              <div class="stat">
+                <span class="label"><svg><use href="#i-box"/></svg>Cubes</span>
+                <span class="value orange">18</span>
+              </div>
+              <div class="stat">
+                <span class="label"><svg><use href="#i-chart"/></svg>XP semaine</span>
+                <span class="value green">320</span>
+              </div>
+            </section>
+
+            <div class="section-head">
+              <h2>Mon garage</h2>
+              <a href="#">Tout voir</a>
+            </div>
+
+            <section class="tiles">
+              <a class="tile" href="#" style="--img:url('/garage/tirages.webp')">
+                <span class="badge">2 dispo</span>
+                <h3>Tirages</h3>
+                <p>Quotidien &amp; hebdo</p>
+              </a>
+              <a class="tile" href="#" style="--img:url('/garage/inventaire.webp')">
+                <h3>Inventaire</h3>
+                <p>24 cartes</p>
+              </a>
+              <a class="tile" href="#" style="--img:url('/garage/recyclage.webp')">
+                <h3>Recyclage</h3>
+                <p>18 cubes</p>
+              </a>
+              <a class="tile" href="#" style="--img:url('/garage/collectionneur.png')">
+                <h3>Collection</h3>
+                <p>62 % complétée</p>
+              </a>
+              <a class="tile" href="#" style="--img:url('/garage/vitrine.webp')">
+                <h3>Trophées</h3>
+                <p>7 médailles</p>
+              </a>
+              <a class="tile" href="#" style="--img:url('/garage/regles.webp')">
+                <h3>Règles</h3>
+                <p>Le guide du pilote</p>
+              </a>
+            </section>
+          </main>
+        </div>
+
+        <nav class="tabbar" aria-label="Navigation principale">
+          <a class="tab active" href="#"><svg><use href="#i-house"/></svg>Garage</a>
+          <a class="tab" href="#"><svg><use href="#i-tag"/></svg>Marché</a>
+          <a class="play" href="#">
+            <span class="play-btn"><svg><use href="#i-swords"/></svg></span>
+            Jouer
+          </a>
+          <a class="tab" href="#"><svg><use href="#i-bag"/></svg>Boutique</a>
+          <a class="tab" href="#"><svg><use href="#i-chart"/></svg>Classement</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

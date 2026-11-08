@@ -1,15 +1,17 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import Image from "next/image";
+import { Swords, X } from "lucide-react";
 import { TileBody, tileClass } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
 import { Modal } from "@/components/Modal";
+import { buttonClass } from "@/components/ui/Button";
 import { acceptDuel, cancelDuel, declineDuel, proposeDuel, type ArrangedPlay } from "@/app/(game)/duel/actions";
 import { formatDateTime } from "@/lib/format";
 import type { ActionState, DuelReport } from "@/lib/types";
 
-export function ProposeDuel() {
+export function ProposeDuel({ variant = "tile" }: { variant?: "tile" | "hero" }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(proposeDuel, null);
   const [sent, setSent] = useState<string | null>(null);
@@ -23,9 +25,41 @@ export function ProposeDuel() {
 
   return (
     <div className="space-y-2">
-      <button type="button" onClick={() => setOpen(true)} className={tileClass()}>
-        <TileBody title="Proposer un duel" text="Défiez directement un pilote" image="/duel/direct.webp" />
-      </button>
+      {variant === "hero" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="group relative flex min-h-56 w-full flex-col justify-center overflow-hidden rounded-2xl border border-amber-500/25 bg-panel p-4 text-left transition hover:border-amber-400/60"
+        >
+          <Image
+            src="/duel/direct.webp"
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 1024px) 45vw, 100vw"
+            className="object-cover object-right opacity-30 transition group-hover:opacity-40 [mask-image:linear-gradient(to_left,#000_15%,transparent_85%)]"
+          />
+          <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-panel via-panel/75 to-transparent" />
+          <span className="relative z-10 flex flex-col items-start gap-2">
+            <span className="font-display text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
+              Défi direct
+            </span>
+            <span className="font-display text-2xl font-bold uppercase leading-none text-white">Organiser un duel</span>
+            <span className="max-w-sm text-xs leading-relaxed text-zinc-400">
+              Défiez un pilote de votre choix. Il jouera avec la config qu&apos;il aura équipée au moment d&apos;accepter.
+            </span>
+            <span className="flex flex-wrap gap-1.5">
+              <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] text-zinc-300">
+                Gains : 2–10 pièces
+              </span>
+            </span>
+          </span>
+        </button>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} className={tileClass()}>
+          <TileBody title="Proposer un duel" text="Défiez directement un pilote" image="/duel/direct.webp" />
+        </button>
+      )}
       {sent && <p className="text-sm text-emerald-400">Demande envoyée à {sent}.</p>}
       {open && (
         <Modal labelledBy="propose-title" onClose={pending ? undefined : () => setOpen(false)}>

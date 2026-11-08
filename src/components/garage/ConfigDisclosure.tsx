@@ -26,7 +26,8 @@ export function ConfigDisclosure({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-amber-400/90">Ma config</p>
-          <div className="mt-2">{summary}</div>
+          {/* Le résumé fait doublon avec l'éditeur (surtout sur mobile) : on ne le garde que replié. */}
+          {!open && <div className="mt-2">{summary}</div>}
         </div>
         <Button
           variant="ghost"

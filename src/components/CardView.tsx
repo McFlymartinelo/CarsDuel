@@ -148,7 +148,7 @@ export function CardView({
   children,
 }: {
   template: CardTemplate;
-  card?: Pick<UserCard, "runs_count" | "runs_total" | "wins_count" | "tire_wear" | "is_listed" | "is_destroyed" | "warranty_used" | "warranty_duels" | "warranty_extended">;
+  card?: Pick<UserCard, "runs_count" | "runs_total" | "wins_count" | "tire_wear" | "is_listed" | "is_destroyed" | "warranty_used" | "warranty_duels" | "warranty_extended" | "source">;
   /** URL déjà résolue côté serveur (les fichiers du disque ne sont pas lisibles dans le navigateur). */
   image?: string | null;
   tirePerfs?: TirePerf[];
@@ -198,6 +198,12 @@ export function CardView({
         </div>
 
         <h3 className="relative mt-4 line-clamp-3 min-h-[4.95rem] font-display text-2xl font-bold uppercase leading-[1.1] tracking-wide text-white">{headline}</h3>
+
+        {card?.source === "reconditioned" && (template.category === "moteur" || template.category === "boite") && (
+          <span className="relative mt-2 w-fit rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200">
+            Reconditionnée sans garantie
+          </span>
+        )}
 
         {card && currentRisk !== null && (
           <div className="relative mt-3 flex flex-wrap items-center gap-1.5 text-xs">

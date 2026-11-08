@@ -24,7 +24,13 @@ export function TileBody({
     <>
       <span aria-hidden className={`garage-tile-art ${imageFit === "contain" ? "garage-tile-art-contained" : ""}`}>
         {image ? (
-          <Image src={image} alt="" fill sizes="(min-width: 640px) 30vw, 70vw" className="object-cover object-right" />
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(min-width: 640px) 30vw, 70vw"
+            className={imageFit === "contain" ? "object-contain object-right" : "object-cover object-right"}
+          />
         ) : (
           <span className="flex h-full items-center justify-center">
             <Trophy size={96} strokeWidth={1.1} className="text-amber-500/20" />

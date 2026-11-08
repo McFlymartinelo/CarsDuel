@@ -1,0 +1,863 @@
+/* Maquette « Atelier de reconditionnement » — mini-jeux proposés.
+   S'appuie sur mockup.css (cadre téléphone, notes, variables). */
+
+:root {
+  --mg-green: #34d399;
+  --mg-green-soft: rgba(52, 211, 153, 0.12);
+  --mg-red: #f87171;
+  --mg-amber: #f59e0b;
+  --mg-amber-soft: rgba(245, 158, 11, 0.12);
+}
+
+.mg-app {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  height: 100%;
+  padding: 0 12px 16px;
+  background:
+    radial-gradient(ellipse 120% 46% at 50% 0%, rgba(245, 158, 11, 0.11), transparent 62%),
+    var(--page);
+}
+
+/* ---------- En-tête d'atelier ---------- */
+
+.mg-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.mg-head-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 11px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-light);
+}
+.mg-head-icon svg { width: 19px; height: 19px; }
+
+.mg-head-copy { min-width: 0; flex: 1; }
+.mg-head-copy .kicker {
+  margin: 0;
+  color: var(--accent-light);
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.mg-head-copy h2 {
+  margin: 1px 0 0;
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mg-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #0b0d12;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.mg-count span { color: var(--dim); font-size: 10px; font-weight: 600; }
+
+/* Progression du parcours */
+.mg-steps {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.mg-steps i {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: #21242c;
+}
+.mg-steps i.done { background: rgba(52, 211, 153, 0.55); }
+.mg-steps i.now {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.35), var(--accent-light));
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.55);
+}
+.mg-steps i.now::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--accent-light);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.mg-steps-label {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -4px;
+  color: var(--dim);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.mg-steps-label b { color: var(--accent-light); font-weight: 700; }
+
+/* ---------- Consigne ---------- */
+
+.mg-brief {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.mg-brief svg {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  color: var(--accent-light);
+}
+.mg-brief p { margin: 0; color: #d4d4d8; font-size: 11.5px; line-height: 1.4; }
+.mg-brief b { color: #fff; }
+
+/* ---------- Plateau de jeu ---------- */
+
+.mg-board {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 0%, rgba(245, 158, 11, 0.08), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 8px),
+    linear-gradient(160deg, #14100c, #090b10 58%);
+  box-shadow: inset 0 0 42px rgba(0, 0, 0, 0.72);
+}
+
+/* Laisse la place à une jauge ou un compteur ancré en bas. */
+.mg-board.has-foot { padding-bottom: 56px; }
+
+.mg-board::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(245, 158, 11, 0.12);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* Pièce illustrée */
+.mg-art {
+  position: relative;
+  width: 90%;
+  margin: 26px auto 0;
+  aspect-ratio: 3 / 2;
+}
+.mg-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.65));
+}
+
+/* Taches de gras */
+.mg-grease {
+  position: absolute;
+  width: 40px;
+  height: 27px;
+  transform: rotate(var(--r, -12deg));
+  border-radius: 50% 44% 52% 46%;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(120, 72, 22, 0.95), transparent 45%),
+    radial-gradient(circle at 60% 62%, #6b4a1e, #33240f 72%);
+  box-shadow:
+    0 0 0 3px rgba(61, 43, 18, 0.55),
+    0 0 14px rgba(180, 120, 40, 0.3);
+  opacity: 0.94;
+}
+.mg-grease::after {
+  content: "";
+  position: absolute;
+  inset: 30% 22%;
+  border-radius: 999px;
+  background: rgba(255, 226, 170, 0.24);
+  filter: blur(3px);
+}
+.mg-grease.clean {
+  background: transparent;
+  border: 1px dashed rgba(52, 211, 153, 0.35);
+  box-shadow: none;
+  opacity: 0.55;
+}
+.mg-grease.clean::after { display: none; }
+
+/* Trace de doigt + main */
+.mg-swish {
+  position: absolute;
+  inset: 30% 16% auto auto;
+  width: 120px;
+  height: 60px;
+  transform: rotate(-16deg);
+  border-top: 2px dashed rgba(255, 236, 179, 0.5);
+  border-radius: 60% 60% 0 0;
+  opacity: 0.8;
+}
+.mg-finger {
+  position: absolute;
+  right: 17%;
+  top: 53%;
+  width: 34px;
+  height: 34px;
+  color: #fde68a;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.8));
+}
+.mg-finger svg { width: 100%; height: 100%; }
+
+/* Compteur de saleté */
+.mg-meter-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 5px 9px;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 10px;
+  background: rgba(7, 9, 13, 0.82);
+  backdrop-filter: blur(6px);
+}
+.mg-meter-badge b {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-light);
+}
+.mg-meter-badge small { color: var(--dim); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* Éclaboussure « +1 » */
+.mg-float {
+  position: absolute;
+  right: 26%;
+  top: 24%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: var(--mg-green);
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  animation: mg-float 2.4s ease-in-out infinite;
+}
+
+@keyframes mg-float {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  45% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ---------- Serrage : culasse + jauge ---------- */
+
+.mg-cylinder {
+  width: 92%;
+  margin: 10px auto 0;
+}
+.mg-cylinder svg { display: block; width: 100%; height: auto; }
+
+.mg-bolt-pulse { animation: mg-bolt 1.4s ease-in-out infinite; transform-origin: center; }
+@keyframes mg-bolt {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.mg-torque {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 11px;
+  background: rgba(7, 9, 13, 0.86);
+  backdrop-filter: blur(6px);
+}
+.mg-torque > span { flex: 0 0 auto; color: var(--dim); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; }
+.mg-torque b {
+  flex: 0 0 auto;
+  min-width: 54px;
+  color: var(--accent-light);
+  font-family: var(--display);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.mg-bar {
+  position: relative;
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: #21242c;
+  overflow: hidden;
+}
+.mg-bar .zone { position: absolute; inset: 0 auto 0 50%; width: 20%; background: rgba(52, 211, 153, 0.38); }
+.mg-bar .fill { position: absolute; inset: 0 auto 0 0; width: 58%; border-radius: 999px; background: linear-gradient(90deg, #b45309, var(--accent-light)); }
+.mg-bar .needle { position: absolute; top: -3px; left: 58%; width: 3px; height: 16px; border-radius: 2px; background: #fff; box-shadow: 0 0 8px #fff; }
+
+.mg-sequence {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.mg-sequence span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0b0d12;
+  color: var(--dim);
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+}
+.mg-sequence span.ok { border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.1); color: var(--mg-green); }
+.mg-sequence span.now { border-color: rgba(245, 158, 11, 0.6); background: rgba(245, 158, 11, 0.13); color: var(--accent-light); box-shadow: 0 0 12px rgba(245, 158, 11, 0.35); }
+
+/* ---------- Boîte : engrenages ---------- */
+
+.mg-gears { width: 100%; margin: 4px auto 0; }
+.mg-gears svg { display: block; width: 100%; height: auto; }
+
+.mg-angle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 5px 9px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+  background: rgba(7, 9, 13, 0.84);
+  color: #7dd3fc;
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.mg-angle small { color: var(--dim); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.mg-order {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: rgba(7, 9, 13, 0.82);
+  color: var(--dim);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.mg-order i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mg-green);
+  box-shadow: 0 0 7px var(--mg-green);
+}
+
+/* ---------- Pneus : autoclave ---------- */
+
+.mg-chamber {
+  position: relative;
+  width: 88%;
+  margin: 20px auto 0;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+}
+.mg-chamber::before {
+  content: "";
+  position: absolute;
+  inset: 7%;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: 22px;
+  background: radial-gradient(circle at 50% 60%, rgba(248, 113, 113, 0.14), transparent 65%);
+  box-shadow: inset 0 0 40px rgba(248, 113, 113, 0.09);
+}
+.mg-tire {
+  position: relative;
+  width: 58%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 0deg, #2b2d33 0 4deg, #1c1e23 4deg 8deg),
+    #22242a;
+  box-shadow:
+    0 0 0 9px #0c0e12,
+    0 0 0 11px #3f3f46,
+    0 0 42px rgba(248, 113, 113, 0.3),
+    inset 0 0 30px rgba(0, 0, 0, 0.85);
+  animation: mg-heat 2.6s ease-in-out infinite;
+}
+.mg-tire::before {
+  content: "";
+  position: absolute;
+  inset: 28%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 40%, #4b4f58, #1a1c21 70%),
+    #1a1c21;
+  box-shadow: inset 0 0 18px #000, 0 0 0 5px #15171c;
+}
+.mg-tire::after {
+  content: "";
+  position: absolute;
+  inset: 40%;
+  border-radius: 50%;
+  background: #0a0b0f;
+  box-shadow: inset 0 0 12px #000;
+}
+
+.mg-tire-img {
+  position: absolute;
+  inset: 8%;
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.65));
+}
+@keyframes mg-heat {
+  0%, 100% { box-shadow: 0 0 0 9px #0c0e12, 0 0 0 11px #3f3f46, 0 0 30px rgba(248, 113, 113, 0.22), inset 0 0 30px rgba(0, 0, 0, 0.85); }
+  50% { box-shadow: 0 0 0 9px #0c0e12, 0 0 0 11px #52525b, 0 0 54px rgba(248, 113, 113, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.85); }
+}
+
+.mg-steam {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  width: 90px;
+  height: 74px;
+  transform: translateX(-50%);
+  opacity: 0.6;
+}
+.mg-steam i {
+  position: absolute;
+  bottom: 0;
+  width: 7px;
+  height: 46px;
+  border-radius: 999px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.32), transparent);
+  filter: blur(2px);
+  animation: mg-steam 2.2s ease-in-out infinite;
+}
+.mg-steam i:nth-child(1) { left: 8px; height: 34px; animation-delay: 0s; }
+.mg-steam i:nth-child(2) { left: 40px; height: 50px; animation-delay: 0.5s; }
+.mg-steam i:nth-child(3) { left: 72px; height: 38px; animation-delay: 1s; }
+@keyframes mg-steam {
+  0% { transform: translateY(6px) scaleY(0.7); opacity: 0; }
+  45% { opacity: 0.75; }
+  100% { transform: translateY(-18px) scaleY(1.15); opacity: 0; }
+}
+
+.mg-temp {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 5px 9px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 10px;
+  background: rgba(7, 9, 13, 0.84);
+  color: #fca5a5;
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-timer {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+}
+.mg-timer svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.mg-timer b {
+  position: relative;
+  color: var(--mg-green);
+  font-family: var(--display);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-thermo {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 9px 10px 7px;
+  border: 1px solid var(--line-soft);
+  border-radius: 11px;
+  background: rgba(7, 9, 13, 0.86);
+  backdrop-filter: blur(6px);
+}
+.mg-thermo .track {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, #27272a 0 58%, rgba(52, 211, 153, 0.34) 58% 78%, #27272a 78% 100%);
+}
+.mg-thermo .track .pin {
+  position: absolute;
+  top: -4px;
+  left: 71%;
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 9px #fff;
+}
+.mg-thermo .track .pin::after {
+  content: "72°";
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: #e4e6eb;
+  color: #0a0c10;
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 700;
+}
+.mg-thermo .scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  color: var(--dim);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+.mg-thermo .scale b { color: var(--mg-green); font-weight: 700; }
+
+/* ---------- Pied de plateau : qualité + action ---------- */
+
+.mg-quality {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+.mg-quality > span { color: var(--dim); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+.mg-quality .track { flex: 1; height: 6px; border-radius: 999px; background: #21242c; overflow: hidden; }
+.mg-quality .track i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #b45309, var(--accent-light)); }
+.mg-quality b { color: var(--accent-light); font-family: var(--display); font-size: 13px; font-variant-numeric: tabular-nums; }
+.mg-quality.low .track i { background: linear-gradient(90deg, #b91c1c, var(--mg-red)); }
+.mg-quality.low b { color: var(--mg-red); }
+
+.mg-actions { display: flex; gap: 8px; }
+.mg-actions .btn { flex: 1; min-height: 44px; font-size: 13px; }
+.mg-actions .btn-ghost { flex: 0 0 38%; }
+
+.mg-toast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 16px;
+  color: var(--mg-green);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.mg-toast svg { width: 13px; height: 13px; }
+
+/* ---------- Écran de fin ---------- */
+
+.mg-result {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 0;
+  text-align: center;
+}
+.mg-stars { display: flex; justify-content: center; gap: 6px; }
+.mg-stars svg { width: 46px; height: 46px; filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.6)); }
+.mg-stars svg.off { color: #2f3239; filter: none; }
+
+.mg-result h2 {
+  margin: 2px 0 0;
+  font-family: var(--display);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.mg-result .score {
+  color: var(--muted);
+  font-size: 12px;
+}
+.mg-result .score b { color: var(--accent-light); font-family: var(--display); font-size: 16px; }
+
+.mg-reward {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid rgba(52, 211, 153, 0.34);
+  border-radius: 14px;
+  background:
+    linear-gradient(105deg, rgba(52, 211, 153, 0.12), rgba(16, 19, 26, 0.92) 60%),
+    var(--panel);
+  text-align: left;
+}
+.mg-reward .art {
+  position: relative;
+  flex: 0 0 auto;
+  width: 62px;
+  height: 46px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: #090b10;
+}
+.mg-reward .art img { position: absolute; inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px); object-fit: contain; }
+.mg-reward strong { display: block; font-family: var(--display); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+.mg-reward small { display: block; margin-top: 1px; color: var(--muted); font-size: 10px; }
+.mg-reward .tag {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.09);
+  color: var(--mg-green);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mg-recap {
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 4px 11px;
+  text-align: left;
+}
+.mg-recap div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 10.5px;
+}
+.mg-recap div:last-child { border-bottom: 0; }
+.mg-recap svg { width: 13px; height: 13px; flex: 0 0 auto; color: var(--mg-green); }
+.mg-recap b { margin-left: auto; color: var(--text); font-family: var(--display); font-size: 11px; font-weight: 700; }
+
+.mg-note {
+  padding: 0 8px;
+  color: var(--dim);
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+
+/* ---------- Notes de la maquette ---------- */
+
+.notes .bad {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+.notes .bad li { padding-left: 20px; }
+.notes .bad li::before {
+  content: "×";
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  background: rgba(248, 113, 113, 0.14);
+  color: var(--danger);
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.mg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 10px;
+}
+.mg-grid span {
+  padding: 7px 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+.mg-grid b {
+  display: block;
+  margin-bottom: 1px;
+  color: var(--accent-light);
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- Boîte : pignons fissurés ---------- */
+
+.mg-debris-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.mg-gear-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #52525b;
+}
+.mg-gear-btn svg { width: 78%; height: 78%; }
+.mg-gear-btn.cracked {
+  border-color: rgba(245, 158, 11, 0.36);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--accent-light);
+  box-shadow: 0 0 16px -8px rgba(245, 158, 11, 0.8);
+}
+.mg-gear-btn.cracked::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 44%;
+  border-radius: 999px;
+  background: var(--danger);
+  transform: rotate(34deg);
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.65);
+}
+.mg-gear-btn.sealed { opacity: 0.30; }
+.mg-gear-btn.sealed::before {
+  content: "×";
+  position: absolute;
+  top: 1px;
+  right: 5px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---------- Pneus : suivre la bande ---------- */
+
+.mg-band-arc {
+  position: absolute;
+  inset: 5%;
+  width: 90%;
+  height: 90%;
+  transform: rotate(-90deg);
+}
+.mg-band-arc .track { fill: none; stroke: #3f3f46; stroke-width: 5; }
+.mg-band-arc .done {
+  fill: none;
+  stroke: var(--mg-green);
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(52, 211, 153, 0.65));
+}
+.mg-band-start {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--mg-green);
+  box-shadow: 0 0 10px var(--mg-green);
+}
+.mg-band-finger {
+  position: absolute;
+  right: 16%;
+  top: 58%;
+  width: 34px;
+  height: 34px;
+  color: #fde68a;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.8));
+}
+.mg-band-finger svg { width: 100%; height: 100%; }
+.mg-band-pct {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 5px 9px;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 10px;
+  background: rgba(7, 9, 13, 0.84);
+  color: var(--mg-green);
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

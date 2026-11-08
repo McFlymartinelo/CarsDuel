@@ -17,7 +17,7 @@ export function CardRow({
   children,
 }: {
   template: CardTemplate;
-  card?: Pick<UserCard, "runs_count" | "runs_total" | "wins_count" | "tire_wear" | "is_destroyed" | "is_listed" | "warranty_used" | "warranty_duels" | "warranty_extended">;
+  card?: Pick<UserCard, "runs_count" | "runs_total" | "wins_count" | "tire_wear" | "is_destroyed" | "is_listed" | "warranty_used" | "warranty_duels" | "warranty_extended" | "source">;
   image?: string | null;
   note?: React.ReactNode;
   /** Nombre d'exemplaires identiques représentés par cette ligne (badge ×N). */
@@ -55,6 +55,7 @@ export function CardRow({
             </span>
           )}
           {card?.is_destroyed && <span className="text-red-500"> · Détruite</span>}
+          {card?.source === "reconditioned" && (template.category === "moteur" || template.category === "boite") && <span className="ml-2 text-amber-300">· Reconditionnée sans garantie</span>}
           {card && template.category !== "pneus" && template.category !== "bonus" && card.runs_total > 0 && (
             <span className="ml-2 inline-flex items-center gap-2 normal-case tracking-normal text-zinc-400">
               <span title={card.runs_total > 1 ? `${card.runs_total} runs réalisés` : `${card.runs_total} run réalisé`} className="inline-flex items-center gap-1">

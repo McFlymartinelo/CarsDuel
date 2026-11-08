@@ -108,7 +108,7 @@ export function cardGroupKey(card: UserCard, includeWarranty = false): string {
         : card.template_id;
   const warranty =
     includeWarranty && mechanical
-      ? `|w${card.warranty_used}/${card.warranty_duels}/${card.warranty_extended ? 1 : 0}`
+      ? `|w${card.warranty_used}/${card.warranty_duels}/${card.warranty_extended ? 1 : 0}${card.source === "reconditioned" ? "|reconditioned" : ""}`
       : "";
   return `${base}${warranty}${card.is_destroyed ? "|hs" : ""}${card.is_listed ? `|${card.id}` : ""}`;
 }
