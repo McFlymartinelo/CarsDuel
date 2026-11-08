@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import type { ActionState } from "@/lib/types";
 
 type Action = (prev: ActionState, fd: FormData) => Promise<ActionState>;
@@ -49,6 +50,15 @@ export function AccountForms({
   const [deletePw, setDeletePw] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const { toast } = useToast();
+  const { setPanel: setDeletePanel, onKeyDown: onDeleteKeyDown } = useDialogA11y<HTMLFormElement>({
+    open: deleteOpen,
+    onClose: () => {
+      if (deletePending) return;
+      setDeleteOpen(false);
+      setDeletePw("");
+      setDeleteConfirm("");
+    },
+  });
 
   useEffect(() => {
     if (nameState?.ok) toast({ tone: "success", title: nameState.message ?? "Pseudo mis à jour.", key: "profile-username" });
@@ -140,7 +150,13 @@ export function AccountForms({
         aria-modal
         aria-labelledby="delete-title"
       >
-        <form action={deleteAction} className="my-auto w-full max-w-md space-y-4 rounded-2xl border border-red-500/40 bg-panel p-5 shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:p-6">
+        <form
+          ref={setDeletePanel}
+          tabIndex={-1}
+          onKeyDown={onDeleteKeyDown}
+          action={deleteAction}
+          className="my-auto w-full max-w-md space-y-4 rounded-2xl border border-red-500/40 bg-panel p-5 shadow-[0_24px_100px_rgba(0,0,0,0.8)] outline-none sm:p-6"
+        >
           <div className="space-y-1">
             <h3 id="delete-title" className="font-display text-2xl font-bold uppercase text-red-300">Supprimer le compte</h3>
             <p className="text-sm text-zinc-400">

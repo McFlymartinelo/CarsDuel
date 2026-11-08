@@ -4,11 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { CardDraw } from "@/components/CardDraw";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import type { DrawnCard } from "@/lib/types";
 
 export function WelcomeDraw({ cards, username }: { cards: DrawnCard[]; username: string }) {
   const router = useRouter();
   const [started, setStarted] = useState(false);
+  const { setPanel: setDialogPanel, onKeyDown: onDialogKeyDown } = useDialogA11y<HTMLDivElement>({
+    open: !started && cards.length > 0,
+  });
   if (cards.length === 0) return null;
 
   if (started) {
@@ -24,7 +28,12 @@ export function WelcomeDraw({ cards, username }: { cards: DrawnCard[]; username:
       aria-modal
       aria-labelledby="welcome-title"
     >
-      <div className="draw-modal relative my-auto w-full max-w-lg space-y-5 rounded-3xl border border-amber-500/35 p-6 text-center shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:p-8">
+      <div
+        ref={setDialogPanel}
+        tabIndex={-1}
+        onKeyDown={onDialogKeyDown}
+        className="draw-modal relative my-auto w-full max-w-lg space-y-5 rounded-3xl border border-amber-500/35 p-6 text-center shadow-[0_24px_100px_rgba(0,0,0,0.8)] outline-none sm:p-8"
+      >
         <div aria-hidden className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/70 to-transparent" />
         <span
           aria-hidden

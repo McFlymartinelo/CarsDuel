@@ -41,6 +41,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={rajdhani.variable}>
       <body className="min-h-screen antialiased">
+        <a
+          href="#contenu"
+          className="sr-only z-[150] rounded-lg border border-accent/60 bg-panel px-4 py-3 font-display text-base font-bold uppercase text-accent focus:not-sr-only focus:fixed focus:left-3 focus:top-[max(0.75rem,env(safe-area-inset-top))]"
+        >
+          Aller au contenu
+        </a>
         <ToastProvider>
           <LaunchGate />
           {children}

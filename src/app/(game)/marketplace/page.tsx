@@ -186,7 +186,15 @@ export default async function MarketplacePage({
                 toastKey="market-offer"
               >
                 <input type="hidden" name="listing_id" value={x.id} />
-                <input name="amount" type="number" min={10} required placeholder="Montant (min. 10)" className="w-28" />
+                <input
+                  name="amount"
+                  type="number"
+                  min={10}
+                  required
+                  placeholder="Montant (min. 10)"
+                  aria-label="Montant de l’offre en pièces"
+                  className="w-28"
+                />
               </ActionForm>
             )}
             {myOffer && (

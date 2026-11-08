@@ -93,7 +93,7 @@ export function Nav({
           </div>
         </div>
 
-        <nav className="border-t border-line/80 bg-[#0b0e13]">
+        <nav aria-label="Navigation principale" className="border-t border-line/80 bg-[#0b0e13]">
           <div className={`${APP_WIDTH} flex justify-center gap-1 px-6 2xl:px-10`}>
             {LINKS.map(({ href, label }) => {
               const active = pathname.startsWith(href);
@@ -143,7 +143,7 @@ export function Nav({
       </header>
 
       {/* ---------- Mobile : barre d'onglets du bas (zone du pouce) ---------- */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-header/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav aria-label="Navigation mobile" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-header/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <div className="grid grid-cols-5 items-end">
           {MOBILE_LEFT.map(({ href, label, icon: Icon }) => {
             const active = pathname.startsWith(href);

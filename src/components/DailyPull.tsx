@@ -6,6 +6,7 @@ import { Cog, Settings2 } from "lucide-react";
 import { PullCountdown } from "@/components/PullCountdown";
 import { TileBody, tileClass } from "@/components/ActionTile";
 import { useToast } from "@/components/ui/Toast";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import type { ActionState, DrawnCard } from "@/lib/types";
 import { RARITY_LABEL } from "@/lib/format";
 
@@ -50,6 +51,17 @@ function PullCard({
   const revealedRarity = cards[0]?.rarity ?? "commune";
   const rarityGlow = RARITY_GLOW[revealedRarity];
   const { toast } = useToast();
+  const { setPanel: setChoosePanel, onKeyDown: onChooseKeyDown } = useDialogA11y<HTMLDivElement>({
+    open: chooseOpen,
+    onClose: () => setChooseOpen(false),
+  });
+  const { setPanel: setRevealPanel, onKeyDown: onRevealKeyDown } = useDialogA11y<HTMLDivElement>({
+    open,
+    onClose: () => {
+      setOpen(false);
+      setShowCard(true);
+    },
+  });
 
   useEffect(() => {
     if (state?.ok && (state.data?.cards.length ?? 0) > 0) {
@@ -90,7 +102,12 @@ function PullCard({
     </form>
       {chooseOpen && weekly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#030507]/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choisir la carte hebdomadaire">
-          <div className="draw-modal w-full max-w-lg space-y-5 rounded-3xl border border-amber-500/35 p-5 shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:p-7">
+          <div
+            ref={setChoosePanel}
+            tabIndex={-1}
+            onKeyDown={onChooseKeyDown}
+            className="draw-modal w-full max-w-lg space-y-5 rounded-3xl border border-amber-500/35 p-5 shadow-[0_24px_100px_rgba(0,0,0,0.8)] outline-none sm:p-7"
+          >
             <p className="text-center font-display text-xl font-bold uppercase tracking-wide text-white">Tirage <span className="text-amber-400">hebdomadaire</span></p>
             <DrawProgress step={1} />
             <div className="text-center">
@@ -114,7 +131,12 @@ function PullCard({
       )}
       {open && weekly && cards[0] && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#030507]/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Révéler la rareté">
-          <div className="draw-modal w-full max-w-xl space-y-4 rounded-3xl border border-amber-500/35 p-5 text-center shadow-[0_24px_100px_rgba(0,0,0,0.8)] sm:space-y-5 sm:p-7">
+          <div
+            ref={setRevealPanel}
+            tabIndex={-1}
+            onKeyDown={onRevealKeyDown}
+            className="draw-modal w-full max-w-xl space-y-4 rounded-3xl border border-amber-500/35 p-5 text-center shadow-[0_24px_100px_rgba(0,0,0,0.8)] outline-none sm:space-y-5 sm:p-7"
+          >
             <p className="font-display text-xl font-bold uppercase tracking-wide text-white">Tirage <span className="text-amber-400">hebdomadaire</span></p>
             <DrawProgress step={2} />
             <div className="flex justify-center py-1 sm:py-2">

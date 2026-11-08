@@ -10,7 +10,7 @@ const VISIBLE_CHALLENGES = 3;
  * cartes réelles pour afficher exactement trois défis entiers, sans couper le
  * quatrième. Sur téléphone, la liste garde sa hauteur naturelle.
  */
-export function ChallengeScrollList({ open, children }: { open: boolean; children: ReactNode }) {
+export function ChallengeScrollList({ id, open, children }: { id?: string; open: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [maxHeight, setMaxHeight] = useState<number>();
 
@@ -43,6 +43,7 @@ export function ChallengeScrollList({ open, children }: { open: boolean; childre
 
   return <div
     ref={ref}
+    id={id}
     style={{ maxHeight }}
     className={`collector-scroll mt-4 flex-col gap-2 sm:grid sm:overflow-y-auto sm:overscroll-contain sm:pr-1 ${open ? "flex" : "hidden"}`}
   >{children}</div>;

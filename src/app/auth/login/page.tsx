@@ -14,7 +14,11 @@ export default async function LoginPage() {
   const signedIn = Boolean(await getCurrentUser());
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-4 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+    <main
+      id="contenu"
+      tabIndex={-1}
+      className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] outline-none"
+    >
       <h1 className="flex flex-col items-center gap-3 text-center font-display text-3xl font-bold text-amber-400">
         <Logo size={120} />
         CarsDuel

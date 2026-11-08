@@ -171,8 +171,11 @@ export function AuthPanel({
             }
           }}
         >
-          <input name="email" type="email" placeholder="Email" required autoComplete="email" />
+          <label htmlFor="signin-email" className="sr-only">Adresse e-mail</label>
+          <input id="signin-email" name="email" type="email" placeholder="Email" required autoComplete="email" />
+          <label htmlFor="signin-password" className="sr-only">Mot de passe</label>
           <input
+            id="signin-password"
             name="password"
             type="password"
             placeholder="Mot de passe"
@@ -213,7 +216,9 @@ export function AuthPanel({
             }
           }}
         >
+          <label htmlFor="signup-username" className="sr-only">Pseudo</label>
           <input
+            id="signup-username"
             name="username"
             type="text"
             placeholder="Pseudo"
@@ -222,8 +227,11 @@ export function AuthPanel({
             maxLength={24}
             autoComplete="username"
           />
-          <input name="email" type="email" placeholder="Email" required autoComplete="email" />
+          <label htmlFor="signup-email" className="sr-only">Adresse e-mail</label>
+          <input id="signup-email" name="email" type="email" placeholder="Email" required autoComplete="email" />
+          <label htmlFor="signup-password" className="sr-only">Mot de passe</label>
           <input
+            id="signup-password"
             name="password"
             type="password"
             placeholder="Mot de passe (8+ caractères)"

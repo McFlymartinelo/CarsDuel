@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, ty
 import { createPortal } from "react-dom";
 import { ArrowUpDown, ChevronDown, SlidersHorizontal, X, type LucideIcon } from "lucide-react";
 import { RARITY_KEYS, RARITY_PALETTE } from "@/lib/rarity-theme";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import type { Rarity } from "@/lib/types";
 
 /** Teinte de chaque rareté, reprise de la palette unique des cartes. */
@@ -146,6 +147,10 @@ export function FilterSheet({
   const dragRef = useRef<{ startY: number; startTime: number } | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const { setPanel: setDialogPanel, onKeyDown: onDialogKeyDown } = useDialogA11y<HTMLElement>({
+    open: open && mounted,
+    onClose,
+  });
 
   useEffect(() => setMounted(true), []);
 
@@ -184,20 +189,6 @@ export function FilterSheet({
     requestAnimationFrame(() => setDragY(0));
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeRef.current();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
   if (!mounted || !open) return null;
 
   return createPortal(
@@ -210,6 +201,9 @@ export function FilterSheet({
         className="filter-backdrop-in absolute inset-0 bg-black/75 backdrop-blur-[2px] transition-opacity duration-200"
       />
       <section
+        ref={setDialogPanel}
+        tabIndex={-1}
+        onKeyDown={onDialogKeyDown}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelId}

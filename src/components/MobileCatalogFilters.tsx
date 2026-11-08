@@ -344,6 +344,7 @@ export function MobileCatalogFilters({
                     step={0.1}
                     defaultValue={query.risk ?? ""}
                     placeholder="Pourcentage accepté"
+                    aria-label="Risque de casse maximal en pourcentage"
                     className="!w-full !rounded-xl !border-white/10 !bg-[#0b0e13] !py-2.5 !pl-9 !pr-3 text-base font-semibold tabular-nums text-white placeholder:font-normal placeholder:text-zinc-600 [appearance:textfield] focus:!border-amber-400/60 focus:!outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                 </div>

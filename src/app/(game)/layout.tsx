@@ -41,7 +41,13 @@ export default async function GameLayout({ children }: { children: React.ReactNo
         notifications={notifications}
         signOut={signOut}
       />
-      <main className={`${APP_WIDTH} space-y-6 px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 md:space-y-8 md:px-6 md:pb-8 md:pt-6 2xl:px-10`}>{children}</main>
+      <main
+        id="contenu"
+        tabIndex={-1}
+        className={`${APP_WIDTH} space-y-6 px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 outline-none sm:px-4 md:space-y-8 md:px-6 md:pb-8 md:pt-6 2xl:px-10`}
+      >
+        {children}
+      </main>
     </>
   );
 }

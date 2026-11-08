@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { CardDraw } from "@/components/CardDraw";
 import { RARITY_LABEL } from "@/lib/format";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import {
   RECYCLE_EXCHANGE_TIER_LIST,
   type RecycleExchangeCategory,
@@ -162,6 +163,11 @@ export function RecycleExchangeTiers({
     setError(null);
   };
 
+  const { setPanel: setDialogPanel, onKeyDown: onDialogKeyDown } = useDialogA11y<HTMLDivElement>({
+    open: Boolean(tier),
+    onClose: close,
+  });
+
   const confirm = async () => {
     if (!tier || !category || pending) return;
     setPending(true);
@@ -192,19 +198,6 @@ export function RecycleExchangeTiers({
       setPending(false);
     }
   };
-
-  // Échap ferme le popup (sauf pendant le débit).
-  useEffect(() => {
-    if (!tier) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !pending) {
-        setTier(null);
-        setError(null);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [tier, pending]);
 
   const selectedCategory = CATEGORIES.find((c) => c.key === category);
   const SelectedIcon = selectedCategory?.icon;
@@ -285,7 +278,12 @@ export function RecycleExchangeTiers({
           aria-modal="true"
           aria-label={`${tier.label} — ${step === "category" ? "choix de la catégorie" : "confirmation"}`}
         >
-          <div className="relative my-auto flex max-h-[94dvh] w-full max-w-xl flex-col overflow-y-auto rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#141821] to-[#090b10] p-4 shadow-[0_24px_100px_rgba(0,0,0,0.85)] sm:p-6">
+          <div
+            ref={setDialogPanel}
+            tabIndex={-1}
+            onKeyDown={onDialogKeyDown}
+            className="relative my-auto flex max-h-[94dvh] w-full max-w-xl flex-col overflow-y-auto rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#141821] to-[#090b10] p-4 shadow-[0_24px_100px_rgba(0,0,0,0.85)] outline-none sm:p-6"
+          >
             <button
               type="button"
               onClick={close}

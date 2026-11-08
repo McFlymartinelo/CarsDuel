@@ -4,7 +4,7 @@ import { buttonClass } from "@/components/ui/Button";
 
 export default function NotFound() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-3 px-4 text-center">
+    <main id="contenu" tabIndex={-1} className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-3 px-4 text-center outline-none">
       <span className="grid size-16 place-items-center rounded-2xl border border-amber-500/35 bg-amber-500/10 text-amber-300">
         <Compass size={32} strokeWidth={1.6} aria-hidden />
       </span>

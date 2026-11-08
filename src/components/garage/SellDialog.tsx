@@ -95,6 +95,7 @@ export function SellDialog({
                     type="number"
                     min={1}
                     max={max}
+                    aria-label="Quantité à mettre en vente"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                     className={`${field} w-full min-w-0 text-center text-base font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
@@ -140,6 +141,7 @@ export function SellDialog({
                   inputMode="numeric"
                   pattern="[0-9]*"
                   placeholder="Autre montant"
+                  aria-label="Prix de vente personnalisé en pièces"
                   value={price}
                   onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))}
                   className={`${field} w-full min-w-0 font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}

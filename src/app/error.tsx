@@ -6,7 +6,7 @@ import { Button, buttonClass } from "@/components/ui/Button";
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-3 px-4 text-center">
+    <main id="contenu" tabIndex={-1} className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-3 px-4 text-center outline-none">
       <span className="grid size-14 place-items-center rounded-2xl border border-red-500/40 bg-red-500/10 text-red-300">
         <TriangleAlert size={28} strokeWidth={1.8} aria-hidden />
       </span>

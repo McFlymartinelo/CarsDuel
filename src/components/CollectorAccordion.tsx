@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { ChallengeScrollList } from "@/components/ChallengeScrollList";
 
@@ -9,8 +9,9 @@ export function CollectorAccordion({ icon, title, subtitle, summary, children }:
   icon: ReactNode; title: string; subtitle: string; summary: string; children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
   return <>
-    <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="flex w-full items-center gap-3 text-left sm:pointer-events-none sm:cursor-default">
+    <button type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((value) => !value)} className="flex w-full items-center gap-3 text-left sm:pointer-events-none sm:cursor-default">
       {icon}
       <span className="min-w-0 flex-1">
         <span className="block font-display text-xl font-bold uppercase tracking-wide text-zinc-100">{title}</span>
@@ -24,6 +25,6 @@ export function CollectorAccordion({ icon, title, subtitle, summary, children }:
         {summary}<span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-400/60">défis</span>
       </span>
     </button>
-    <ChallengeScrollList open={open}>{children}</ChallengeScrollList>
+    <ChallengeScrollList id={panelId} open={open}>{children}</ChallengeScrollList>
   </>;
 }
