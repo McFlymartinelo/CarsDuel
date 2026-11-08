@@ -262,18 +262,16 @@ function SyncBenchGame({ name, onWin, onMiss }: GameProps) {
 /* ------------------------------------------------------------------ */
 
 const TRACE_LEN = 24;
-const FAULTY_GEAR = 3;
-const traceOf = (faulty: boolean) =>
+const traceOf = (faulty: boolean, faultStart = 10, faultLength = 3) =>
   Array.from({ length: TRACE_LEN }, (_, i) => {
     const t = i / (TRACE_LEN - 1);
     const base = Math.sin(Math.PI * t) * 0.55;
     if (!faulty) return base;
-    if (i >= 10 && i <= 12) return 0.1;
-    if (i === 13) return 1;
+    if (i >= faultStart && i < faultStart + faultLength) return 0.1;
+    if (i === faultStart + faultLength) return 1;
     return base;
   });
 const TRACE_OK = traceOf(false);
-const TRACE_BAD = traceOf(true);
 
 function Trace({ values, count }: { values: number[]; count: number }) {
   const shown = values.slice(0, count);
@@ -287,6 +285,12 @@ function Trace({ values, count }: { values: number[]; count: number }) {
 }
 
 function GearDiagnosisGame({ name, onWin, onMiss }: GameProps) {
+  const [fault] = useState(() => {
+    const start = 4 + Math.floor(Math.random() * 12);
+    const length = 1 + Math.floor(Math.random() * 4);
+    return { index: Math.floor(Math.random() * 5), trace: traceOf(true, start, length) };
+  });
+  const faultyGear = fault.index;
   const [tested, setTested] = useState<boolean[]>([false, false, false, false, false]);
   const [cleared, setCleared] = useState<boolean[]>([false, false, false, false, false]);
   const [running, setRunning] = useState<number | null>(null);
@@ -318,7 +322,7 @@ function GearDiagnosisGame({ name, onWin, onMiss }: GameProps) {
   };
 
   const designate = (index: number) => {
-    if (index === FAULTY_GEAR) {
+    if (index === faultyGear) {
       setTone("ok");
       setMessage(`Le rapport ${index + 1} accroche : synchro à remplacer.`);
       win();
@@ -336,14 +340,14 @@ function GearDiagnosisGame({ name, onWin, onMiss }: GameProps) {
         <ul className="relative z-10 space-y-2">
           {tested.map((done, index) => {
             const isRunning = running === index;
-            const values = index === FAULTY_GEAR ? TRACE_BAD : TRACE_OK;
+            const values = index === faultyGear ? fault.trace : TRACE_OK;
             return (
-              <li key={index} className={`grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-xl border border-line bg-black/30 p-2 ${cleared[index] ? "opacity-50" : ""}`}>
+              <li key={index} className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 rounded-xl border border-line bg-black/30 p-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] ${cleared[index] ? "opacity-50" : ""}`}>
                 <span className="grid h-9 w-9 place-items-center rounded-lg border border-line font-display font-bold text-zinc-200">{index + 1}</span>
-                <div role="img" aria-label={done ? (index === FAULTY_GEAR ? `Rapport ${index + 1} : courbe avec un à-coup` : `Rapport ${index + 1} : courbe régulière`) : `Rapport ${index + 1} : pas encore testé`}>
+                <div role="img" aria-label={done ? (index === faultyGear ? `Rapport ${index + 1} : courbe avec un à-coup` : `Rapport ${index + 1} : courbe régulière`) : `Rapport ${index + 1} : pas encore testé`}>
                   <Trace values={values} count={done ? TRACE_LEN : isRunning ? count : 0} />
                 </div>
-                <div className="flex gap-1">
+                <div className="col-span-2 flex justify-end gap-1 sm:col-span-1">
                   <SmallButton disabled={running != null || cleared[index]} onClick={() => test(index)}>
                     {done ? "Retester" : "Tester"}
                   </SmallButton>
@@ -547,12 +551,22 @@ function PinionAssemblyGame({ name, onWin, onMiss }: GameProps) {
 /* Réglage de la tringlerie (combinaison de mouvements)                */
 /* ------------------------------------------------------------------ */
 
-const LINK_TARGETS = [3, 6, 2];
+const LINK_GEAR_POOL = [1, 2, 3, 4, 5, 6];
+function createLinkTargets() {
+  const values = [...LINK_GEAR_POOL];
+  for (let i = values.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [values[i], values[j]] = [values[j], values[i]];
+  }
+  const length = 3 + Math.floor(Math.random() * 3);
+  return values.slice(0, length);
+}
 const slotX = (col: number) => 20 + col * 30;
 const slotY = (row: number) => 50 + row * 30;
 const slotGear = (col: number, row: number) => (row === 0 ? 0 : col * 2 + (row < 0 ? 1 : 2));
 
 function LinkageGame({ name, onWin, onMiss }: GameProps) {
+  const [targets] = useState(createLinkTargets);
   const [knob, setKnob] = useState({ col: 1, row: 0 });
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("Le levier ne change de colonne qu'au point mort. Engagez le rapport demandé.");
@@ -578,23 +592,23 @@ function LinkageGame({ name, onWin, onMiss }: GameProps) {
     const gear = slotGear(col, row);
     if (gear === 0) {
       setTone("idle");
-      setMessage(`Point mort. Rapport demandé : ${LINK_TARGETS[progress]}.`);
+      setMessage(`Point mort. Rapport demandé : ${targets[progress]}.`);
       return;
     }
-    if (gear === LINK_TARGETS[progress]) {
+    if (gear === targets[progress]) {
       const done = progress + 1;
       setProgress(done);
       setTone("ok");
-      if (done >= LINK_TARGETS.length) {
+      if (done >= targets.length) {
         setMessage("Tringlerie réglée : les trois rapports passent.");
         win();
         return;
       }
-      setMessage(`Rapport ${gear} engagé ! Revenez au point mort, puis passez le ${LINK_TARGETS[done]}.`);
+      setMessage(`Rapport ${gear} engagé ! Revenez au point mort, puis passez le ${targets[done]}.`);
       return;
     }
     setTone("bad");
-    setMessage(`Vous avez engagé le ${gear} au lieu du ${LINK_TARGETS[progress]}. Revenez au point mort.`);
+    setMessage(`Vous avez engagé le ${gear} au lieu du ${targets[progress]}. Revenez au point mort.`);
     onMiss();
   };
 
@@ -616,10 +630,10 @@ function LinkageGame({ name, onWin, onMiss }: GameProps) {
   );
 
   return (
-    <GameFrame name={name} badge={`${progress} / ${LINK_TARGETS.length}`} message={message} tone={tone}>
+    <GameFrame name={name} badge={`${progress} / ${targets.length}`} message={message} tone={tone}>
       <GameBoard className="p-3">
         <div className="relative z-10">
-          <Chips items={LINK_TARGETS} current={progress} />
+          <Chips items={targets} current={progress} />
           <div className="flex items-center justify-center gap-4">
             <div
               role="application"
@@ -645,7 +659,7 @@ function LinkageGame({ name, onWin, onMiss }: GameProps) {
                 <path d="M20 20 V80 M50 20 V80 M80 20 V80 M20 50 H80" stroke="#52525b" strokeWidth="4" strokeLinecap="round" fill="none" />
                 {[0, 1, 2].flatMap((col) =>
                   [-1, 1].map((row) => (
-                    <text key={`${col}${row}`} x={slotX(col)} y={slotY(row) + (row < 0 ? -6 : 11)} fontSize="9" fill={slotGear(col, row) === LINK_TARGETS[progress] ? "#fbbf24" : "#a1a1aa"} textAnchor="middle" fontWeight="700">
+                      <text key={`${col}${row}`} x={slotX(col)} y={slotY(row) + (row < 0 ? -6 : 11)} fontSize="9" fill={slotGear(col, row) === targets[progress] ? "#fbbf24" : "#a1a1aa"} textAnchor="middle" fontWeight="700">
                       {slotGear(col, row)}
                     </text>
                   )),
@@ -676,20 +690,38 @@ function LinkageGame({ name, onWin, onMiss }: GameProps) {
 /* ------------------------------------------------------------------ */
 
 const JOINTS = [
-  { id: "carter", label: "Joint de carter", x: 50, y: 18, leak: false, stain: "dry" },
-  { id: "primaire", label: "Joint d'arbre primaire", x: 14, y: 52, leak: false, stain: "none" },
-  { id: "secondaire", label: "Joint d'arbre secondaire", x: 86, y: 52, leak: true, stain: "wet" },
-  { id: "bouchon", label: "Bouchon de vidange", x: 38, y: 84, leak: false, stain: "dry" },
-  { id: "reniflard", label: "Reniflard", x: 66, y: 84, leak: false, stain: "none" },
+  { id: "carter", label: "Joint de carter", short: "Couvercle", x: 50, y: 16, leak: false, stain: "dry" },
+  { id: "primaire", label: "Joint d'arbre primaire", short: "Primaire", x: 12, y: 52, leak: false, stain: "none" },
+  { id: "secondaire", label: "Joint d'arbre secondaire", short: "Secondaire", x: 88, y: 52, leak: true, stain: "wet" },
+  { id: "bouchon", label: "Bouchon de vidange", short: "Vidange", x: 37, y: 86, leak: false, stain: "dry" },
+  { id: "reniflard", label: "Reniflard", short: "Reniflard", x: 82, y: 17, leak: false, stain: "none" },
 ] as const;
 const PRESSURE_MIN = 40;
+const PRESSURE_COST = 6;
 const stainText = { wet: "suintement brillant", dry: "tache sèche", none: "aucune trace" };
+const gaugePoint = (radius: number, deg: number) => ({
+  x: radius * Math.sin((deg * Math.PI) / 180),
+  y: -radius * Math.cos((deg * Math.PI) / 180),
+});
+const gaugeArc = (radius: number, from: number, to: number) => {
+  const a = gaugePoint(radius, from);
+  const b = gaugePoint(radius, to);
+  return `M${a.x.toFixed(2)} ${a.y.toFixed(2)} A${radius} ${radius} 0 ${to - from > 180 ? 1 : 0} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`;
+};
 
 function TightnessTestGame({ name, onWin, onMiss }: GameProps) {
+  const [joints] = useState(() => {
+    const leakIndex = Math.floor(Math.random() * JOINTS.length);
+    return JOINTS.map((joint, index) => ({
+      ...joint,
+      leak: index === leakIndex,
+      stain: index === leakIndex ? "wet" as const : joint.stain === "wet" ? "dry" as const : joint.stain,
+    }));
+  });
   const [pressure, setPressure] = useState(100);
   const [done, setDone] = useState(false);
   const [checked, setChecked] = useState<string[]>([]);
-  const [message, setMessage] = useState("La pression chute : repérez le joint qui fuit (suintement brillant) avant le seuil.");
+  const [message, setMessage] = useState("Inspectez les joints : la pression fuit en continu.");
   const [tone, setTone] = useState<Tone>("idle");
   const pressureRef = useRef(100);
   const missRef = useRef(onMiss);
@@ -706,7 +738,7 @@ function TightnessTestGame({ name, onWin, onMiss }: GameProps) {
       if (pressureRef.current <= PRESSURE_MIN) {
         pressureRef.current = 100;
         setTone("bad");
-        setMessage("Pression sous le seuil : on regonfle le carter, cherchez plus vite.");
+        setMessage("Pression sous 40 % : le carter est regonflé à 100 %, réessayez.");
         missRef.current();
       }
       setPressure(pressureRef.current);
@@ -714,7 +746,7 @@ function TightnessTestGame({ name, onWin, onMiss }: GameProps) {
     return () => window.clearInterval(timer);
   }, [done]);
 
-  const inspect = (joint: (typeof JOINTS)[number]) => {
+  const inspect = (joint: (typeof joints)[number]) => {
     if (done || checked.includes(joint.id)) return;
     if (joint.leak) {
       setDone(true);
@@ -724,49 +756,185 @@ function TightnessTestGame({ name, onWin, onMiss }: GameProps) {
       return;
     }
     setChecked((list) => [...list, joint.id]);
-    pressureRef.current = Math.max(PRESSURE_MIN + 4, pressureRef.current - 6);
+    pressureRef.current = Math.max(PRESSURE_MIN + 4, pressureRef.current - PRESSURE_COST);
     setPressure(pressureRef.current);
     setTone("bad");
-    setMessage(`${joint.label} : étanche (${stainText[joint.stain]}). La pression a baissé pendant le contrôle.`);
+    setMessage(`${joint.label} : étanche (${stainText[joint.stain]}). Contrôle raté : −${PRESSURE_COST} % de pression.`);
     onMiss();
   };
 
   const angle = -120 + (pressure / 100) * 240;
+  const thresholdAngle = -120 + (PRESSURE_MIN / 100) * 240;
   const low = pressure < PRESSURE_MIN + 15;
+  const thresholdAt = gaugePoint(38, thresholdAngle);
 
   return (
     <GameFrame name={name} badge={`${Math.round(pressure)} % de pression`} message={message} tone={tone}>
       <GameBoard className="p-3">
-        <div className="relative z-10 grid items-center gap-3 sm:grid-cols-[auto_1fr]">
-          <svg viewBox="-62 -62 124 106" className="mx-auto w-40" role="img" aria-label={`Manomètre : ${Math.round(pressure)} pour cent, seuil ${PRESSURE_MIN} pour cent`}>
-            <path d="M-45 26 A52 52 0 1 1 45 26" fill="none" stroke="#3f3f46" strokeWidth="9" strokeLinecap="round" />
-            <line x1="0" y1="-44" x2="0" y2="-58" stroke="#ef4444" strokeWidth="3" transform={`rotate(${-120 + (PRESSURE_MIN / 100) * 240})`} />
-            <line x1="0" y1="0" x2="0" y2="-40" stroke={low ? "#f87171" : "#fbbf24"} strokeWidth="3" strokeLinecap="round" transform={`rotate(${angle})`} style={{ transition: "transform .1s linear" }} />
-            <circle r="5" fill="#27272a" stroke="#71717a" />
-            <text y="34" fontSize="9" fill="#a1a1aa" textAnchor="middle">
-              seuil {PRESSURE_MIN} %
-            </text>
-          </svg>
-          <div className="relative mx-auto aspect-[3/2] w-full max-w-[300px] rounded-2xl border border-zinc-600 bg-zinc-900/80">
-            {JOINTS.map((joint) => (
-              <button
-                key={joint.id}
-                type="button"
-                disabled={done || checked.includes(joint.id)}
-                onClick={() => inspect(joint)}
-                aria-label={`${joint.label}, ${stainText[joint.stain]}`}
-                className="absolute grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-zinc-500 bg-zinc-800 transition hover:border-amber-300 disabled:opacity-40"
-                style={{ left: `${joint.x}%`, top: `${joint.y}%` }}
-              >
-                {joint.stain === "wet" && <Droplet size={18} className="fill-sky-300 text-sky-200" aria-hidden />}
-                {joint.stain === "dry" && <span aria-hidden className="h-3 w-5 rounded-full bg-amber-950" />}
-                {joint.stain === "none" && <span aria-hidden className="h-2 w-2 rounded-full bg-zinc-500" />}
-              </button>
-            ))}
-            <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[10px] uppercase tracking-widest text-zinc-600">carter</span>
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(56,189,248,.08),transparent_62%)]" />
+
+        <div className="relative z-10 space-y-3">
+          {/* Consigne et légende des indices */}
+          <div className="rounded-xl border border-line bg-black/30 px-2.5 py-2">
+            <p className="text-center text-[11px] leading-snug text-zinc-300">
+              <b className="text-zinc-100">Un seul joint fuit.</b> Cliquez sur la <b className="text-sky-300">goutte brillante</b>, pas sur les traces brunes. Chaque erreur coûte <b className="text-red-300">−{PRESSURE_COST} %</b> de pression.
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-1.5 text-[9px] font-semibold">
+              <span className="flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-1.5 text-sky-200">
+                <Droplet size={11} className="shrink-0 fill-sky-300 text-sky-200" aria-hidden />Goutte = fuite
+              </span>
+              <span className="flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-amber-800/50 bg-amber-950/30 px-1.5 text-amber-200">
+                <span aria-hidden className="h-2.5 w-4 shrink-0 rounded-[50%] bg-[radial-gradient(circle_at_35%_30%,#a8753f,#4a2d10_72%)]" />Trace sèche
+              </span>
+              <span className="flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-line bg-black/30 px-1.5 text-zinc-400">
+                <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />Aucune trace
+              </span>
+            </div>
+          </div>
+
+          {/* Jauge de pression */}
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-black/35 p-2">
+            <svg viewBox="-58 -58 116 104" className="w-[126px] shrink-0" role="img" aria-label={`Manomètre : ${Math.round(pressure)} pour cent, seuil ${PRESSURE_MIN} pour cent`}>
+              <defs>
+                <linearGradient id="tight-bezel" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#e4e4e7" />
+                  <stop offset="32%" stopColor="#71717a" />
+                  <stop offset="58%" stopColor="#27272a" />
+                  <stop offset="80%" stopColor="#a1a1aa" />
+                  <stop offset="100%" stopColor="#3f3f46" />
+                </linearGradient>
+                <radialGradient id="tight-face" cx="42%" cy="34%" r="72%">
+                  <stop offset="0%" stopColor="#26262c" />
+                  <stop offset="100%" stopColor="#0b0b0e" />
+                </radialGradient>
+              </defs>
+              <circle r="50" fill="#000000" opacity=".45" />
+              <circle r="48" fill="url(#tight-face)" stroke="url(#tight-bezel)" strokeWidth="5" />
+              <path d={gaugeArc(41, -120, 120)} fill="none" stroke="#3f3f46" strokeWidth="7" strokeLinecap="round" />
+              <path d={gaugeArc(41, -120, thresholdAngle)} fill="none" stroke="#ef4444" strokeWidth="7" strokeLinecap="butt" />
+              <path d={gaugeArc(41, thresholdAngle, 120)} fill="none" stroke="#34d399" strokeWidth="7" strokeLinecap="round" strokeOpacity=".75" />
+              {Array.from({ length: 21 }, (_, i) => {
+                const value = i * 5;
+                const deg = -120 + (value / 100) * 240;
+                const outer = gaugePoint(48, deg);
+                const inner = gaugePoint(i % 4 === 0 ? 43.5 : 46, deg);
+                return <line key={i} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke={i % 4 === 0 ? "#d4d4d8" : "#71717a"} strokeWidth={i % 4 === 0 ? 1 : .5} strokeLinecap="round" />;
+              })}
+              <text x={thresholdAt.x} y={thresholdAt.y} fontSize="5" fontWeight="700" fill="#fca5a5" textAnchor="middle">{PRESSURE_MIN}</text>
+              <text x="-41" y="32" fontSize="7" fill="#a1a1aa" textAnchor="middle">0</text>
+              <text x="41" y="32" fontSize="7" fill="#a1a1aa" textAnchor="middle">100</text>
+              <g transform={`rotate(${angle})`} style={{ filter: `drop-shadow(0 0 3px ${low ? "rgba(248,113,113,.75)" : "rgba(251,191,36,.5)"})` }}>
+                <path d="M0 2 L-2.5 -31 L0 -36 L2.5 -31 Z" fill={low ? "#f87171" : "#fbbf24"} />
+              </g>
+              <circle r="7" fill="#27272a" stroke="url(#tight-bezel)" strokeWidth="1.2" />
+              <circle r="2.5" fill="#111114" stroke="#71717a" strokeWidth=".7" />
+              <text y="42" fontSize="4.8" letterSpacing="1.6" textAnchor="middle" fill="#52525b">PRESSION</text>
+            </svg>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-semibold uppercase tracking-[.18em] text-zinc-500">Pression carter</p>
+              <p className={`font-display text-2xl font-bold tabular-nums ${low ? "text-red-300" : "text-amber-200"}`}>{Math.round(pressure)} %</p>
+              <div className="relative mt-1 h-2 overflow-hidden rounded-full bg-zinc-800">
+                <span className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400" style={{ width: `${pressure}%` }} />
+                <span className="absolute inset-y-0 w-px bg-white/85 shadow-[0_0_4px_#fff]" style={{ left: `${PRESSURE_MIN}%` }} />
+              </div>
+              <div className="mt-1 flex justify-between text-[9px] text-zinc-500">
+                <span>0</span>
+                <span className="font-semibold text-red-300">seuil {PRESSURE_MIN}</span>
+                <span>100</span>
+              </div>
+              <p className="mt-1 text-[9px] text-zinc-500">Chaque joint contrôlé à tort coûte {PRESSURE_COST} %.</p>
+            </div>
+          </div>
+
+          {/* Carter et joints */}
+          <div className="relative mx-auto aspect-[3/2] w-full max-w-[360px]">
+            <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full" aria-hidden>
+              <defs>
+                <linearGradient id="gear-metal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3d4047" />
+                  <stop offset="48%" stopColor="#26282d" />
+                  <stop offset="100%" stopColor="#141519" />
+                </linearGradient>
+                <linearGradient id="gear-top" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4a4d55" />
+                  <stop offset="100%" stopColor="#2b2d33" />
+                </linearGradient>
+                <radialGradient id="gear-bolt" cx="38%" cy="32%" r="70%">
+                  <stop offset="0%" stopColor="#bfc2c9" />
+                  <stop offset="100%" stopColor="#4a4d55" />
+                </radialGradient>
+              </defs>
+              <ellipse cx="150" cy="184" rx="120" ry="8" fill="#000000" opacity=".55" />
+              {/* cloche d'embrayage */}
+              <ellipse cx="62" cy="100" rx="47" ry="58" fill="url(#gear-metal)" stroke="#0a0a0c" strokeWidth="2" />
+              <ellipse cx="62" cy="100" rx="35" ry="45" fill="none" stroke="#4a4d55" strokeWidth="1.2" strokeOpacity=".8" />
+              <ellipse cx="62" cy="100" rx="27" ry="36" fill="#191b1f" stroke="#121316" strokeWidth="1" />
+              {/* corps principal */}
+              <rect x="72" y="38" width="198" height="124" rx="16" fill="url(#gear-metal)" stroke="#0a0a0c" strokeWidth="2" />
+              <rect x="80" y="46" width="182" height="108" rx="11" fill="none" stroke="#4a4d55" strokeWidth=".8" strokeOpacity=".55" />
+              {/* nervures */}
+              <g stroke="#4b4e56" strokeWidth="1.2" strokeOpacity=".35">
+                <path d="M96 56 V146 M116 56 V146 M136 56 V146 M156 56 V146 M176 56 V146 M196 56 V146 M216 56 V146 M236 56 V146 M256 56 V146" />
+                <path d="M88 66 L264 66 M88 134 L264 134" />
+              </g>
+              {/* couvercle supérieur */}
+              <rect x="88" y="28" width="166" height="20" rx="7" fill="url(#gear-top)" stroke="#0a0a0c" strokeWidth="1.4" />
+              <path d="M94 33 H248" stroke="#6f737c" strokeWidth="1" strokeOpacity=".45" />
+              {/* plan de joint */}
+              <path d="M74 100 H266" stroke="#111216" strokeWidth="2" />
+              <path d="M74 98 H266" stroke="#585b63" strokeWidth=".7" strokeOpacity=".5" />
+              {/* plaque centrale */}
+              <rect x="119" y="76" width="94" height="34" rx="6" fill="#17191d" stroke="#42454c" strokeWidth="1" />
+              <text x="166" y="97" fontSize="11" letterSpacing="2.4" textAnchor="middle" fill="#7b7f88">CARTER</text>
+              {/* arbre primaire */}
+              <rect x="6" y="91" width="34" height="18" rx="3" fill="#5c6068" stroke="#202226" />
+              <circle cx="36" cy="100" r="12" fill="#23252a" stroke="#7a7e86" strokeWidth="1.2" />
+              {/* arbre secondaire */}
+              <rect x="258" y="91" width="36" height="18" rx="3" fill="#5c6068" stroke="#202226" />
+              <circle cx="264" cy="100" r="12" fill="#23252a" stroke="#7a7e86" strokeWidth="1.2" />
+              {/* bouchon de vidange */}
+              <circle cx="111" cy="162" r="12" fill="#2b2d33" stroke="#7a7e86" strokeWidth="1.3" />
+              <path d="M104 162 H118 M111 155 V169 M106 157 L116 167 M116 157 L106 167" stroke="#555961" strokeWidth=".9" />
+              {/* reniflard */}
+              <circle cx="246" cy="34" r="9" fill="#2b2d33" stroke="#7a7e86" strokeWidth="1.2" />
+              <path d="M241 30 L251 38 M251 30 L241 38" stroke="#555961" strokeWidth=".8" />
+              {/* boulons */}
+              {[[86, 44], [254, 44], [86, 154], [254, 154], [74, 100], [266, 100]].map(([cx, cy], i) => (
+                <circle key={i} cx={cx} cy={cy} r="2.6" fill="url(#gear-bolt)" stroke="#15171a" strokeWidth=".6" />
+              ))}
+            </svg>
+            {joints.map((joint) => {
+              const inspected = checked.includes(joint.id);
+              return (
+                <div key={joint.id}>
+                  <button
+                    type="button"
+                    disabled={done || inspected}
+                    onClick={() => inspect(joint)}
+                    aria-label={`${joint.label}, ${stainText[joint.stain]}`}
+                    className={`absolute grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 bg-zinc-800/95 shadow-[0_3px_10px_rgba(0,0,0,.65),inset_0_1px_1px_rgba(255,255,255,.14)] transition hover:border-amber-300 disabled:opacity-60 ${
+                      joint.leak ? "border-sky-400/60 shadow-[0_0_14px_rgba(56,189,248,.3)]" : "border-zinc-500"
+                    }`}
+                    style={{ left: `${joint.x}%`, top: `${joint.y}%` }}
+                  >
+                    <span className={`absolute inset-[5px] rounded-full border ${joint.leak ? "border-sky-300/35" : "border-zinc-600/70"}`} />
+                    {joint.stain === "wet" && <Droplet size={18} className="relative fill-sky-300 text-sky-200 drop-shadow-[0_0_5px_rgba(125,211,252,.85)]" aria-hidden />}
+                    {joint.stain === "dry" && <span aria-hidden className="relative h-3.5 w-6 rounded-[50%] bg-[radial-gradient(circle_at_35%_30%,#a8753f,#4a2d10_72%)] shadow-[0_0_0_1px_rgba(0,0,0,.35)]" />}
+                    {joint.stain === "none" && <span aria-hidden className="relative h-2 w-2 rounded-full bg-zinc-500 shadow-[inset_0_1px_1px_rgba(255,255,255,.25)]" />}
+                    {inspected && <span className="absolute -right-1.5 -top-1.5 grid h-4 w-4 place-items-center rounded-full border border-emerald-200 bg-emerald-500 text-[9px] font-bold text-emerald-950">✓</span>}
+                  </button>
+                  <span
+                    aria-hidden
+                    className={`pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wider ${joint.leak ? "text-sky-200/90" : "text-zinc-400/85"}`}
+                    style={{ left: `${joint.x}%`, top: `calc(${joint.y}% + ${joint.y > 65 ? -34 : 27}px)` }}
+                  >
+                    {joint.short}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <p className="relative z-10 mt-2 text-center text-[11px] text-zinc-500">Touchez un joint pour le contrôler : goutte brillante = suintement, tache brune = ancienne trace sèche.</p>
       </GameBoard>
     </GameFrame>
   );

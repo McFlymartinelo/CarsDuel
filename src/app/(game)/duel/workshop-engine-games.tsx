@@ -25,13 +25,21 @@ import {
 } from "./workshop-kit";
 
 const fmtMm = (value: number) => `${value.toFixed(2).replace(".", ",")} mm`;
+const shuffled = <T,>(values: T[]) => {
+  const result = [...values];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
 
 /* ------------------------------------------------------------------ */
 /* Diagnostic au stéthoscope (observer, sélectionner)                  */
 /* ------------------------------------------------------------------ */
 
 const WAVE_LEN = 60;
-const STETHO_ROUNDS = [2, 0];
+const STETHO_CYLINDERS = [0, 1, 2, 3];
 
 /** Signal d'un cylindre : une impulsion par temps, plus un cliquetis entre les temps si défaut. */
 function wave(faulty: boolean): number[] {
@@ -66,19 +74,20 @@ function Scope({ samples, phase, active }: { samples: number[]; phase: number; a
 
 function StethoscopeGame({ name, onWin, onMiss }: GameProps) {
   const [round, setRound] = useState(0);
+  const [faults] = useState(() => shuffled(STETHO_CYLINDERS).slice(0, 2));
   const [selected, setSelected] = useState<number | null>(null);
   const [cleared, setCleared] = useState<boolean[]>([false, false, false, false]);
   const [message, setMessage] = useState("Comparez les 4 signaux, choisissez celui qui cliquette.");
   const [tone, setTone] = useState<Tone>("idle");
   const tick = useClock(80);
   const win = useWinOnce(onWin);
-  const faulty = STETHO_ROUNDS[round];
+  const faulty = faults[round];
 
   const confirm = () => {
     if (selected == null) return;
     if (selected === faulty) {
       setTone("ok");
-      if (round + 1 >= STETHO_ROUNDS.length) {
+      if (round + 1 >= faults.length) {
         setMessage("Défaut localisé : les deux moteurs sont diagnostiqués.");
         win();
         return;
@@ -99,7 +108,7 @@ function StethoscopeGame({ name, onWin, onMiss }: GameProps) {
   return (
     <GameFrame
       name={name}
-      badge={`Moteur ${round + 1} / ${STETHO_ROUNDS.length}`}
+      badge={`Moteur ${round + 1} / ${faults.length}`}
       message={message}
       tone={tone}
       footer={
@@ -147,8 +156,9 @@ function StethoscopeGame({ name, onWin, onMiss }: GameProps) {
 const snap5 = (angle: number) => Math.round(angle / 5) * 5;
 
 function TimingMarksGame({ name, onWin, onMiss }: GameProps) {
-  const [crank, setCrank] = useState(130);
-  const [cam, setCam] = useState(250);
+  const [targets] = useState(() => [Math.floor(Math.random() * 12) * 30, Math.floor(Math.random() * 12) * 30] as const);
+  const [crank, setCrank] = useState(() => (targets[0] + 130) % 360);
+  const [cam, setCam] = useState(() => (targets[1] + 250) % 360);
   const [phase, setPhase] = useState<0 | 1>(0);
   const [message, setMessage] = useState("1. Amenez le repère du vilebrequin en haut, puis verrouillez-le.");
   const [tone, setTone] = useState<Tone>("idle");
@@ -156,7 +166,8 @@ function TimingMarksGame({ name, onWin, onMiss }: GameProps) {
 
   const lock = () => {
     const angle = phase === 0 ? crank : cam;
-    const gap = angleDelta(angle, 0);
+    const expected = targets[phase];
+    const gap = angleDelta(angle, expected);
     if (Math.abs(gap) > 7) {
       setTone("bad");
       setMessage(`Repère décalé de ${Math.abs(Math.round(gap))}° ${gap > 0 ? "vers la droite" : "vers la gauche"}.`);
@@ -192,8 +203,10 @@ function TimingMarksGame({ name, onWin, onMiss }: GameProps) {
           className="w-full max-w-[150px]"
         >
           <svg viewBox="-80 -86 160 166" className="w-full" aria-hidden>
-            <circle cx="0" cy="-73" r="5" fill={locked ? "#34d399" : "#10b981"} />
-            <path d="M0 -62 L0 -68" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" />
+            <g transform={`rotate(${targets[which]})`}>
+              <circle cx="0" cy="-73" r="6" fill={locked ? "#34d399" : "#10b981"} stroke="#bbf7d0" strokeWidth="1.5" />
+              <path d="M0 -62 L0 -68" stroke="#34d399" strokeWidth="3" strokeLinecap="round" />
+            </g>
             <GearSvg
               cx={0}
               cy={0}
@@ -229,6 +242,7 @@ function TimingMarksGame({ name, onWin, onMiss }: GameProps) {
     >
       <GameBoard className="p-3">
         <PartArt src="/cards/moteur/_6-cylindres-en-ligne.webp" opacity={0.14} />
+        <p className="relative z-10 mb-3 text-center text-xs font-semibold text-emerald-200">Alignez chaque trait jaune avec le repère vert lumineux. Cibles : vilebrequin {targets[0]}° · arbre à cames {targets[1]}°.</p>
         <div className="relative z-10 grid grid-cols-2 gap-3">
           {gear(0)}
           {gear(1)}
@@ -263,17 +277,26 @@ const SIDE_POINT = [
   [20, 40],
   [0, 20],
 ];
-const PIPE_START: Pipe[] = [
-  { kind: "straight", rot: 1 },
-  { kind: "elbow", rot: 0 },
-  { kind: "elbow", rot: 3 },
-  { kind: "elbow", rot: 2 },
-  { kind: "straight", rot: 0 },
-  { kind: "straight", rot: 1 },
-  { kind: "straight", rot: 1 },
-  { kind: "elbow", rot: 3 },
-  { kind: "straight", rot: 1 },
-];
+function createCircuit(): Pipe[] {
+  const routes = [[0, 1, 2, 5, 8], [0, 3, 6, 7, 8]];
+  const path = routes[Math.floor(Math.random() * routes.length)];
+  return Array.from({ length: 9 }, (_, index) => {
+    const at = path.indexOf(index);
+    if (at < 0) return { kind: Math.random() < 0.5 ? "straight" : "elbow", rot: Math.floor(Math.random() * 4) };
+    const sides: number[] = [];
+    if (at === 0) sides.push(3); else {
+      const prev = path[at - 1];
+      sides.push(prev === index - 3 ? 0 : prev === index + 3 ? 2 : prev === index + 1 ? 1 : 3);
+    }
+    if (at === path.length - 1) sides.push(1); else {
+      const next = path[at + 1];
+      sides.push(next === index - 3 ? 0 : next === index + 3 ? 2 : next === index + 1 ? 1 : 3);
+    }
+    const kind: PipeKind = (sides[0] + 2) % 4 === sides[1] ? "straight" : "elbow";
+    const rot = kind === "straight" ? (sides[0] === 1 || sides[0] === 3 ? 0 : 1) : (sides[0] === 0 && sides[1] === 1 || sides.includes(0) && sides.includes(1) ? 0 : sides[0] === 1 && sides[1] === 2 || sides.includes(1) && sides.includes(2) ? 1 : sides.includes(2) && sides.includes(3) ? 2 : 3);
+    return { kind, rot: (rot + Math.floor(Math.random() * 3) + 1) % 4 };
+  });
+}
 
 /** Suit le liquide depuis la pompe (entrée à gauche de la case 0) jusqu'au radiateur (sortie à droite de la case 8). */
 function traceCircuit(pipes: Pipe[]) {
@@ -299,7 +322,7 @@ function traceCircuit(pipes: Pipe[]) {
 }
 
 function CoolingCircuitGame({ name, onWin, onMiss }: GameProps) {
-  const [pipes, setPipes] = useState<Pipe[]>(PIPE_START);
+  const [pipes, setPipes] = useState<Pipe[]>(createCircuit);
   const [tested, setTested] = useState(false);
   const [message, setMessage] = useState("Touchez une durite pour la pivoter : reliez la pompe au radiateur.");
   const [tone, setTone] = useState<Tone>("idle");
@@ -400,23 +423,24 @@ function CoolingCircuitGame({ name, onWin, onMiss }: GameProps) {
 /* Réglage du jeu aux soupapes (cale puis jauge)                       */
 /* ------------------------------------------------------------------ */
 
-const VALVES = [
-  { label: "Admission 1", spec: 0.15, start: 0.32 },
-  { label: "Échappement 2", spec: 0.25, start: 0.06 },
-  { label: "Admission 3", spec: 0.2, start: 0.3 },
-];
-const SHIMS = [0.1, 0.15, 0.2, 0.25, 0.3];
+const VALVE_LABELS = ["Admission 1", "Échappement 2", "Admission 3"];
+const SHIM_VALUES = [0.1, 0.15, 0.2, 0.25, 0.3];
 const VALVE_TOL = 0.02;
 
 function ValveClearanceGame({ name, onWin, onMiss }: GameProps) {
+  const [valves] = useState(() => VALVE_LABELS.map((label) => {
+    const spec = SHIM_VALUES[Math.floor(Math.random() * SHIM_VALUES.length)];
+    return { label, spec, start: Math.random() < 0.5 ? Math.min(0.38, spec + 0.1) : Math.max(0.02, spec - 0.1) };
+  }));
+  const [shims] = useState(() => shuffled(SHIM_VALUES));
   const [index, setIndex] = useState(0);
   const [shim, setShim] = useState<number | null>(null);
   const [rejected, setRejected] = useState<number[]>([]);
-  const [gap, setGap] = useState(VALVES[0].start);
+  const [gap, setGap] = useState(() => valves[0].start);
   const [message, setMessage] = useState("Choisissez la cale qui correspond au jeu prescrit.");
   const [tone, setTone] = useState<Tone>("idle");
   const win = useWinOnce(onWin);
-  const valve = VALVES[index];
+  const valve = valves[index];
 
   const pick = (value: number) => {
     if (Math.abs(value - valve.spec) < 0.001) {
@@ -440,7 +464,7 @@ function ValveClearanceGame({ name, onWin, onMiss }: GameProps) {
       onMiss();
       return;
     }
-    if (index + 1 >= VALVES.length) {
+    if (index + 1 >= valves.length) {
       setTone("ok");
       setMessage("Les trois soupapes sont réglées.");
       win();
@@ -450,9 +474,9 @@ function ValveClearanceGame({ name, onWin, onMiss }: GameProps) {
     setIndex(next);
     setShim(null);
     setRejected([]);
-    setGap(VALVES[next].start);
+    setGap(valves[next].start);
     setTone("ok");
-    setMessage(`Soupape réglée. Suivante : ${VALVES[next].label}, choisissez la cale.`);
+    setMessage(`Soupape réglée. Suivante : ${valves[next].label}, choisissez la cale.`);
   };
 
   const gapPx = gap * 150;
@@ -461,7 +485,7 @@ function ValveClearanceGame({ name, onWin, onMiss }: GameProps) {
   return (
     <GameFrame
       name={name}
-      badge={`${index} / ${VALVES.length}`}
+      badge={`${index} / ${valves.length}`}
       message={message}
       tone={tone}
       footer={
@@ -470,14 +494,14 @@ function ValveClearanceGame({ name, onWin, onMiss }: GameProps) {
         </ActionButton>
       }
     >
-      <GameBoard className="p-3">
+      <GameBoard className="p-2 sm:p-3">
         <PartArt src="/cards/moteur/_4-cylindres.webp" opacity={0.12} />
-        <div className="relative z-10 space-y-3">
-          <p className="text-center text-sm font-semibold text-zinc-200">
+        <div className="relative z-10 space-y-2 sm:space-y-3">
+          <p className="text-center text-xs font-semibold text-zinc-200 sm:text-sm">
             {valve.label} · jeu prescrit {fmtMm(valve.spec)} ± {fmtMm(VALVE_TOL)}
           </p>
           <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Cales d'épaisseur">
-            {SHIMS.map((value) => (
+            {shims.map((value) => (
               <SmallButton
                 key={value}
                 disabled={shim != null || rejected.includes(value)}
@@ -488,7 +512,7 @@ function ValveClearanceGame({ name, onWin, onMiss }: GameProps) {
               </SmallButton>
             ))}
           </div>
-          <svg viewBox="0 0 240 150" className="mx-auto w-full max-w-[300px]" aria-hidden>
+          <svg viewBox="0 0 240 150" className="mx-auto w-full max-w-[240px] sm:max-w-[300px]" aria-hidden>
             <rect x="30" y="10" width="180" height="26" rx="8" fill="#3f3f46" stroke="#71717a" />
             <rect x="108" y="36" width="24" height="10" fill="#a1a1aa" />
             <rect x="108" y={46 + gapPx} width="24" height={Math.max(4, 100 - gapPx)} fill="#52525b" stroke="#71717a" />
@@ -538,14 +562,18 @@ function ValveClearanceGame({ name, onWin, onMiss }: GameProps) {
 /* Recherche de fuite (détecteur à déplacer)                           */
 /* ------------------------------------------------------------------ */
 
-const LEAKS: Point[] = [
-  { x: 27, y: 34 },
-  { x: 71, y: 52 },
-  { x: 44, y: 79 },
-];
+function createLeaks(): Point[] {
+  const points: Point[] = [];
+  while (points.length < 3) {
+    const point = { x: 18 + Math.random() * 64, y: 20 + Math.random() * 60 };
+    if (points.every((other) => Math.hypot(other.x - point.x, other.y - point.y) > 22)) points.push(point);
+  }
+  return points;
+}
 const LEAK_RADIUS = 8;
 
 function LeakSearchGame({ name, onWin, onMiss }: GameProps) {
+  const [leaks] = useState(createLeaks);
   const [pos, setPos] = useState<Point>({ x: 50, y: 50 });
   const [found, setFound] = useState<boolean[]>([false, false, false]);
   const [message, setMessage] = useState("Déplacez le détecteur : plus le signal monte, plus vous êtes près d'une fuite.");
@@ -554,12 +582,12 @@ function LeakSearchGame({ name, onWin, onMiss }: GameProps) {
 
   const signal = Math.max(
     0,
-    ...LEAKS.map((leak, i) => (found[i] ? 0 : 1 - Math.hypot(leak.x - pos.x, leak.y - pos.y) / 38)),
+    ...leaks.map((leak, i) => (found[i] ? 0 : 1 - Math.hypot(leak.x - pos.x, leak.y - pos.y) / 38)),
   );
   const count = found.filter(Boolean).length;
 
   const mark = (at: Point = pos) => {
-    const hit = LEAKS.findIndex((leak, i) => !found[i] && Math.hypot(leak.x - at.x, leak.y - at.y) <= LEAK_RADIUS);
+    const hit = leaks.findIndex((leak, i) => !found[i] && Math.hypot(leak.x - at.x, leak.y - at.y) <= LEAK_RADIUS);
     if (hit < 0) {
       setTone("bad");
       setMessage("Rien ici : le détecteur ne mesure pas de fuite à cet endroit.");
@@ -588,7 +616,7 @@ function LeakSearchGame({ name, onWin, onMiss }: GameProps) {
       <GameBoard>
         <ProbeBoard pos={pos} onMove={setPos} onAct={mark} label="Bloc moteur : déplacez le détecteur avec les flèches, Entrée pour marquer" className="aspect-[4/3] w-full">
           <PartArt src="/cards/moteur/_v8.webp" opacity={0.3} />
-          {LEAKS.map((leak, i) =>
+          {leaks.map((leak, i) =>
             found[i] ? (
               <span key={i} aria-hidden className="absolute grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-emerald-400 bg-emerald-500/20 text-emerald-200" style={{ left: `${leak.x}%`, top: `${leak.y}%` }}>
                 <Droplets size={14} />
@@ -624,7 +652,6 @@ function LeakSearchGame({ name, onWin, onMiss }: GameProps) {
 /* Ordre d'allumage (relier les bougies)                               */
 /* ------------------------------------------------------------------ */
 
-const FIRING_ORDER = [1, 3, 4, 2];
 const PLUGS = [
   { id: 1, x: 15 },
   { id: 2, x: 38 },
@@ -633,6 +660,7 @@ const PLUGS = [
 ];
 
 function FiringOrderGame({ name, onWin, onMiss }: GameProps) {
+  const [firingOrder] = useState(() => shuffled(PLUGS.map((plug) => plug.id)));
   const [progress, setProgress] = useState(0);
   const [flash, setFlash] = useState<number | null>(null);
   const [playing, setPlaying] = useState(true);
@@ -644,11 +672,11 @@ function FiringOrderGame({ name, onWin, onMiss }: GameProps) {
 
   const play = (delay = 0) => {
     later(() => setPlaying(true), delay);
-    FIRING_ORDER.forEach((id, i) => {
+    firingOrder.forEach((id, i) => {
       later(() => setFlash(id), delay + 400 + i * 700);
       later(() => setFlash(null), delay + 400 + i * 700 + 450);
     });
-    later(() => setPlaying(false), delay + 400 + FIRING_ORDER.length * 700);
+    later(() => setPlaying(false), delay + 400 + firingOrder.length * 700);
   };
 
   useEffect(() => {
@@ -658,8 +686,8 @@ function FiringOrderGame({ name, onWin, onMiss }: GameProps) {
   }, []);
 
   const press = (id: number) => {
-    if (playing || progress >= FIRING_ORDER.length) return;
-    if (id !== FIRING_ORDER[progress]) {
+    if (playing || progress >= firingOrder.length) return;
+    if (id !== firingOrder[progress]) {
       setProgress(0);
       setTone("bad");
       setMessage("Mauvais ordre : les câbles sont débranchés, reprenez depuis le début.");
@@ -669,7 +697,7 @@ function FiringOrderGame({ name, onWin, onMiss }: GameProps) {
     const next = progress + 1;
     setProgress(next);
     setTone("ok");
-    if (next >= FIRING_ORDER.length) {
+    if (next >= firingOrder.length) {
       setMessage("Ordre d'allumage correct.");
       win();
       return;
@@ -677,12 +705,12 @@ function FiringOrderGame({ name, onWin, onMiss }: GameProps) {
     setMessage(`Bougie ${id} reliée. Suivante ?`);
   };
 
-  const linked = FIRING_ORDER.slice(0, progress);
+  const linked = firingOrder.slice(0, progress);
 
   return (
     <GameFrame
       name={name}
-      badge={`${progress} / ${FIRING_ORDER.length}`}
+      badge={`${progress} / ${firingOrder.length}`}
       message={message}
       tone={tone}
       footer={
@@ -691,7 +719,7 @@ function FiringOrderGame({ name, onWin, onMiss }: GameProps) {
             Revoir l&apos;indice
           </SmallButton>
           <SmallButton onClick={() => setShowText((v) => !v)} aria-pressed={showText}>
-            {showText ? `Ordre : ${FIRING_ORDER.join(" → ")}` : "Indice écrit"}
+            {showText ? `Ordre : ${firingOrder.join(" → ")}` : "Indice écrit"}
           </SmallButton>
         </div>
       }

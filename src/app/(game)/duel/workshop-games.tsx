@@ -2,14 +2,16 @@
 
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type ComponentType,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react";
 import Image from "next/image";
-import { RotateCcw, RotateCw, X, Cog } from "lucide-react";
+import { RotateCcw, RotateCw, X } from "lucide-react";
 import {
   ActionButton,
   GameBoard,
@@ -18,16 +20,26 @@ import {
   SmallButton,
   angleDelta,
   clamp,
+  gearPath,
   norm360,
   useWinOnce,
   type GameProps,
   type Tone,
 } from "./workshop-kit";
+import { TireFace, TirePhoto } from "./workshop-tire-art";
 import { ENGINE_GAMES } from "./workshop-engine-games";
 import { GEARBOX_GAMES } from "./workshop-gearbox-games";
 import { TIRE_GAMES } from "./workshop-tire-games";
 
 export type WorkshopKind = "moteur" | "boite" | "pneus";
+const shuffle = <T,>(values: T[]) => {
+  const result = [...values];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
 
 
 /* ------------------------------------------------------------------ */
@@ -45,23 +57,25 @@ const ENGINE_SPOTS: Spot[] = [
 ];
 
 const TIRE_SPOTS: Spot[] = [
-  { x: 32, y: 30, r: 4 },
-  { x: 43, y: 24, r: 4 },
-  { x: 54, y: 30, r: 4 },
-  { x: 58, y: 44, r: 4 },
-  { x: 57, y: 58, r: 4 },
-  { x: 47, y: 68, r: 4 },
-  { x: 34, y: 66, r: 4 },
-  { x: 27, y: 52, r: 4 },
+  { x: 60.1, y: 12.3, r: 4.2 },
+  { x: 83.8, y: 30.5, r: 4.2 },
+  { x: 87.7, y: 60.1, r: 4.2 },
+  { x: 69.5, y: 83.8, r: 4.2 },
+  { x: 39.9, y: 87.7, r: 4.2 },
+  { x: 16.2, y: 69.5, r: 4.2 },
+  { x: 12.3, y: 39.9, r: 4.2 },
+  { x: 30.5, y: 16.2, r: 4.2 },
 ];
 
 function ScrubGame({
   name,
   image,
+  art,
+  square = false,
   spots,
   unit,
   onWin,
-}: GameProps & { image?: string; spots: Spot[]; unit: string }) {
+}: GameProps & { image?: string; art?: ReactNode; square?: boolean; spots: Spot[]; unit: string }) {
   const [grime, setGrime] = useState<number[]>(() => spots.map(() => 100));
   const [message, setMessage] = useState("Glissez le doigt sur chaque tache pour nettoyer la pièce.");
   const [tone, setTone] = useState<Tone>("idle");
@@ -154,14 +168,15 @@ function ScrubGame({
     >
       <GameBoard>
         <div
-          className="relative mx-auto aspect-[3/2] w-full max-w-[440px] touch-none select-none"
+          className={`relative mx-auto w-full touch-none select-none ${square ? "aspect-square max-w-[420px]" : "aspect-[3/2] max-w-[440px]"}`}
           onPointerDown={down}
           onPointerMove={move}
           onPointerUp={stop}
           onPointerCancel={stop}
           onPointerLeave={stop}
         >
-          {!image && (
+          {art}
+          {!image && !art && (
             <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">
               <div className="aspect-square h-[82%] rounded-full border-2 border-zinc-700/70 bg-[radial-gradient(circle_at_50%_45%,rgba(63,63,70,.35),rgba(9,9,11,.85))] shadow-[inset_0_0_40px_rgba(0,0,0,.85)]" />
             </div>
@@ -218,11 +233,14 @@ function ScrubGame({
 
 function TimingGame({
   name,
-  zone,
   target,
   onWin,
   onMiss,
-}: GameProps & { zone: [number, number]; target: number }) {
+}: GameProps & { target: number }) {
+  const [targetZone] = useState<[number, number]>(() => {
+    const start = 25 + Math.floor(Math.random() * 40);
+    return [start, start + 15];
+  });
   const [position, setPosition] = useState(8);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("Tapotez quand l'aiguille est dans la zone verte.");
@@ -255,7 +273,7 @@ function TimingGame({
   }, []);
 
   const tap = () => {
-    const inside = positionRef.current >= zone[0] && positionRef.current <= zone[1];
+    const inside = positionRef.current >= targetZone[0] && positionRef.current <= targetZone[1];
     if (!inside) {
       setProgress(0);
       setTone("bad");
@@ -284,11 +302,12 @@ function TimingGame({
     >
       <GameBoard className="px-4 pb-4 pt-3">
         <PartArt src="/cards/moteur/_4-cylindres.webp" opacity={0.24} />
+        <p className="relative z-10 mt-4 text-center text-xs font-semibold text-emerald-200">Zone cible · {targetZone[0]}–{targetZone[1]} % <span className="font-normal text-amber-200">· aiguille jaune</span></p>
         <div className="relative z-10 mt-5 h-28 w-full overflow-hidden rounded-xl border border-line bg-zinc-900">
           <div className="absolute inset-x-4 top-1/2 h-2 -translate-y-1/2 rounded-full bg-zinc-700" />
           <div
             className="absolute inset-y-0 top-1/2 h-4 -translate-y-1/2 rounded bg-emerald-500/50 shadow-[0_0_18px_rgba(16,185,129,.55)]"
-            style={{ left: `${zone[0]}%`, width: `${zone[1] - zone[0]}%` }}
+            style={{ left: `${targetZone[0]}%`, width: `${targetZone[1] - targetZone[0]}%` }}
           />
           <span
             className="absolute top-1/2 h-16 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-300 shadow-[0_0_14px_#fbbf24]"
@@ -487,14 +506,18 @@ const BOLTS = [
   { x: 98, y: 178 },
   { x: 222, y: 178 },
 ];
-const BOLT_ORDER = [0, 1, 2, 4, 3];
+const BOLT_IDS = [0, 1, 2, 3, 4];
 
 function TorqueGame({ name, onWin, onMiss }: GameProps) {
+  const [boltOrder] = useState(() => shuffle(BOLT_IDS));
+  const [target] = useState(() => 42 + Math.floor(Math.random() * 22));
+  const lowTarget = target - 12;
+  const highTarget = target + 12;
   const [step, setStep] = useState(0);
   const [torque, setTorque] = useState(0);
   const [holding, setHolding] = useState(false);
   const [flash, setFlash] = useState(false);
-  const [message, setMessage] = useState("Maintenez le boulon jusqu'à la zone verte, puis relâchez.");
+  const [message, setMessage] = useState(`Maintenez jusqu'à la zone verte ${lowTarget}–${highTarget} %, puis relâchez.`);
   const [tone, setTone] = useState<Tone>("idle");
   const torqueRef = useRef(0);
   const holdingRef = useRef(false);
@@ -519,7 +542,7 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
   );
 
   const start = () => {
-    if (holdingRef.current || busyRef.current || step >= BOLT_ORDER.length) return;
+    if (holdingRef.current || busyRef.current || step >= boltOrder.length) return;
     holdingRef.current = true;
     setHolding(true);
     setTone("idle");
@@ -531,7 +554,7 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
     holdingRef.current = false;
     setHolding(false);
     const value = torqueRef.current;
-    if (value >= 48 && value <= 72) {
+    if (value >= lowTarget && value <= highTarget) {
       busyRef.current = true;
       setFlash(true);
       setTone("ok");
@@ -544,11 +567,11 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
         torqueRef.current = 0;
         setTorque(0);
         setStep(next);
-        if (next >= BOLT_ORDER.length) {
+        if (next >= boltOrder.length) {
           setMessage("Culasse serrée au couple.");
           win();
         } else {
-          setMessage(`Boulon ${next} serré. Passez au suivant.`);
+          setMessage(`Boulon ${boltOrder[next] + 1} serré. Passez au suivant.`);
         }
       }, 320);
       return;
@@ -556,7 +579,7 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
     torqueRef.current = 0;
     setTorque(0);
     setTone("bad");
-    setMessage(value < 48 ? "Trop tôt : le couple est insuffisant." : "Trop tard : le couple est dépassé.");
+    setMessage(value < lowTarget ? "Trop tôt : le couple est insuffisant." : "Trop tard : le couple est dépassé.");
     onMiss();
   };
 
@@ -572,12 +595,12 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
     stop();
   };
 
-  const activeBolt = BOLTS[BOLT_ORDER[Math.min(step, BOLT_ORDER.length - 1)]];
+  const activeBolt = BOLTS[boltOrder[Math.min(step, boltOrder.length - 1)]];
 
   return (
     <GameFrame
       name={name}
-      badge={`Boulon ${Math.min(step + 1, BOLT_ORDER.length)} / ${BOLT_ORDER.length}`}
+      badge={`Boulon ${Math.min(step + 1, boltOrder.length)} / ${boltOrder.length}`}
       message={message}
       tone={tone}
       footer={
@@ -600,11 +623,12 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
     >
       <GameBoard className="p-3">
         <PartArt src="/cards/moteur/_v8.webp" opacity={0.22} />
+        <p className="relative z-10 mb-2 text-center text-xs font-semibold text-emerald-200">Couple cible : {target} % · zone {lowTarget}–{highTarget} %</p>
         <div className="relative z-10 mx-auto max-w-[360px]">
           <svg viewBox="0 0 320 250" className="w-full" aria-hidden>
             <rect x="46" y="34" width="228" height="186" rx="22" fill="#181a20" stroke="#3f3f46" strokeWidth="2" />
             {BOLTS.map((bolt, index) => {
-              const orderIndex = BOLT_ORDER.indexOf(index);
+              const orderIndex = boltOrder.indexOf(index);
               const active = orderIndex === step;
               const done = orderIndex < step;
               return (
@@ -691,7 +715,7 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
           </svg>
 
           <div className="mt-1 grid grid-cols-5 gap-1.5">
-            {Array.from({ length: BOLT_ORDER.length }, (_, index) => (
+            {Array.from({ length: boltOrder.length }, (_, index) => (
               <span
                 key={index}
                 className={`grid h-7 place-items-center rounded-md border font-display text-xs font-bold ${
@@ -710,7 +734,7 @@ function TorqueGame({ name, onWin, onMiss }: GameProps) {
           <div className="mt-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
             <span>Couple</span>
             <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
-              <span className="absolute inset-y-0 left-[48%] w-[24%] bg-emerald-500/40" />
+              <span className="absolute inset-y-0 bg-emerald-500/40" style={{ left: `${lowTarget}%`, width: `${highTarget - lowTarget}%` }} />
               <span className="absolute inset-y-0 left-0 bg-amber-400" style={{ width: `${torque}%` }} />
             </div>
             <span className="tabular-nums text-amber-300">{Math.round(torque)} N·m</span>
@@ -803,6 +827,62 @@ function RevGame({ name, onWin }: GameProps) {
 /* 6 · Boîte — Extraction des pignons usés (taper les rebuts)          */
 /* ------------------------------------------------------------------ */
 
+/** Pignon illustré : acier sain, ou acier usé avec dent manquante et fêlure. */
+function DebrisGear({ broken, className = "" }: { broken: boolean; className?: string }) {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const id = (name: string) => `debris-${uid}-${name}`;
+  const crack = "M33 16 L27 21 L29 25 L23 29 L25 35";
+  const branch = "M29 25 L34 28";
+  return (
+    <svg viewBox="0 0 48 48" className={`h-full w-full ${className}`} aria-hidden>
+      <defs>
+        <radialGradient id={id("steel")} cx="34%" cy="28%" r="80%">
+          {broken ? (
+            <>
+              <stop offset="0%" stopColor="#efd39a" />
+              <stop offset="42%" stopColor="#a87c40" />
+              <stop offset="100%" stopColor="#49351c" />
+            </>
+          ) : (
+            <>
+              <stop offset="0%" stopColor="#c6cbd3" />
+              <stop offset="42%" stopColor="#858b95" />
+              <stop offset="100%" stopColor="#34383f" />
+            </>
+          )}
+        </radialGradient>
+        <mask id={id("chip")}>
+          <rect width="48" height="48" fill="#ffffff" />
+          <path d="M29 0 L48 4 L46 11 L42 9 L43 16 L38 14 L39 20 L32 17 Z" fill="#000000" />
+        </mask>
+      </defs>
+      <g mask={broken ? `url(#${id("chip")})` : undefined}>
+        <g transform="translate(24 24)">
+          <path d={gearPath(12, 21, 16)} fill={`url(#${id("steel")})`} stroke="#0e0f12" strokeWidth="1.1" strokeLinejoin="round" />
+          <circle r="14.2" fill={broken ? "#2d2519" : "#24272c"} stroke="#0e0f12" strokeWidth=".9" />
+          <circle r="12.1" fill="none" stroke={broken ? "#6b5430" : "#4a4f57"} strokeWidth=".7" opacity=".7" />
+          {Array.from({ length: 5 }, (_, i) => {
+            const a = ((i * 72 - 90) * Math.PI) / 180;
+            return <circle key={i} cx={9.8 * Math.cos(a)} cy={9.8 * Math.sin(a)} r="2.3" fill="#0b0c0e" stroke={broken ? "#6b5430" : "#565b64"} strokeWidth=".45" />;
+          })}
+          <circle r="6.3" fill={`url(#${id("steel")})`} stroke="#0e0f12" strokeWidth=".9" />
+          <circle r="2.5" fill="#0b0c0f" stroke={broken ? "#8a6a38" : "#737983"} strokeWidth=".55" />
+          <path d="M-13 8 A15 15 0 0 1 -4 -14" fill="none" stroke="#ffffff" strokeWidth="1.1" strokeOpacity={broken ? ".2" : ".32"} strokeLinecap="round" />
+        </g>
+      </g>
+      {broken && (
+        <g style={{ filter: "drop-shadow(0 0 2px rgba(248,113,113,.55))" }}>
+          <path d={crack} fill="none" stroke="#5c1212" strokeWidth="3.1" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={crack} fill="none" stroke="#f87171" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={branch} fill="none" stroke="#5c1212" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={branch} fill="none" stroke="#fca5a5" strokeWidth=".9" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M33 16 L36 14 L39 15 L40 19" fill="none" stroke="#fde68a" strokeWidth="1" strokeLinecap="round" strokeOpacity=".8" />
+        </g>
+      )}
+    </svg>
+  );
+}
+
 const DEBRIS = [
   { broken: true },
   { broken: false },
@@ -817,15 +897,16 @@ const DEBRIS = [
 ];
 
 function DebrisGame({ name, onWin, onMiss }: GameProps) {
-  const [removed, setRemoved] = useState<boolean[]>(() => DEBRIS.map(() => false));
-  const [sealed, setSealed] = useState<boolean[]>(() => DEBRIS.map(() => false));
-  const [message, setMessage] = useState("Touchez les pignons fissurés, laissez les pignons sains.");
+  const [items] = useState(() => shuffle(DEBRIS));
+  const [removed, setRemoved] = useState<boolean[]>(() => items.map(() => false));
+  const [sealed, setSealed] = useState<boolean[]>(() => items.map(() => false));
+  const [message, setMessage] = useState("Touchez uniquement les pignons fissurés (fêlure rouge) : les pignons sains doivent rester intacts.");
   const [tone, setTone] = useState<Tone>("idle");
   const win = useWinOnce(onWin);
 
   const tap = (index: number) => {
     if (removed[index] || sealed[index]) return;
-    if (DEBRIS[index].broken) {
+    if (items[index].broken) {
       const next = [...removed];
       next[index] = true;
       setRemoved(next);
@@ -854,7 +935,7 @@ function DebrisGame({ name, onWin, onMiss }: GameProps) {
       <GameBoard className="p-4">
         <div className="relative z-10">
           <div className="grid grid-cols-5 gap-2">
-          {DEBRIS.map((item, index) => {
+          {items.map((item, index) => {
             const isRemoved = removed[index];
             const isSealed = sealed[index];
             return (
@@ -867,32 +948,29 @@ function DebrisGame({ name, onWin, onMiss }: GameProps) {
                   isRemoved
                     ? "invisible"
                     : item.broken
-                      ? "border-amber-500/40 bg-amber-500/10 hover:border-amber-300/70 hover:bg-amber-500/20"
+                      ? "border-amber-500/40 bg-[radial-gradient(circle_at_50%_35%,rgba(251,191,36,.16),rgba(251,191,36,.03)_72%)] hover:border-amber-300/70 hover:bg-amber-500/15"
                       : isSealed
                         ? "border-line bg-black/20 opacity-40"
                         : "border-line bg-black/20 hover:border-zinc-500"
                 }`}
               >
-                <Cog
-                  size={44}
-                  strokeWidth={1.4}
-                  className={item.broken ? "text-amber-300" : "text-zinc-600"}
-                />
-                {item.broken && (
-                  <span aria-hidden className="absolute inset-0 grid place-items-center">
-                    <span className="h-9 w-1 rotate-45 rounded-full bg-red-400/80" />
-                  </span>
-                )}
+                <span className="grid h-[82%] w-[82%] place-items-center">
+                  <DebrisGear broken={item.broken} />
+                </span>
                 {isSealed && <X size={16} className="absolute right-1 top-1 text-red-400" aria-hidden />}
               </button>
             );
           })}
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[10px] text-zinc-500">
-          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-300">
+          <span className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-300">
+            <span className="h-4 w-4 shrink-0"><DebrisGear broken /></span>
             fissuré = à retirer
           </span>
-          <span className="rounded-full border border-line bg-black/30 px-2 py-0.5">sain = à laisser</span>
+          <span className="flex items-center gap-1.5 rounded-full border border-line bg-black/30 px-2 py-0.5">
+            <span className="h-4 w-4 shrink-0"><DebrisGear broken={false} /></span>
+            sain = à laisser
+          </span>
         </div>
         </div>
       </GameBoard>
@@ -1326,6 +1404,21 @@ function TreadScrubGame({ name, onWin }: GameProps) {
   return (
     <ScrubGame
       name={name}
+      square
+      art={
+        <svg aria-hidden viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 h-full w-full">
+          <defs>
+            <radialGradient id="scrub-halo" cx="50%" cy="50%" r="50%">
+              <stop offset="55%" stopColor="#fbbf24" stopOpacity="0" />
+              <stop offset="86%" stopColor="#fbbf24" stopOpacity=".1" />
+              <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <ellipse cx="50" cy="96" rx="28" ry="3" fill="#000000" opacity=".5" />
+          <circle cx="50" cy="50" r="49" fill="url(#scrub-halo)" />
+          <TireFace cx={50} cy={50} size={44} variant="worn" />
+        </svg>
+      }
       spots={TIRE_SPOTS}
       unit="résidu"
       onWin={onWin}
@@ -1454,29 +1547,47 @@ function BandTraceGame({ name, onWin, onMiss }: GameProps) {
           onPointerCancel={stop}
         >
           <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden>
+            <defs>
+              <radialGradient id="band-halo" cx="50%" cy="50%" r="50%">
+                <stop offset="58%" stopColor="#34d399" stopOpacity="0" />
+                <stop offset="88%" stopColor="#34d399" stopOpacity=".1" />
+                <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+              </radialGradient>
+              <linearGradient id="band-new" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#6ee7b7" />
+                <stop offset="55%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#10b981" />
+              </linearGradient>
+            </defs>
+            <ellipse cx="100" cy="190" rx="58" ry="7" fill="#000000" opacity=".55" />
+            <circle cx="100" cy="100" r="99" fill="url(#band-halo)" />
+            <TireFace size={94} variant="worn" />
+            <circle cx="100" cy="100" r="91" fill="none" stroke="#0a0a0c" strokeWidth="13" strokeOpacity=".6" />
+            <circle cx="100" cy="100" r="91" fill="none" stroke="#34d399" strokeOpacity=".25" strokeWidth="1.5" strokeDasharray="4 5" />
             <circle
               cx="100"
               cy="100"
               r="91"
               fill="none"
-              stroke="#34d399"
-              strokeOpacity="0.25"
-              strokeWidth="1.5"
-              strokeDasharray="4 5"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="91"
-              fill="none"
-              stroke="#34d399"
-              strokeWidth="4"
+              stroke="url(#band-new)"
+              strokeWidth="7"
               strokeLinecap="round"
               strokeDasharray={`${(progress / 360) * 572} 572`}
               transform="rotate(-90 100 100)"
               style={{ filter: "drop-shadow(0 0 6px rgba(52,211,153,.6))" }}
             />
-            <circle cx="100" cy="9" r="3.5" fill="#34d399" />
+            <circle cx="100" cy="9" r="4.5" fill="#34d399" style={{ filter: "drop-shadow(0 0 5px rgba(52,211,153,.9))" }} />
+            {progress > 0 && (
+              <circle
+                cx={100 + 91 * Math.sin((progress * Math.PI) / 180)}
+                cy={100 - 91 * Math.cos((progress * Math.PI) / 180)}
+                r="5.5"
+                fill="#d1fae5"
+                stroke="#34d399"
+                strokeWidth="1.5"
+                style={{ filter: "drop-shadow(0 0 5px rgba(52,211,153,.8))" }}
+              />
+            )}
           </svg>
           {tracing && (
             <span className="absolute left-3 top-3 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-300">
@@ -1547,20 +1658,31 @@ function ThermostatGame({ name, onWin }: GameProps) {
       }
     >
       <GameBoard className="p-4">
-        <div className="relative mx-auto h-56 w-56">
-          <div aria-hidden className="absolute inset-4 rounded-full bg-red-500/20 blur-2xl" />
-          <div
-            aria-hidden
-            className="absolute inset-0 rounded-full border-[18px] border-zinc-800 bg-zinc-950 shadow-[inset_0_0_30px_#000]"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-[30%] rounded-full border border-zinc-700 bg-zinc-900 shadow-[inset_0_0_18px_#000]"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 rounded-full shadow-[inset_0_0_36px_rgba(248,113,113,.28)]"
-          />
+        <div className="relative mx-auto aspect-square w-full max-w-[380px]">
+          <div aria-hidden className="absolute inset-0 rounded-[30px] border border-red-500/25 bg-[radial-gradient(circle_at_50%_58%,rgba(248,113,113,.16),rgba(9,9,11,.35)_62%)] shadow-[inset_0_0_60px_rgba(0,0,0,.92)]" />
+          <span aria-hidden className="absolute left-3 top-3 h-2.5 w-2.5 rounded-full border border-zinc-500 bg-zinc-800 shadow-[inset_0_1px_1px_rgba(255,255,255,.2)]" />
+          <span aria-hidden className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full border border-zinc-500 bg-zinc-800 shadow-[inset_0_1px_1px_rgba(255,255,255,.2)]" />
+          <span aria-hidden className="absolute bottom-3 left-3 h-2.5 w-2.5 rounded-full border border-zinc-500 bg-zinc-800 shadow-[inset_0_1px_1px_rgba(255,255,255,.2)]" />
+          <span aria-hidden className="absolute bottom-3 right-3 h-2.5 w-2.5 rounded-full border border-zinc-500 bg-zinc-800 shadow-[inset_0_1px_1px_rgba(255,255,255,.2)]" />
+          <div className="absolute inset-[9%] overflow-hidden rounded-[22px] border border-white/5 bg-black/40">
+            <TirePhoto glow="hot" size="90%" opacity={0.95} />
+            <span aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_68%,rgba(248,113,113,.2),transparent_62%)]" />
+            <span aria-hidden className="absolute left-1/2 top-[7%] h-16 w-24 -translate-x-1/2 rounded-full bg-white/10 blur-2xl" />
+            <span aria-hidden className="absolute left-1/2 top-[13%] h-9 w-14 -translate-x-1/2 rounded-full bg-white/[.06] blur-xl" />
+          </div>
+          <span className={`absolute left-3 top-3 rounded-lg border px-2 py-1 font-display text-base font-bold tabular-nums ${inBand ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-red-500/35 bg-red-500/10 text-red-300"}`}>
+            {Math.round(temp)} °C
+          </span>
+          <span className="absolute right-3 top-3 grid h-12 w-12 place-items-center">
+            <svg viewBox="0 0 40 40" className="absolute inset-0 -rotate-90" aria-hidden>
+              <circle cx="20" cy="20" r="16" fill="rgba(9,9,11,.75)" stroke="#27272a" strokeWidth="3" />
+              <circle cx="20" cy="20" r="16" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(hold / 3000) * 100.5} 100.5`} style={{ filter: "drop-shadow(0 0 3px rgba(52,211,153,.7))" }} />
+            </svg>
+            <b className="relative text-[11px] tabular-nums text-emerald-300">{(hold / 1000).toFixed(1)}</b>
+          </span>
+          <span className={`absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[.18em] ${inBand ? "border-red-500/40 bg-red-500/15 text-red-200" : "border-line bg-black/50 text-zinc-500"}`}>
+            {inBand ? "Gomme en cuisson" : "Chambre froide"}
+          </span>
         </div>
         <div className="mt-4">
           <div className="relative h-3 overflow-hidden rounded-full bg-zinc-800">
@@ -1569,6 +1691,7 @@ function ThermostatGame({ name, onWin }: GameProps) {
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-600 to-amber-400"
               style={{ width: `${(temp / 120) * 100}%` }}
             />
+            <span className="absolute inset-y-0 w-px bg-white/70 shadow-[0_0_4px_#fff]" style={{ left: `${(temp / 120) * 100}%` }} />
           </div>
           <div className="mt-1 flex justify-between text-[10px] text-zinc-500">
             <span>0 °C</span>
@@ -1593,7 +1716,7 @@ const LEGACY_GAMES = {
   scrub: (props: GameProps) => (
     <ScrubGame {...props} image="/workshop/engine-workshop-v2.png" spots={ENGINE_SPOTS} unit="tache" />
   ),
-  valveLap: (props: GameProps) => <TimingGame {...props} zone={[40, 60]} target={3} />,
+  valveLap: (props: GameProps) => <TimingGame {...props} target={3} />,
   rings: RingGame,
   torque: TorqueGame,
   rev: RevGame,

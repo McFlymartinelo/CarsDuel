@@ -103,8 +103,8 @@ export function GameFrame({
 }) {
   const toneClass = tone === "ok" ? "text-emerald-300" : tone === "bad" ? "text-red-300" : "text-amber-200";
   return (
-    <div className="mt-5 rounded-xl border border-line bg-black/25 p-4 sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+    <div className="mt-3 rounded-xl border border-line bg-black/25 p-3 sm:mt-5 sm:p-6">
+      <div className="mb-2 flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-widest text-zinc-500 sm:mb-4">
         <span>Atelier · {name}</span>
         {badge != null && (
           <span className="rounded-full border border-line bg-black/40 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-zinc-300">
@@ -113,7 +113,7 @@ export function GameFrame({
         )}
       </div>
       {children}
-      <div aria-live="polite" className={`mt-3 min-h-5 text-center text-sm ${toneClass}`}>
+      <div aria-live="polite" className={`mt-2 min-h-5 text-center text-sm ${toneClass} sm:mt-3`}>
         {message}
       </div>
       {footer}

@@ -19,6 +19,7 @@ import {
   type Point,
   type Tone,
 } from "./workshop-kit";
+import { TireFace } from "./workshop-tire-art";
 
 const polar = (cx: number, cy: number, radius: number, deg: number) => ({
   x: cx + radius * Math.sin((deg * Math.PI) / 180),
@@ -34,12 +35,30 @@ const fmtDepth = (value: number) => `${value.toFixed(1).replace(".", ",")} mm`;
 
 type DefectKind = "cut" | "bulge" | "object";
 const DEFECT_LABEL: Record<DefectKind, string> = { cut: "Coupure", bulge: "Hernie", object: "Objet incrusté" };
-const DEFECTS: { angle: number; kind: DefectKind }[] = [
-  { angle: 40, kind: "cut" },
-  { angle: 130, kind: "bulge" },
-  { angle: 215, kind: "object" },
-  { angle: 305, kind: "cut" },
-];
+function createDefects(): { angle: number; kind: DefectKind }[] {
+  const positions = Array.from({ length: 8 }, (_, index) => index * 45);
+  const count = 3 + Math.floor(Math.random() * 4);
+  const kinds: DefectKind[] = ["cut", "bulge", "object"];
+  const extras: DefectKind[] = ["cut", "bulge", "object"];
+  for (let i = positions.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+  for (let i = kinds.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
+  }
+  for (let i = extras.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [extras[i], extras[j]] = [extras[j], extras[i]];
+  }
+  kinds.push(...extras.slice(0, count - kinds.length));
+  for (let i = kinds.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
+  }
+  return positions.slice(0, count).map((angle, index) => ({ angle, kind: kinds[index] }));
+}
 const LENS_TOLERANCE = 16;
 
 function DefectIcon({ kind }: { kind: DefectKind }) {
@@ -49,13 +68,14 @@ function DefectIcon({ kind }: { kind: DefectKind }) {
 }
 
 function CarcassInspectionGame({ name, onWin, onMiss }: GameProps) {
-  const [angle, setAngle] = useState(0);
-  const [tagged, setTagged] = useState<boolean[]>([false, false, false, false]);
+  const [defects] = useState(createDefects);
+  const [angle, setAngle] = useState(() => norm360(-defects[0].angle));
+  const [tagged, setTagged] = useState<boolean[]>(() => defects.map(() => false));
   const [message, setMessage] = useState("Faites tourner le pneu : amenez un défaut sous la loupe, puis qualifiez-le.");
   const [tone, setTone] = useState<Tone>("idle");
   const win = useWinOnce(onWin);
 
-  const underLens = DEFECTS.findIndex((defect) => Math.abs(norm360(defect.angle + angle + 180) - 180) <= LENS_TOLERANCE);
+  const underLens = defects.findIndex((defect) => Math.abs(norm360(defect.angle + angle + 180) - 180) <= LENS_TOLERANCE);
 
   const qualify = (kind: DefectKind) => {
     if (underLens < 0) {
@@ -69,7 +89,7 @@ function CarcassInspectionGame({ name, onWin, onMiss }: GameProps) {
       setMessage("Ce défaut est déjà signalé.");
       return;
     }
-    if (DEFECTS[underLens].kind !== kind) {
+    if (defects[underLens].kind !== kind) {
       setTone("bad");
       setMessage(`Ce n'est pas : ${DEFECT_LABEL[kind].toLowerCase()}. Observez sa forme.`);
       onMiss();
@@ -91,7 +111,7 @@ function CarcassInspectionGame({ name, onWin, onMiss }: GameProps) {
   return (
     <GameFrame
       name={name}
-      badge={`${tagged.filter(Boolean).length} / ${DEFECTS.length}`}
+      badge={`${tagged.filter(Boolean).length} / ${defects.length}`}
       message={message}
       tone={tone}
       footer={
@@ -112,28 +132,36 @@ function CarcassInspectionGame({ name, onWin, onMiss }: GameProps) {
       }
     >
       <GameBoard className="p-2">
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_44%,rgba(251,191,36,.10),transparent_62%)]" />
         <Rotary angle={angle} onChange={(value) => setAngle(norm360(Math.round(value / 5) * 5))} label="Pneu : faire tourner" step={15} className="relative mx-auto aspect-square w-full max-w-[380px]">
           <div className="absolute inset-0" style={{ transform: `rotate(${angle}deg)` }}>
             <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden>
-              {Array.from({ length: 24 }, (_, i) => {
-                const a = polar(100, 100, 94, i * 15);
-                const b = polar(100, 100, 89, i * 15);
-                return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#71717a" strokeWidth={i % 6 === 0 ? 2 : 1} />;
-              })}
-              {DEFECTS.map((defect, i) => {
-                const at = polar(100, 100, 74, defect.angle);
+              <TireFace variant="worn" size={88} />
+              {defects.map((defect, i) => {
+                const at = polar(100, 100, 80, defect.angle);
                 return (
-                  <g key={i} transform={`translate(${at.x} ${at.y}) rotate(${defect.angle})`} opacity={tagged[i] ? 0.45 : 1}>
+                  <g key={i} transform={`translate(${at.x} ${at.y}) rotate(${defect.angle})`} opacity={tagged[i] ? 0.55 : 1}>
+                    <circle r="12" fill="rgba(9,9,11,.58)" stroke={tagged[i] ? "#34d399" : "rgba(255,255,255,.22)"} strokeWidth="1" />
                     <DefectIcon kind={defect.kind} />
-                    {tagged[i] && <circle r="11" fill="none" stroke="#34d399" strokeWidth="2" />}
+                    {tagged[i] && <circle r="14" fill="none" stroke="#34d399" strokeWidth="1.8" strokeDasharray="3 2" />}
                   </g>
                 );
               })}
             </svg>
           </div>
           <svg viewBox="0 0 200 200" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-            <circle cx="100" cy="26" r="21" fill="none" stroke={underLens >= 0 ? "#34d399" : "#fbbf24"} strokeWidth="2.5" strokeDasharray="5 4" />
-            <path d="M100 2 L100 -4" stroke="#fbbf24" />
+            <ellipse cx="100" cy="192" rx="56" ry="7" fill="#000000" opacity=".55" />
+            <defs>
+              <radialGradient id="inspection-glass" cx="38%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity=".2" />
+                <stop offset="55%" stopColor="#fbbf24" stopOpacity=".08" />
+                <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <circle cx="100" cy="22" r="18" fill="url(#inspection-glass)" stroke={underLens >= 0 ? "#34d399" : "#fbbf24"} strokeWidth="2.4" strokeDasharray="5 4" />
+            <circle cx="100" cy="22" r="12" fill="none" stroke={underLens >= 0 ? "#6ee7b7" : "#fde68a"} strokeWidth="1" strokeOpacity=".55" />
+            <path d="M100 1 V8 M91 22 H94 M106 22 H109 M100 36 V40" stroke={underLens >= 0 ? "#6ee7b7" : "#fde68a"} strokeWidth="1.5" strokeLinecap="round" />
+            <text x="100" y="49" fontSize="5" letterSpacing="1.2" textAnchor="middle" fill={underLens >= 0 ? "#6ee7b7" : "#fde68a"} opacity=".75">LOUPE</text>
           </svg>
         </Rotary>
       </GameBoard>
@@ -145,20 +173,20 @@ function CarcassInspectionGame({ name, onWin, onMiss }: GameProps) {
 /* Équilibrage de roue (placer des masses)                             */
 /* ------------------------------------------------------------------ */
 
-const HEAVY = { angle: 75, grams: 20 };
 const MASS_GRAMS = 5;
-const MASS_MAX = 4;
 const BALANCE_TOL = 3;
 const clockHour = (deg: number) => Math.round(norm360(deg) / 30) || 12;
 
 function WheelBalanceGame({ name, onWin, onMiss }: GameProps) {
+  const [heavy] = useState(() => ({ angle: Math.floor(Math.random() * 24) * 15, grams: (1 + Math.floor(Math.random() * 4)) * MASS_GRAMS }));
+  const massMax = heavy.grams / MASS_GRAMS;
   const [masses, setMasses] = useState<number[]>([]);
   const [cursor, setCursor] = useState(0);
   const [message, setMessage] = useState("Le point lourd tire la roue : posez des masses de 5 g du côté opposé.");
   const [tone, setTone] = useState<Tone>("idle");
   const win = useWinOnce(onWin);
 
-  const vector = [{ angle: HEAVY.angle, grams: HEAVY.grams }, ...masses.map((angle) => ({ angle, grams: MASS_GRAMS }))].reduce(
+  const vector = [{ angle: heavy.angle, grams: heavy.grams }, ...masses.map((angle) => ({ angle, grams: MASS_GRAMS }))].reduce(
     (total, item) => ({
       x: total.x + item.grams * Math.sin((item.angle * Math.PI) / 180),
       y: total.y - item.grams * Math.cos((item.angle * Math.PI) / 180),
@@ -169,7 +197,7 @@ function WheelBalanceGame({ name, onWin, onMiss }: GameProps) {
   const residualAngle = norm360((Math.atan2(vector.x, -vector.y) * 180) / Math.PI);
 
   const place = () => {
-    if (masses.length >= MASS_MAX) {
+    if (masses.length >= massMax) {
       setTone("bad");
       setMessage("Plus de masses disponibles : retirez-en une pour la déplacer.");
       return;
@@ -192,14 +220,14 @@ function WheelBalanceGame({ name, onWin, onMiss }: GameProps) {
   };
 
   const setSnapped = (value: number) => setCursor(norm360(Math.round(value / 15) * 15));
-  const heavyAt = polar(100, 100, 72, HEAVY.angle);
-  const cursorAt = polar(100, 100, 72, cursor);
-  const needle = polar(100, 100, Math.min(60, residual * 3.2), residualAngle);
+  const heavyAt = polar(100, 100, 75, heavy.angle);
+  const cursorAt = polar(100, 100, 58, cursor);
+  const needle = polar(100, 100, Math.min(44, residual * 2.6), residualAngle);
 
   return (
     <GameFrame
       name={name}
-      badge={`${masses.length} / ${MASS_MAX} masses`}
+      badge={`${masses.length} / ${massMax} masses`}
       message={message}
       tone={tone}
       footer={
@@ -217,23 +245,47 @@ function WheelBalanceGame({ name, onWin, onMiss }: GameProps) {
       }
     >
       <GameBoard className="p-2">
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,.08),transparent_66%)]" />
         <Rotary angle={cursor} onChange={setSnapped} label="Position de la masse sur la jante" step={15} className="relative mx-auto aspect-square w-full max-w-[360px]">
           <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden>
-            <circle cx="100" cy="100" r="55" fill="rgba(9,9,11,.82)" stroke="#52525b" strokeWidth="2" />
-            <circle cx="100" cy="100" r="72" fill="none" stroke="#3f3f46" strokeDasharray="2 6" />
-            <circle cx={heavyAt.x} cy={heavyAt.y} r="11" fill="rgba(239,68,68,.35)" stroke="#f87171" strokeWidth="2" />
-            <text x={heavyAt.x} y={heavyAt.y + 3.5} fontSize="9" fontWeight="700" fill="#fecaca" textAnchor="middle">20g</text>
-            {masses.map((angle, i) => {
-              const at = polar(100, 100, 72, angle);
-              return <rect key={i} x={at.x - 6} y={at.y - 5} width="12" height="10" rx="2" fill="#fbbf24" stroke="#fde68a" transform={`rotate(${angle} ${at.x} ${at.y})`} />;
+            <defs>
+              <radialGradient id="balance-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="62%" stopColor="#fbbf24" stopOpacity="0" />
+                <stop offset="88%" stopColor="#fbbf24" stopOpacity=".07" />
+                <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <ellipse cx="100" cy="188" rx="54" ry="7" fill="#000000" opacity=".55" />
+            <TireFace size={86} />
+            <circle cx="100" cy="100" r="99" fill="url(#balance-glow)" />
+            {Array.from({ length: 12 }, (_, i) => {
+              const a = i * 30;
+              const outer = polar(100, 100, 98, a);
+              const inner = polar(100, 100, i % 3 === 0 ? 90 : 94, a);
+              return <line key={i} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke={i % 3 === 0 ? "#a1a1aa" : "#52525b"} strokeWidth={i % 3 === 0 ? 1.6 : 1} strokeLinecap="round" />;
             })}
-            <circle cx={cursorAt.x} cy={cursorAt.y} r="10" fill="none" stroke="#34d399" strokeWidth="2.2" strokeDasharray="4 3" />
-            <line x1="100" y1="100" x2={needle.x} y2={needle.y} stroke={residual <= BALANCE_TOL ? "#34d399" : "#f87171"} strokeWidth="3" strokeLinecap="round" />
-            <circle cx="100" cy="100" r="4" fill="#e4e4e7" />
+            <g transform={`translate(${heavyAt.x} ${heavyAt.y})`} style={{ filter: "drop-shadow(0 0 5px rgba(248,113,113,.8))" }}>
+              <circle r="10" fill="rgba(239,68,68,.32)" stroke="#f87171" strokeWidth="2" />
+              <text y="2.6" fontSize="7" fontWeight="700" fill="#fecaca" textAnchor="middle">{heavy.grams}g</text>
+            </g>
+            {masses.map((angle, i) => {
+              const at = polar(100, 100, 58, angle);
+              return (
+                <g key={i} transform={`translate(${at.x} ${at.y}) rotate(${angle})`} style={{ filter: "drop-shadow(0 0 3px rgba(251,191,36,.55))" }}>
+                  <rect x="-6.5" y="-3.5" width="13" height="7" rx="1.6" fill="#fbbf24" stroke="#fde68a" strokeWidth=".9" />
+                  <path d="M-4.5 -1.6 H4.5" stroke="#78350f" strokeWidth=".8" opacity=".8" />
+                </g>
+              );
+            })}
+            <circle cx={cursorAt.x} cy={cursorAt.y} r="9" fill="none" stroke="#34d399" strokeWidth="2.2" strokeDasharray="4 3" />
+            <circle cx={cursorAt.x} cy={cursorAt.y} r="2.2" fill="#6ee7b7" />
+            <line x1="100" y1="100" x2={needle.x} y2={needle.y} stroke={residual <= BALANCE_TOL ? "#34d399" : "#f87171"} strokeWidth="3" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 3px ${residual <= BALANCE_TOL ? "rgba(52,211,153,.8)" : "rgba(248,113,113,.7)"})` }} />
+            <circle cx="100" cy="100" r="5" fill="#27272a" stroke="#a1a1aa" strokeWidth="1.4" />
+            <circle cx="100" cy="100" r="1.8" fill="#0a0a0c" />
           </svg>
         </Rotary>
         <p className="pb-1 text-center text-xs text-zinc-300">
-          Balourd résiduel : <b className={residual <= BALANCE_TOL ? "text-emerald-300" : "text-amber-200"}>{residual.toFixed(0)} g</b> · tolérance {BALANCE_TOL} g
+          Point lourd : <b className="text-red-300">{heavy.grams} g à {clockHour(heavy.angle)} h</b> · balourd résiduel : <b className={residual <= BALANCE_TOL ? "text-emerald-300" : "text-amber-200"}>{residual.toFixed(0)} g</b> · tolérance {BALANCE_TOL} g
         </p>
       </GameBoard>
     </GameFrame>
@@ -245,30 +297,45 @@ function WheelBalanceGame({ name, onWin, onMiss }: GameProps) {
 /* ------------------------------------------------------------------ */
 
 /* 0 vide, 1 vertical, 2 oblique « / », 3 horizontal, 4 oblique « \ ». */
-const TREAD_TARGET = [2, 2, 4, 4, 1, 0, 0, 1, 4, 4, 2, 2];
-const TREAD_START = [1, 3, 0, 2, 0, 2, 3, 4, 1, 0, 4, 3];
+const TREAD_PATTERNS = [
+  [2, 2, 4, 4, 1, 0, 0, 1, 4, 4, 2, 2],
+  [1, 3, 1, 3, 2, 0, 4, 0, 4, 2, 4, 2],
+  [4, 1, 2, 0, 3, 4, 1, 2, 0, 4, 3, 1],
+  [0, 2, 0, 4, 4, 1, 3, 2, 1, 0, 4, 3],
+  [3, 4, 1, 2, 0, 2, 4, 1, 3, 1, 0, 4],
+];
 const TREAD_ROT = [0, 0, 45, 90, 135];
 const TREAD_NAME = ["vide", "vertical", "oblique droite", "horizontal", "oblique gauche"];
 
 function TreadBlock({ state }: { state: number }) {
   return (
     <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
+      <rect x=".8" y=".8" width="22.4" height="22.4" rx="4" fill="#1b1b1f" stroke="#3b3b43" strokeWidth=".7" />
+      <path d="M3 3.2 H21" stroke="#ffffff" strokeOpacity=".07" strokeWidth=".8" />
+      <path d="M2.6 20.8 H21.4" stroke="#000000" strokeOpacity=".5" strokeWidth="1.2" />
       {state === 0 ? (
-        <rect x="8" y="4" width="8" height="16" rx="2" fill="none" stroke="#52525b" strokeDasharray="2 2" />
+        <rect x="8" y="4" width="8" height="16" rx="2" fill="#101013" stroke="#4a4a52" strokeDasharray="2 2" />
       ) : (
-        <rect x="8" y="3" width="8" height="18" rx="2.5" fill="#27272a" stroke="#fbbf24" strokeWidth="1.2" transform={`rotate(${TREAD_ROT[state]} 12 12)`} />
+        <g transform={`rotate(${TREAD_ROT[state]} 12 12)`}>
+          <rect x="7.2" y="2.2" width="9.6" height="19.6" rx="2.4" fill="#33333a" stroke="#0c0c0f" strokeWidth="1" />
+          <rect x="9" y="4" width="6" height="16" rx="1.8" fill="#16161a" />
+          <path d="M9.4 5 V19" stroke="#fbbf24" strokeOpacity=".5" strokeWidth=".7" />
+          <path d="M14.6 5 V19" stroke="#ffffff" strokeOpacity=".08" strokeWidth=".7" />
+        </g>
       )}
+      <rect x=".8" y=".8" width="22.4" height="22.4" rx="4" fill="none" stroke="#000000" strokeOpacity=".55" />
     </svg>
   );
 }
 
 function TreadPatternGame({ name, onWin, onMiss }: GameProps) {
-  const [blocks, setBlocks] = useState(TREAD_START);
+  const [target] = useState(() => TREAD_PATTERNS[Math.floor(Math.random() * TREAD_PATTERNS.length)]);
+  const [blocks, setBlocks] = useState(() => Array.from({ length: target.length }, () => Math.floor(Math.random() * 5)));
   const [wrong, setWrong] = useState<number[]>([]);
   const [message, setMessage] = useState("Touchez un bloc pour l'orienter : reproduisez le motif de référence.");
   const [tone, setTone] = useState<Tone>("idle");
   const win = useWinOnce(onWin);
-  const good = blocks.filter((value, i) => value === TREAD_TARGET[i]).length;
+  const good = blocks.filter((value, i) => value === target[i]).length;
 
   const cycle = (index: number) => {
     setBlocks((list) => list.map((value, i) => (i === index ? (value + 1) % 5 : value)));
@@ -277,7 +344,7 @@ function TreadPatternGame({ name, onWin, onMiss }: GameProps) {
   };
 
   const check = () => {
-    const bad = blocks.flatMap((value, i) => (value === TREAD_TARGET[i] ? [] : [i]));
+    const bad = blocks.flatMap((value, i) => (value === target[i] ? [] : [i]));
     if (bad.length === 0) {
       setTone("ok");
       setMessage("Sculpture conforme au motif.");
@@ -293,37 +360,52 @@ function TreadPatternGame({ name, onWin, onMiss }: GameProps) {
   return (
     <GameFrame
       name={name}
-      badge={`${good} / ${TREAD_TARGET.length}`}
+      badge={`${good} / ${target.length}`}
       message={message}
       tone={tone}
       footer={<ActionButton onClick={check}>Contrôler la sculpture</ActionButton>}
     >
-      <GameBoard className="p-3">
-        <div className="relative z-10 space-y-3">
+      <GameBoard className="p-2 sm:p-3">
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,.10),transparent_60%)]" />
+        <svg aria-hidden viewBox="0 0 200 200" className="pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 opacity-[.07]">
+          <TireFace size={100} variant="slick" />
+        </svg>
+        <div className="relative z-10 space-y-2 sm:space-y-3">
           <div>
-            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Motif de référence</p>
-            <div className="mx-auto grid max-w-[180px] grid-cols-4 gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-1" role="img" aria-label={`Motif cible : ${TREAD_TARGET.map((s) => TREAD_NAME[s]).join(", ")}`}>
-              {TREAD_TARGET.map((state, i) => (
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Motif d&apos;usine</p>
+              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300">référence</span>
+            </div>
+            <div className="mx-auto grid max-w-[150px] grid-cols-4 gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-1 sm:max-w-[180px]" role="img" aria-label={`Motif cible : ${target.map((s) => TREAD_NAME[s]).join(", ")}`}>
+              {target.map((state, i) => (
                 <span key={i} className="aspect-square"><TreadBlock state={state} /></span>
               ))}
             </div>
           </div>
           <div>
-            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Votre bande</p>
-            <div className="mx-auto grid max-w-[320px] grid-cols-4 gap-1.5">
-              {blocks.map((state, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => cycle(i)}
-                  aria-label={`Bloc ligne ${Math.floor(i / 4) + 1}, colonne ${(i % 4) + 1} : ${TREAD_NAME[state]}`}
-                  className={`aspect-square rounded-lg border bg-black/40 transition hover:border-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 ${
-                    wrong.includes(i) ? "border-red-400 bg-red-500/10" : "border-line"
-                  }`}
-                >
-                  <TreadBlock state={state} />
-                </button>
-              ))}
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Votre bande</p>
+              <span className="text-[10px] font-semibold tabular-nums text-zinc-400">{good} / {target.length} conformes</span>
+            </div>
+            <div className="mx-auto max-w-[270px] rounded-xl border border-line bg-black/35 p-1.5 sm:max-w-[320px]">
+              <div className="grid grid-cols-4 gap-1">
+                {blocks.map((state, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => cycle(i)}
+                    aria-label={`Bloc ligne ${Math.floor(i / 4) + 1}, colonne ${(i % 4) + 1} : ${TREAD_NAME[state]}`}
+                    className={`aspect-square rounded-lg border bg-black/40 transition hover:border-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 ${
+                      wrong.includes(i) ? "border-red-400 bg-red-500/10" : "border-line"
+                    }`}
+                  >
+                    <TreadBlock state={state} />
+                  </button>
+                ))}
+              </div>
+              <div className="mx-1 mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-800">
+                <span className="block h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-300 transition-all" style={{ width: `${(good / target.length) * 100}%` }} />
+              </div>
             </div>
           </div>
         </div>
@@ -336,14 +418,14 @@ function TreadPatternGame({ name, onWin, onMiss }: GameProps) {
 /* Réparation de crevaison (repérer, poncer, coller)                   */
 /* ------------------------------------------------------------------ */
 
-const PUNCTURE: Point = { x: 63, y: 36 };
+const PUNCTURE: Point = { x: 76, y: 31 };
 const PUNCTURE_TOL = 8;
 const PATCH_HOLD_MS = 1500;
 const PUNCTURE_STEPS = ["1 Repérer", "2 Poncer", "3 Coller"];
 
 function PunctureRepairGame({ name, onWin, onMiss }: GameProps) {
   const [phase, setPhase] = useState(0);
-  const [pos, setPos] = useState<Point>({ x: 38, y: 62 });
+  const [pos, setPos] = useState<Point>({ x: 38, y: 60 });
   const [sanding, setSanding] = useState(0);
   const [holdMs, setHoldMs] = useState(0);
   const [holding, setHolding] = useState(false);
@@ -446,7 +528,12 @@ function PunctureRepairGame({ name, onWin, onMiss }: GameProps) {
 
   const bubbles = Array.from({ length: 6 }, (_, k) => {
     const age = (tick + k * 2) % 12;
-    return { x: PUNCTURE.x + Math.sin(k * 2.1 + age * 0.7) * 2.2, y: PUNCTURE.y - age * 2.4, o: 1 - age / 12 };
+    return {
+      x: PUNCTURE.x + Math.sin(k * 2.1 + age * 0.7) * 2.4,
+      y: PUNCTURE.y - age * 1.7,
+      o: 1 - age / 13,
+      r: 0.9 + (k % 3) * 0.35,
+    };
   });
 
   return (
@@ -481,11 +568,44 @@ function PunctureRepairGame({ name, onWin, onMiss }: GameProps) {
       <GameBoard>
         {phase === 0 ? (
           <ProbeBoard pos={pos} onMove={setPos} onAct={mark} label="Bac d'eau : déplacez le repère avec les flèches, Entrée pour marquer" className="aspect-square w-full">
-            <div aria-hidden className="absolute inset-0 bg-sky-500/20" />
+            <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
+              <defs>
+                <linearGradient id="puncture-water" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#155e75" stopOpacity=".55" />
+                  <stop offset="45%" stopColor="#0e7490" stopOpacity=".38" />
+                  <stop offset="100%" stopColor="#082f49" stopOpacity=".75" />
+                </linearGradient>
+                <linearGradient id="puncture-glass" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#e0f2fe" stopOpacity=".14" />
+                  <stop offset="45%" stopColor="#e0f2fe" stopOpacity=".02" />
+                  <stop offset="100%" stopColor="#e0f2fe" stopOpacity=".08" />
+                </linearGradient>
+              </defs>
+              <rect x="2" y="3" width="96" height="94" rx="5" fill="#071e2a" stroke="#38bdf8" strokeOpacity=".18" strokeWidth=".8" />
+              <rect x="5" y="8" width="90" height="86" rx="3" fill="url(#puncture-water)" />
+              <path d="M5 13 Q 20 10.5 35 13 T 65 13 T 95 13 V 94 H 5 Z" fill="#0e7490" fillOpacity=".2" />
+              <path d="M5 13 Q 20 10.5 35 13 T 65 13 T 95 13" fill="none" stroke="#7dd3fc" strokeOpacity=".45" strokeWidth=".8" />
+              <ellipse cx="24" cy="80" rx="20" ry="4" fill="#7dd3fc" opacity=".06" />
+              <ellipse cx="74" cy="74" rx="14" ry="3" fill="#7dd3fc" opacity=".05" />
+              <TireFace cx={50} cy={52} size={38} />
+              <circle cx="50" cy="52" r="38" fill="#0ea5e9" opacity=".13" />
+              <rect x="2" y="3" width="96" height="94" rx="5" fill="url(#puncture-glass)" />
+              <path d="M8 10 L26 10 L10 88 L6 88 Z" fill="#bae6fd" opacity=".05" />
+              <rect x="2" y="3" width="96" height="94" rx="5" fill="none" stroke="#7dd3fc" strokeOpacity=".16" />
+              <text x="8" y="7.4" fontSize="2.6" letterSpacing=".8" fill="#7dd3fc" opacity=".6">BAC D&apos;EAU</text>
+              {Array.from({ length: 7 }, (_, i) => (
+                <line key={i} x1="6" y1={24 + i * 10} x2={i % 2 === 0 ? 9.5 : 8} y2={24 + i * 10} stroke="#7dd3fc" strokeOpacity=".22" strokeWidth=".5" />
+              ))}
+            </svg>
             {bubbles.map((bubble, i) => (
-              <span key={i} aria-hidden className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-100/80 bg-sky-200/30" style={{ left: `${bubble.x}%`, top: `${bubble.y}%`, opacity: bubble.o }} />
+              <span
+                key={i}
+                aria-hidden
+                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-100/70 bg-sky-200/25 shadow-[0_0_6px_rgba(125,211,252,.55)]"
+                style={{ left: `${bubble.x}%`, top: `${bubble.y}%`, width: `${bubble.r * 2.4}%`, aspectRatio: "1 / 1", opacity: bubble.o }}
+              />
             ))}
-            <span aria-hidden className="absolute z-10 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-amber-300" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
+            <span aria-hidden className="absolute z-10 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-amber-300 shadow-[0_0_12px_rgba(251,191,36,.45)]" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
               <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-200" />
             </span>
           </ProbeBoard>
@@ -497,14 +617,37 @@ function PunctureRepairGame({ name, onWin, onMiss }: GameProps) {
             onPointerUp={() => (last.current = null)}
             onPointerCancel={() => (last.current = null)}
           >
+            <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
+              <defs>
+                <radialGradient id="puncture-halo" cx="50%" cy="50%" r="50%">
+                  <stop offset="50%" stopColor="#fbbf24" stopOpacity=".02" />
+                  <stop offset="84%" stopColor="#fbbf24" stopOpacity=".1" />
+                  <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <ellipse cx="50" cy="94" rx="30" ry="3.2" fill="#000000" opacity=".5" />
+              <circle cx="50" cy="50" r="49" fill="url(#puncture-halo)" />
+              <TireFace cx={50} cy={50} size={44} variant="worn" />
+            </svg>
             <span
               aria-hidden
               className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${phase === 2 ? "border-emerald-400 bg-amber-200/20" : "border-dashed border-amber-300"}`}
               style={{ left: `${PUNCTURE.x}%`, top: `${PUNCTURE.y}%`, width: "26%", aspectRatio: "1 / 1", background: phase === 1 ? `rgba(251,191,36,${0.05 + sanding / 400})` : undefined }}
             />
             {phase === 2 && (
-              <span aria-hidden className="absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-zinc-200 bg-zinc-700 text-[10px] font-bold text-zinc-100" style={{ left: `${PUNCTURE.x}%`, top: `${PUNCTURE.y}%`, width: `${14 + (holdMs / PATCH_HOLD_MS) * 8}%`, aspectRatio: "1 / 1" }}>
-                RUSTINE
+              <span
+                aria-hidden
+                className="absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-zinc-300/90 text-[8px] font-bold tracking-widest text-zinc-100 shadow-[0_0_18px_rgba(0,0,0,.6)]"
+                style={{
+                  left: `${PUNCTURE.x}%`,
+                  top: `${PUNCTURE.y}%`,
+                  width: `${14 + (holdMs / PATCH_HOLD_MS) * 8}%`,
+                  aspectRatio: "1 / 1",
+                  background: "radial-gradient(circle at 34% 28%, #5a5a62, #26262b 58%, #111114)",
+                }}
+              >
+                <span className="absolute inset-[12%] rounded-full border border-zinc-500/70" />
+                <span className="relative">RUSTINE</span>
               </span>
             )}
           </div>
@@ -523,20 +666,30 @@ function PunctureRepairGame({ name, onWin, onMiss }: GameProps) {
 /* Contrôle de profondeur (mesurer, décider)                           */
 /* ------------------------------------------------------------------ */
 
-const DEPTH_ROUNDS = [
-  { depths: [6.1, 5.8, 6.3, 5.9], ok: true },
-  { depths: [7.0, 3.2, 6.8, 3.0], ok: false },
-];
 const DEPTH_MAX_GAP = 1.5;
 
+function createDepthRounds() {
+  const around = (center: number, spread: number) =>
+    Math.round((center + (Math.random() * 2 - 1) * spread) * 10) / 10;
+  const goodCenter = 3 + Math.random() * 4;
+  const lowCenter = 2.5 + Math.random();
+  const highCenter = 5.6 + Math.random() * 1.4;
+  const rounds = [
+    { depths: Array.from({ length: 4 }, () => around(goodCenter, 0.4)), ok: true },
+    { depths: [around(lowCenter, 0.2), around(lowCenter, 0.2), around(highCenter, 0.2), around(highCenter, 0.2)], ok: false },
+  ];
+  return Math.random() < 0.5 ? rounds : rounds.reverse();
+}
+
 function DepthCheckGame({ name, onWin, onMiss }: GameProps) {
+  const [rounds] = useState(createDepthRounds);
   const [round, setRound] = useState(0);
   const [probes, setProbes] = useState([0, 0, 0, 0]);
   const [groove, setGroove] = useState(0);
   const [message, setMessage] = useState(`Mesurez les 4 rainures. Rechapable si l'écart entre rainures reste ≤ ${fmtDepth(DEPTH_MAX_GAP)}.`);
   const [tone, setTone] = useState<Tone>("idle");
   const win = useWinOnce(onWin);
-  const data = DEPTH_ROUNDS[round];
+  const data = rounds[round];
   const measured = data.depths.map((depth, i) => (probes[i] >= depth ? depth : null));
   const allMeasured = measured.every((value) => value != null);
   const gap = Math.max(...data.depths) - Math.min(...data.depths);
@@ -556,7 +709,7 @@ function DepthCheckGame({ name, onWin, onMiss }: GameProps) {
       return;
     }
     setTone("ok");
-    if (round + 1 >= DEPTH_ROUNDS.length) {
+    if (round + 1 >= rounds.length) {
       setMessage("Bonnes décisions : le contrôle est terminé.");
       win();
       return;
@@ -572,7 +725,7 @@ function DepthCheckGame({ name, onWin, onMiss }: GameProps) {
   return (
     <GameFrame
       name={name}
-      badge={`Pneu ${round + 1} / ${DEPTH_ROUNDS.length}`}
+      badge={`Pneu ${round + 1} / ${rounds.length}`}
       message={message}
       tone={tone}
       footer={
@@ -584,19 +737,97 @@ function DepthCheckGame({ name, onWin, onMiss }: GameProps) {
     >
       <GameBoard className="p-3">
         <div className="relative z-10 space-y-3">
-          <svg viewBox="0 0 240 130" className="w-full" aria-hidden>
-            <rect x="10" y="30" width="220" height="86" rx="8" fill="#27272a" stroke="#52525b" />
-            <rect x="10" y="30" width="220" height="10" fill="#3f3f46" />
+          <svg viewBox="0 0 240 138" className="w-full" role="img" aria-label={message}>
+            <defs>
+              <linearGradient id="depth-rubber" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3a3a42" />
+                <stop offset="45%" stopColor="#26262c" />
+                <stop offset="100%" stopColor="#151519" />
+              </linearGradient>
+              <linearGradient id="depth-probe" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#71717a" />
+                <stop offset="45%" stopColor="#f4f4f5" />
+                <stop offset="100%" stopColor="#52525b" />
+              </linearGradient>
+              <pattern id="depth-bench" width="8" height="8" patternUnits="userSpaceOnUse">
+                <path d="M0 8 L8 0" stroke="#27272a" strokeWidth=".6" />
+              </pattern>
+            </defs>
+            <rect x="0" y="0" width="240" height="138" fill="url(#depth-bench)" opacity=".45" />
+            <ellipse cx="120" cy="120" rx="104" ry="7" fill="#000000" opacity=".55" />
+            <path
+              d="M24 34 H216 Q226 34 227 46 V96 Q227 109 214 109 H26 Q13 109 13 96 V46 Q14 34 24 34 Z"
+              fill="url(#depth-rubber)"
+              stroke="#08080a"
+              strokeWidth="1.6"
+            />
+            <rect x="14" y="34" width="212" height="15" fill="#2f2f36" />
+            <path d="M14 49 H226" stroke="#101013" strokeWidth="1.2" />
+            <path d="M16 82 H224 M16 89 H224 M16 96 H224" stroke="#55555f" strokeWidth="1.4" strokeDasharray="5 2" opacity=".32" />
+            <path d="M16 86 H224 M16 93 H224" stroke="#777782" strokeWidth="1" strokeDasharray="2 3" opacity=".28" />
             {data.depths.map((depth, i) => {
-              const bottom = 30 + (measured[i] != null ? depth * 8 : 14);
+              const measuredDepth = measured[i] != null;
+              const bottom = 34 + (measuredDepth ? depth * 8 : 12);
+              const probeTip = 34 + Math.min(probes[i], depth) * 8;
+              const active = groove === i;
               return (
                 <g key={i}>
-                  <rect x={x(i) - 8} y="30" width="16" height={bottom - 30} fill="#09090b" stroke={groove === i ? "#fbbf24" : "#52525b"} />
-                  {measured[i] != null && <text x={x(i)} y={bottom + 14} fontSize="10" fill="#6ee7b7" textAnchor="middle">{fmtDepth(depth)}</text>}
+                  {/* rainure */}
+                  <rect
+                    x={x(i) - 8}
+                    y="34"
+                    width="16"
+                    height={bottom - 34}
+                    rx="3"
+                    fill="#070709"
+                    stroke={active ? "#fbbf24" : "#3d3d46"}
+                    strokeWidth={active ? 1.3 : .7}
+                  />
+                  <path d={`M${x(i) - 6.5} 37 V${bottom - 3}`} stroke="#000000" strokeWidth="2" opacity=".7" />
+                  <path d={`M${x(i) + 6.5} 37 V${bottom - 3}`} stroke="#ffffff" strokeWidth=".7" opacity=".07" />
+                  {measuredDepth && (
+                    <g>
+                      <rect x={x(i) - 14} y={bottom + 4} width="28" height="11" rx="3" fill="#052e24" stroke="#34d399" strokeOpacity=".45" />
+                      <text x={x(i)} y={bottom + 11.6} fontSize="6.4" fontWeight="700" fill="#6ee7b7" textAnchor="middle">{fmtDepth(depth)}</text>
+                    </g>
+                  )}
+                  {active && (
+                    <path
+                      d={`M${x(i) - 1.5} 12 V${probeTip - 2}`}
+                      stroke={probeTip >= bottom - 0.15 ? "#6ee7b7" : "#fbbf24"}
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeDasharray="3 2"
+                      opacity=".25"
+                    />
+                  )}
                 </g>
               );
             })}
-            <rect x={x(groove) - 2} y={4} width="4" height={26 + Math.min(probes[groove], data.depths[groove]) * 8} fill="#fbbf24" />
+            {/* blocs de gomme entre les rainures */}
+            {[0, 1, 2, 3].map((i) => {
+              const from = i === 0 ? 20 : x(i - 1) + 10;
+              const to = x(i) - 10;
+              return (
+                <g key={i} stroke="#17171b" strokeWidth=".8" opacity=".8">
+                  <path d={`M${from + 4} 37 V47 M${from + 10} 37 V47 M${to - 4} 37 V47 M${to - 10} 37 V47`} />
+                </g>
+              );
+            })}
+            {/* sonde */}
+            <g>
+              <rect x={x(groove) - 7} y="2" width="14" height="8" rx="2.2" fill="#3f3f46" stroke="#71717a" strokeWidth=".8" />
+              <rect x={x(groove) - 1.6} y="10" width="3.2" height={34 + Math.min(probes[groove], data.depths[groove]) * 8 - 10} fill="url(#depth-probe)" />
+              <path
+                d={`M${x(groove) - 1.6} ${34 + Math.min(probes[groove], data.depths[groove]) * 8} L${x(groove)} ${34 + Math.min(probes[groove], data.depths[groove]) * 8 + 4} L${x(groove) + 1.6} ${34 + Math.min(probes[groove], data.depths[groove]) * 8} Z`}
+                fill="#e4e4e7"
+              />
+              <rect x={x(groove) - 17} y="3" width="7" height="6" rx="1.5" fill="#18181b" stroke="#52525b" strokeWidth=".6" />
+              <rect x={x(groove) + 10} y="3" width="7" height="6" rx="1.5" fill="#18181b" stroke="#52525b" strokeWidth=".6" />
+            </g>
+            <text x="120" y="21" fontSize="5.6" letterSpacing="1.5" textAnchor="middle" fill="#a1a1aa" opacity=".62">BANDE DE ROULEMENT</text>
+            <text x="120" y="128" fontSize="5" letterSpacing="1.6" textAnchor="middle" fill="#71717a" opacity=".75">CARCASSE</text>
+            <text x="12" y="128" fontSize="4.6" fill="#52525b">RAINURE {groove + 1} / 4</text>
           </svg>
           <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Rainure à mesurer">
             {data.depths.map((_, i) => (
@@ -625,7 +856,6 @@ function DepthCheckGame({ name, onWin, onMiss }: GameProps) {
 /* Pression de gonflage (régler sans dépasser)                         */
 /* ------------------------------------------------------------------ */
 
-const P_ZONE: [number, number] = [2.2, 2.4];
 const P_BURST = 2.8;
 const P_MAX = 4;
 const P_STABLE_MS = 1200;
@@ -638,6 +868,10 @@ const arc = (r: number, from: number, to: number) => {
 const pressureAngle = (value: number) => -120 + (value / P_MAX) * 240;
 
 function InflationGame({ name, onWin, onMiss }: GameProps) {
+  const [targetZone] = useState<[number, number]>(() => {
+    const low = 1.4 + Math.floor(Math.random() * 11) / 10;
+    return [low, low + 0.2];
+  });
   const [pressure, setPressure] = useState(1.2);
   const [stable, setStable] = useState(0);
   const [holding, setHolding] = useState(false);
@@ -677,7 +911,7 @@ function InflationGame({ name, onWin, onMiss }: GameProps) {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      const inZone = pressureRef.current >= P_ZONE[0] && pressureRef.current <= P_ZONE[1];
+      const inZone = pressureRef.current >= targetZone[0] && pressureRef.current <= targetZone[1];
       stableRef.current = inZone ? stableRef.current + 100 : 0;
       setStable(stableRef.current);
       if (stableRef.current >= P_STABLE_MS) {
@@ -690,7 +924,7 @@ function InflationGame({ name, onWin, onMiss }: GameProps) {
       }
     }, 100);
     return () => window.clearInterval(timer);
-  }, [win]);
+  }, [targetZone, win]);
 
   const start = () => {
     if (holdingRef.current) return;
@@ -703,10 +937,10 @@ function InflationGame({ name, onWin, onMiss }: GameProps) {
     if (!holdingRef.current) return;
     holdingRef.current = false;
     setHolding(false);
-    setMessage(pressureRef.current < P_ZONE[0] ? "Pression encore trop basse." : pressureRef.current > P_ZONE[1] ? "Trop haut : purgez un peu." : "Dans la zone : ne touchez plus à rien.");
+    setMessage(pressureRef.current < targetZone[0] ? "Pression encore trop basse." : pressureRef.current > targetZone[1] ? "Trop haut : purgez un peu." : "Dans la zone : ne touchez plus à rien.");
   };
 
-  const inZone = pressure >= P_ZONE[0] && pressure <= P_ZONE[1];
+  const inZone = pressure >= targetZone[0] && pressure <= targetZone[1];
   const nudge = (delta: number) => {
     setTone("idle");
     apply(pressureRef.current + delta);
@@ -751,13 +985,55 @@ function InflationGame({ name, onWin, onMiss }: GameProps) {
       }
     >
       <GameBoard className="p-3">
-        <svg viewBox="-66 -66 132 108" className="relative z-10 mx-auto w-full max-w-[300px]" role="img" aria-label={`Manomètre : ${fmtBar(pressure)}, zone cible ${fmtBar(P_ZONE[0])} à ${fmtBar(P_ZONE[1])}`}>
-          <path d={arc(50, -120, 120)} fill="none" stroke="#3f3f46" strokeWidth="9" />
-          <path d={arc(50, pressureAngle(P_ZONE[0]), pressureAngle(P_ZONE[1]))} fill="none" stroke="#34d399" strokeWidth="9" />
-          <path d={arc(50, pressureAngle(P_BURST), 120)} fill="none" stroke="#ef4444" strokeWidth="9" />
-          <line x1="0" y1="0" x2="0" y2="-44" stroke={inZone ? "#6ee7b7" : "#fbbf24"} strokeWidth="3" strokeLinecap="round" transform={`rotate(${pressureAngle(pressure)})`} />
-          <circle r="5" fill="#27272a" stroke="#71717a" />
-          <text y="30" fontSize="14" fontWeight="700" fill={inZone ? "#6ee7b7" : "#fde68a"} textAnchor="middle">{fmtBar(pressure)}</text>
+        <p className="relative z-10 mb-1 text-center text-xs font-semibold text-emerald-200">Pression optimale : {fmtBar(targetZone[0])} à {fmtBar(targetZone[1])}</p>
+        <svg viewBox="-70 -70 140 124" className="relative z-10 mx-auto w-full max-w-[320px]" role="img" aria-label={`Manomètre : ${fmtBar(pressure)}, zone cible ${fmtBar(targetZone[0])} à ${fmtBar(targetZone[1])}`}>
+          <defs>
+            <linearGradient id="gauge-bezel" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#e4e4e7" />
+              <stop offset="28%" stopColor="#71717a" />
+              <stop offset="52%" stopColor="#27272a" />
+              <stop offset="74%" stopColor="#a1a1aa" />
+              <stop offset="100%" stopColor="#3f3f46" />
+            </linearGradient>
+            <radialGradient id="gauge-face" cx="42%" cy="34%" r="70%">
+              <stop offset="0%" stopColor="#26262c" />
+              <stop offset="100%" stopColor="#0b0b0e" />
+            </radialGradient>
+            <radialGradient id="gauge-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="60%" stopColor="#34d399" stopOpacity="0" />
+              <stop offset="88%" stopColor="#34d399" stopOpacity={inZone ? ".22" : "0"} />
+              <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle r="59" fill="#000000" opacity=".45" />
+          <circle r="57" fill="#0c0d10" stroke="url(#gauge-bezel)" strokeWidth="6.5" />
+          <circle r="51" fill="url(#gauge-face)" stroke="#2b2e34" strokeWidth=".8" />
+          <circle r="51" fill="url(#gauge-glow)" />
+          <path d={arc(46, -120, 120)} fill="none" stroke="#3f3f46" strokeWidth="6.5" strokeLinecap="round" />
+          <path d={arc(46, pressureAngle(targetZone[0]), pressureAngle(targetZone[1]))} fill="none" stroke="#34d399" strokeWidth="6.5" strokeLinecap="butt" style={{ filter: "drop-shadow(0 0 3px rgba(52,211,153,.55))" }} />
+          <path d={arc(46, pressureAngle(P_BURST), 120)} fill="none" stroke="#ef4444" strokeWidth="6.5" strokeLinecap="round" />
+          {Array.from({ length: 21 }, (_, i) => {
+            const value = i * 0.2;
+            const angle = pressureAngle(value);
+            const outer = polar(0, 0, 51.5, angle);
+            const inner = polar(0, 0, i % 5 === 0 ? 38.5 : 41.5, angle);
+            return <line key={i} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke={i % 5 === 0 ? "#d4d4d8" : "#71717a"} strokeWidth={i % 5 === 0 ? 1.1 : .55} strokeLinecap="round" />;
+          })}
+          {[0, 1, 2, 3, 4].map((value) => {
+            const at = polar(0, 0, 32, pressureAngle(value));
+            return <text key={value} x={at.x} y={at.y + 2} fontSize="5.6" fontWeight="700" fill="#a1a1aa" textAnchor="middle">{value}</text>;
+          })}
+          <g transform={`rotate(${pressureAngle(pressure)})`} style={{ filter: `drop-shadow(0 0 3px ${inZone ? "rgba(52,211,153,.7)" : "rgba(251,191,36,.55)"})` }}>
+            <path d="M0 3 L-2.8 -31 L0 -41 L2.8 -31 Z" fill={inZone ? "#6ee7b7" : "#fbbf24"} />
+            <path d="M0 0 L-1.1 -30 L0 -38 Z" fill="#ffffff" opacity=".3" />
+          </g>
+          <circle r="8" fill="#27272a" stroke="url(#gauge-bezel)" strokeWidth="1.4" />
+          <circle r="3" fill="#111114" stroke="#71717a" strokeWidth=".8" />
+          <rect x="-30" y="22" width="60" height="23" rx="6" fill="#09090b" stroke={inZone ? "#34d399" : "#3f3f46"} strokeWidth="1" />
+          <text y="38" fontSize="12" fontWeight="700" fill={inZone ? "#6ee7b7" : "#fde68a"} textAnchor="middle">{fmtBar(pressure)}</text>
+          <text y="49" fontSize="4" letterSpacing="1.6" textAnchor="middle" fill="#71717a">PRESSION</text>
+          <text x="-53" y="50" fontSize="4.4" fill="#52525b" textAnchor="middle">MIN</text>
+          <text x="53" y="50" fontSize="4.4" fill="#ef4444" textAnchor="middle">MAX</text>
         </svg>
       </GameBoard>
     </GameFrame>
