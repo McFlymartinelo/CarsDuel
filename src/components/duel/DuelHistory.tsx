@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Coins, Swords } from "lucide-react";
+import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -40,7 +41,12 @@ export async function DuelHistory({ userId, page, slot }: { userId: string; page
         <EmptyState
           icon={Swords}
           title="Aucun duel pour l'instant."
-          description="Lancez votre première course depuis Ma config."
+          description="Complétez votre configuration puis lancez votre première course."
+          action={
+            <Link href="/duel?config=1" className={buttonClass({ size: "sm" })}>
+              Compléter ma config
+            </Link>
+          }
         />
       ) : (
         <>

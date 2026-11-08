@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Cog, Disc, Settings2, Ticket, Zap, type LucideIcon } from "lucide-react";
+import { Cog, Disc, Layers, SearchX, Settings2, Ticket, Zap, type LucideIcon } from "lucide-react";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { compareCollectionDefault, compareTemplates, ENGINE_SORTS, GEARBOX_SORTS } from "@/lib/catalog-sort";
 import { CATEGORY_LABEL, RARITY_LABEL, TIRE_LABEL, cardSummary } from "@/lib/format";
 import { matchesTemplateSearch } from "@/lib/search";
@@ -87,6 +89,16 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
     setSort("");
   };
 
+  const resetFilters = () => {
+    setCategory("tout");
+    setRarity("");
+    setSort("");
+    setOwnedOnly(false);
+    setSearch("");
+  };
+
+  const filtered = Boolean(search || rarity || ownedOnly || category !== "tout" || sort);
+
   return (
     <div className="space-y-4">
       <SearchInput
@@ -151,7 +163,24 @@ export function CollectorCollection({ entries, tirePerfs = [] }: { entries: Entr
         list={<div className="grid min-w-0 gap-2">
           {shown.map((entry) => <CollectionRow key={entry.card_templates.id} {...entry} />)}
         </div>}
-      /> : <p className="rounded-xl border border-line bg-panel p-6 text-center text-sm text-zinc-400">Aucune carte dans cette sélection.</p>}
+      /> : (
+        <EmptyState
+          icon={filtered ? SearchX : Layers}
+          title={filtered ? "Aucun résultat pour ces filtres" : "Collection vide"}
+          description={
+            filtered
+              ? "Aucune carte ne correspond à cette recherche. Réinitialisez les filtres pour revoir toute la collection."
+              : "Le catalogue du jeu n’est pas encore disponible. Revenez dans un instant."
+          }
+          action={
+            filtered ? (
+              <button type="button" onClick={resetFilters} className={buttonClass({ variant: "ghost", size: "sm" })}>
+                Réinitialiser les filtres
+              </button>
+            ) : undefined
+          }
+        />
+      )}
     </div>
   );
 }

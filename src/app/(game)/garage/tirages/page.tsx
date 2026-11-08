@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { CalendarDays, CalendarRange, History, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { DailyPull } from "@/components/DailyPull";
 import { PageHeader } from "@/components/PageHeader";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDateTime, nextParisMidnight, nextParisMonday, parisToday, parisWeekStart } from "@/lib/format";
 import { loadPullHistory, type PullRow } from "@/lib/queries";
 import { claimDailyPull, claimWeeklyPull } from "../actions";
@@ -55,11 +58,16 @@ export default async function PullsPage() {
         </div>
 
         {history.length === 0 ? (
-          <div className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-line-strong bg-panel-mid px-4 py-10 text-center">
-            <Sparkles size={26} className="text-amber-400/60" aria-hidden />
-            <p className="text-sm text-zinc-400">Aucun tirage pour le moment.</p>
-            <p className="text-xs text-zinc-500">Lancez un tirage quotidien ou hebdomadaire pour remplir votre historique.</p>
-          </div>
+          <EmptyState
+            icon={Sparkles}
+            title="Aucun tirage pour le moment"
+            description="Lancez un tirage quotidien ou hebdomadaire pour remplir votre historique."
+            action={
+              <Link href="#tirage" className={buttonClass({ variant: "ghost", size: "sm" })}>
+                Lancer un tirage
+              </Link>
+            }
+          />
         ) : (
           <ul className="overflow-hidden rounded-xl border border-line bg-panel-mid">
             {history.map((h) => {

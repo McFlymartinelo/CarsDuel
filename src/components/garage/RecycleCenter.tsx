@@ -21,6 +21,7 @@ import {
 import { ActionForm } from "@/components/ActionForm";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterRow } from "@/components/FilterRow";
 import { SortRow } from "@/components/SortRow";
 import type { CardViewMode } from "@/components/ViewToggle";
@@ -144,20 +145,22 @@ const recycleHref = (
 
 function emptyState(title: string, text: string, action?: { label: string; onClick: () => void }) {
   return (
-    <div className="rounded-xl border border-dashed border-line-strong bg-panel-mid px-4 py-8 text-center">
-      <Recycle size={34} strokeWidth={1.5} className="mx-auto text-zinc-600" />
-      <p className="mt-3 font-display text-lg font-bold uppercase text-zinc-300">{title}</p>
-      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-500">{text}</p>
-      {action && (
-        <button
-          type="button"
-          onClick={action.onClick}
-          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-500/70 px-4 text-sm font-semibold text-amber-300 hover:bg-amber-500/10"
-        >
-          {action.label}
-        </button>
-      )}
-    </div>
+    <EmptyState
+      icon={Recycle}
+      title={title}
+      description={text}
+      action={
+        action ? (
+          <button
+            type="button"
+            onClick={action.onClick}
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-500/70 px-4 text-sm font-semibold text-amber-300 hover:bg-amber-500/10"
+          >
+            {action.label}
+          </button>
+        ) : undefined
+      }
+    />
   );
 }
 

@@ -31,6 +31,8 @@ import {
   FilterTrigger,
 } from "@/components/MobileFilterUi";
 import { Modal } from "@/components/Modal";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchInput } from "@/components/SearchBox";
 import { SortRow } from "@/components/SortRow";
 import { TradeCardTile } from "@/components/marketplace/TradeCardTile";
@@ -305,11 +307,31 @@ export function TradeInventoryPicker({
       </div>
 
       {visible.length === 0 ? (
-        <div className="mt-5 rounded-xl border border-line bg-panel-mid px-4 py-10 text-center">
-          <PackageSearch size={34} strokeWidth={1.4} className="mx-auto text-zinc-600" />
-          <p className="mt-3 text-sm text-zinc-400">
-            {available.length === 0 ? "Aucune carte disponible pour cet échange." : "Aucune carte ne correspond à cette recherche."}
-          </p>
+        <div className="mt-5">
+          <EmptyState
+            icon={PackageSearch}
+            title={available.length === 0 ? "Aucune carte disponible" : "Aucun résultat pour ces filtres"}
+            description={
+              available.length === 0
+                ? "Cet inventaire ne contient aucune carte échangeable pour le moment."
+                : "Changez de catégorie ou effacez la recherche pour retrouver les cartes disponibles."
+            }
+            action={
+              available.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setCategory("toutes");
+                    setSort("");
+                  }}
+                  className={buttonClass({ variant: "ghost", size: "sm" })}
+                >
+                  Réinitialiser les filtres
+                </button>
+              ) : undefined
+            }
+          />
         </div>
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">

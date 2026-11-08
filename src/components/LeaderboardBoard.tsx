@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { BarChart3, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, Sparkles, Trophy } from "lucide-react";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { LeaderboardRow } from "@/lib/queries";
 
 export interface PeriodBoard {
@@ -285,7 +288,18 @@ export function LeaderboardBoard({ userId, weekly, monthly }: { userId: string; 
             </table>
           </div>
         ) : (
-          <p className="px-4 py-6 text-sm text-zinc-500">Aucun point d&apos;XP sur cette période.</p>
+          <div className="p-3">
+            <EmptyState
+              icon={Trophy}
+              title="Aucun point d’XP sur cette période"
+              description="Le classement s’ouvrira dès les premières courses. Lancez un duel pour y apparaître."
+              action={
+                <Link href="/duel" className={buttonClass({ size: "sm" })}>
+                  Lancer un duel
+                </Link>
+              }
+            />
+          </div>
         )}
       </div>
     </>

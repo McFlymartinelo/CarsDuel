@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Cog, Disc, Settings2, Zap, type LucideIcon } from "lucide-react";
+import { Cog, Disc, PackageOpen, SearchX, Settings2, Zap, type LucideIcon } from "lucide-react";
 import { ActionForm } from "@/components/ActionForm";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { CardRow } from "@/components/CardRow";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { FilterRow } from "@/components/FilterRow";
@@ -205,19 +207,32 @@ export function Inventory({
       )}
 
       {entries.length === 0 && (
-        <p className="rounded-xl border border-line bg-panel-mid p-3 text-sm text-zinc-500">
-          {activeRarity ? (
-            <>
-              Aucune carte de niveau <span className="font-semibold text-zinc-300">{RARITY_LABEL[activeRarity]}</span> dans
-              cette catégorie.{" "}
-              <Link href={hrefForRarity("")} scroll={false} className="font-semibold text-amber-300 hover:text-amber-200">
-                Voir tous les niveaux
+        <EmptyState
+          icon={activeRarity ? SearchX : PackageOpen}
+          title={activeRarity ? "Aucun résultat pour ce niveau" : "Aucune carte dans cette catégorie"}
+          description={
+            activeRarity
+              ? `Aucune carte ${RARITY_LABEL[activeRarity].toLowerCase()} dans cette catégorie pour l’instant.`
+              : cards.length === 0
+                ? "Votre inventaire est vide. Les tirages gratuits et la boutique vous aideront à démarrer."
+                : "Changez de catégorie ou complétez votre collection à la boutique."
+          }
+          action={
+            activeRarity ? (
+              <Link href={hrefForRarity("")} scroll={false} className={buttonClass({ variant: "ghost", size: "sm" })}>
+                Réinitialiser le filtre
               </Link>
-            </>
-          ) : (
-            "Aucune carte dans cette catégorie."
-          )}
-        </p>
+            ) : cards.length === 0 ? (
+              <Link href="/garage/tirages" className={buttonClass({ size: "sm" })}>
+                Ouvrir les tirages
+              </Link>
+            ) : (
+              <Link href="/shop" className={buttonClass({ size: "sm" })}>
+                Voir la boutique
+              </Link>
+            )
+          }
+        />
       )}
       <div
         className={

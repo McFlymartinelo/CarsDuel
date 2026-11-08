@@ -2,7 +2,9 @@
 
 import { useActionState, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Bolt, ChevronRight } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { Modal } from "@/components/Modal";
 import { Button, buttonClass } from "@/components/ui/Button";
@@ -167,7 +169,18 @@ export function DailyQuests({
               style={{ width: `${(done / 3) * 100}%` }}
             />
           </span>
-          {!state && <p className="text-sm text-zinc-500">Les défis ne sont pas disponibles pour le moment.</p>}
+          {!state && (
+            <EmptyState
+              icon={Bolt}
+              title="Défis indisponibles"
+              description="Les défis du jour n’ont pas pu être chargés. Réessayez dans un instant."
+              action={
+                <Link href="/duel" className={buttonClass({ variant: "ghost", size: "sm" })}>
+                  Réessayer
+                </Link>
+              }
+            />
+          )}
           {state && (
             <ul className="space-y-2">
               {ids.map((id) => (
@@ -188,7 +201,18 @@ export function DailyQuests({
             <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-zinc-600 px-3 py-1.5 text-sm hover:bg-zinc-800">Fermer</button>
           </div>
           <p className="mb-3 text-sm text-zinc-400">Trois défis, renouvelés à minuit (heure de Paris). Chacun rapporte 5 pièces.</p>
-          {!state && <p className="text-sm text-zinc-500">Les défis ne sont pas disponibles pour le moment.</p>}
+          {!state && (
+            <EmptyState
+              icon={Bolt}
+              title="Défis indisponibles"
+              description="Les défis du jour n’ont pas pu être chargés. Réessayez dans un instant."
+              action={
+                <Link href="/duel" className={buttonClass({ variant: "ghost", size: "sm" })}>
+                  Réessayer
+                </Link>
+              }
+            />
+          )}
           {state && (
             <ul className="space-y-2">
               {ids.map((id) => <QuestLine key={id} id={id} progress={state.progress} claimed={state.claimed} />)}

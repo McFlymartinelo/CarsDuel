@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeftRight, PackageOpen } from "lucide-react";
 import { ActionForm } from "@/components/ActionForm";
 import { CardView, type TirePerf } from "@/components/CardView";
 import { Modal } from "@/components/Modal";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { SortRow } from "@/components/SortRow";
 import { equipCard } from "@/app/(game)/garage/actions";
 import { compareTemplates, ENGINE_SORTS, GEARBOX_SORTS, type CardSort } from "@/lib/catalog-sort";
@@ -102,7 +105,18 @@ export function ChangeCardDialog({
               </p>
             </div>
           )}
-          {alternatives.length === 0 && <p className="text-sm text-zinc-500">Aucune autre carte disponible.</p>}
+          {alternatives.length === 0 && (
+            <EmptyState
+              icon={PackageOpen}
+              title="Aucune autre carte disponible"
+              description="Votre inventaire ne contient pas d’autre pièce pour cet emplacement."
+              action={
+                <Link href="/shop" className={buttonClass({ variant: "ghost", size: "sm" })}>
+                  Voir la boutique
+                </Link>
+              }
+            />
+          )}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {ordered.map((alt) => (
               <CardView key={alt.id} template={alt.card_templates} card={alt} image={alt.image} tirePerfs={tirePerfs}>

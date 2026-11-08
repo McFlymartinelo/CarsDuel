@@ -1,6 +1,10 @@
+import Link from "next/link";
+import { SearchX, Store } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { QuestPing } from "@/components/QuestPing";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { buttonClass } from "@/components/ui/Button";
 import { CardRow } from "@/components/CardRow";
 import { CardView } from "@/components/CardView";
 import { CatalogFilters } from "@/components/CatalogFilters";
@@ -45,6 +49,9 @@ export default async function ShopPage({
       return query.sort ? compareTemplates(a.card_templates, b.card_templates, query.sort) : 0;
     });
 
+  const filtered = Boolean(query.q || query.rarity || query.min != null || query.max != null || query.sort);
+  const resetHref = `/shop?tab=${query.tab.key}`;
+
   const buy = (item: (typeof shown)[number]) => (
     <ShopBuyForm
       action={buyShopItem}
@@ -74,9 +81,26 @@ export default async function ShopPage({
           preserveCatalogView
         />
         {shown.length === 0 ? (
-          <p className="text-sm text-zinc-400">
-            {query.q ? `Aucune pièce ne correspond à « ${query.q} » dans cette sélection.` : "Aucune pièce dans cette sélection pour le moment."}
-          </p>
+          <EmptyState
+            icon={filtered ? SearchX : Store}
+            title={filtered ? "Aucun résultat pour ces filtres" : "Aucune pièce dans cette sélection"}
+            description={
+              filtered
+                ? "Élargissez la recherche ou réinitialisez les filtres pour retrouver le catalogue complet."
+                : "Cette catégorie est momentanément vide. Les tirages gratuits peuvent vous dépanner."
+            }
+            action={
+              filtered ? (
+                <Link href={resetHref} className={buttonClass({ variant: "ghost", size: "sm" })}>
+                  Réinitialiser les filtres
+                </Link>
+              ) : (
+                <Link href="/garage/tirages" className={buttonClass({ size: "sm" })}>
+                  Ouvrir les tirages
+                </Link>
+              )
+            }
+          />
         ) : (
           <CatalogViewPanels
             cards={(

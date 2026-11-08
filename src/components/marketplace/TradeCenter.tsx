@@ -12,6 +12,7 @@ import {
   Send,
   X,
 } from "lucide-react";
+import { buttonClass } from "@/components/ui/Button";
 import { TradeComposer } from "@/components/marketplace/TradeComposer";
 import { TradeIncomingModal } from "@/components/marketplace/TradeIncomingModal";
 import { cancelTradeOffer, lookupTradePartner, searchTradePlayers } from "@/app/(game)/marketplace/trade-actions";
@@ -59,13 +60,22 @@ function SectionTitle({ icon, title, count }: { icon: React.ReactNode; title: st
   );
 }
 
-function EmptyList({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function EmptyList({
+  icon,
+  children,
+  action,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="rounded-xl border border-dashed border-line bg-panel/70 px-4 py-8 text-center">
       <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-[#0b0e13] text-zinc-500">
         {icon}
       </span>
       <p className="mt-3 text-sm text-zinc-500">{children}</p>
+      {action && <div className="mt-3">{action}</div>}
     </div>
   );
 }
@@ -257,7 +267,7 @@ export function TradeCenter({
 
   return (
     <>
-      <section className="relative rounded-2xl border border-amber-500/30 bg-[linear-gradient(120deg,rgba(245,158,11,0.12),rgba(10,13,19,0.86)_45%,rgba(34,211,238,0.08))] p-4 shadow-[0_0_30px_rgba(245,158,11,0.08)] sm:p-5">
+      <section id="composer-echange" className="relative rounded-2xl border border-amber-500/30 bg-[linear-gradient(120deg,rgba(245,158,11,0.12),rgba(10,13,19,0.86)_45%,rgba(34,211,238,0.08))] p-4 shadow-[0_0_30px_rgba(245,158,11,0.08)] sm:p-5">
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
           <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-amber-500/10 blur-3xl" />
         </div>
@@ -407,7 +417,16 @@ export function TradeCenter({
       <section className="space-y-3">
         <SectionTitle icon={<Send size={20} strokeWidth={1.8} />} title="Propositions envoyées" count={outgoing.length} />
         {outgoing.length === 0 ? (
-          <EmptyList icon={<Send size={20} strokeWidth={1.6} />}>Aucune proposition en attente de votre part.</EmptyList>
+          <EmptyList
+            icon={<Send size={20} strokeWidth={1.6} />}
+            action={
+              <a href="#composer-echange" className={buttonClass({ variant: "ghost", size: "sm" })}>
+                Composer un échange
+              </a>
+            }
+          >
+            Aucune proposition en attente de votre part.
+          </EmptyList>
         ) : (
           <div className="space-y-3">
             {outgoing.map((offer) => {
@@ -466,7 +485,16 @@ export function TradeCenter({
       <section className="space-y-3">
         <SectionTitle icon={<Inbox size={20} strokeWidth={1.8} />} title="Propositions reçues" count={incoming.length} />
         {incoming.length === 0 ? (
-          <EmptyList icon={<Inbox size={20} strokeWidth={1.6} />}>Aucune demande reçue pour le moment.</EmptyList>
+          <EmptyList
+            icon={<Inbox size={20} strokeWidth={1.6} />}
+            action={
+              <a href="#composer-echange" className={buttonClass({ variant: "ghost", size: "sm" })}>
+                Proposer un échange
+              </a>
+            }
+          >
+            Aucune demande reçue pour le moment.
+          </EmptyList>
         ) : (
           <div className="space-y-2">
             {incoming.map((offer) => (

@@ -1,5 +1,9 @@
+import Link from "next/link";
+import { Trophy } from "lucide-react";
 import { TrophyArt } from "@/components/garage/TrophyArt";
 import { PageHeader } from "@/components/PageHeader";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { requireUser } from "@/lib/auth";
 import { loadTrophyStats } from "@/lib/queries";
 
@@ -75,6 +79,7 @@ export default async function TrophiesPage() {
   ];
 
   const totalWins = stats.attack_wins + stats.defense_wins;
+  const hasTrophies = totalWins > 0 || trophies.some((trophy) => trophy.value > 0);
 
   return (
     <section className="space-y-6">
@@ -99,6 +104,19 @@ export default async function TrophiesPage() {
           </p>
         </div>
       </div>
+
+      {!hasTrophies && (
+        <EmptyState
+          icon={Trophy}
+          title="Votre vitrine attend sa première victoire"
+          description="Gagnez un duel, décrochez une médaille ou hissez-vous en tête du classement pour remplir ces trophées."
+          action={
+            <Link href="/duel" className={buttonClass({ size: "sm" })}>
+              Lancer un duel
+            </Link>
+          }
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {trophies.map(({ value, label, detail, image, kind, accent, text, glow }) => (

@@ -1,5 +1,9 @@
+import Link from "next/link";
+import { SearchX, Store, Tag } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { ActionForm } from "@/components/ActionForm";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { CardRow } from "@/components/CardRow";
 import { CardView } from "@/components/CardView";
 import { viewMode, type CardViewMode } from "@/components/ViewToggle";
@@ -90,6 +94,8 @@ export default async function MarketplacePage({
   const others = listings.filter((x) => x.seller_id !== user.id);
   const myOffers = offers.filter((x) => x.buyer_id === user.id);
   const offersOn = (listingId: string) => offers.filter((x) => x.listing_id === listingId && x.buyer_id !== user.id);
+  const filtered = Boolean(query.q || query.rarity || query.min != null || query.max != null || query.sort);
+  const resetHref = `/marketplace?tab=${query.tab.key}${view === "liste" ? "&vue=liste" : ""}`;
 
   const href = (o: { page?: number; view?: CardViewMode }) => {
     const q = new URLSearchParams();
@@ -216,9 +222,26 @@ export default async function MarketplacePage({
       <section className="space-y-3">
         <h2 className="font-display text-xl font-bold uppercase tracking-wide">Mes annonces</h2>
         {mine.length === 0 && (
-          <p className="rounded-xl border border-line bg-panel px-4 py-6 text-center text-sm text-zinc-500">
-            Aucune de vos annonces dans cette sélection.
-          </p>
+          <EmptyState
+            icon={filtered ? SearchX : Tag}
+            title={filtered ? "Aucun résultat pour ces filtres" : "Aucune annonce de votre part"}
+            description={
+              filtered
+                ? "Élargissez la recherche ou réinitialisez les filtres pour retrouver vos annonces."
+                : "Mettez une carte en vente depuis votre inventaire pour la proposer aux autres pilotes."
+            }
+            action={
+              filtered ? (
+                <Link href={resetHref} className={buttonClass({ variant: "ghost", size: "sm" })}>
+                  Réinitialiser les filtres
+                </Link>
+              ) : (
+                <Link href="/garage/inventaire" className={buttonClass({ size: "sm" })}>
+                  Choisir une carte à vendre
+                </Link>
+              )
+            }
+          />
         )}
         <CatalogViewPanels cards={mineGrid("cartes")} list={mineGrid("liste")} />
       </section>
@@ -226,9 +249,26 @@ export default async function MarketplacePage({
       <section className="space-y-3">
         <h2 className="font-display text-xl font-bold uppercase tracking-wide">Annonces</h2>
         {others.length === 0 && (
-          <p className="rounded-xl border border-line bg-panel px-4 py-6 text-center text-sm text-zinc-500">
-            {query.q ? `Aucune annonce ne correspond à « ${query.q} ».` : "Aucune annonce pour le moment."}
-          </p>
+          <EmptyState
+            icon={filtered ? SearchX : Store}
+            title={filtered ? "Aucun résultat pour ces filtres" : "Aucune annonce pour le moment"}
+            description={
+              filtered
+                ? "Aucune annonce ne correspond à votre recherche. Réinitialisez les filtres pour voir tout le marché."
+                : "Le marché est calme : revenez plus tard ou complétez votre collection à la boutique."
+            }
+            action={
+              filtered ? (
+                <Link href={resetHref} className={buttonClass({ variant: "ghost", size: "sm" })}>
+                  Réinitialiser les filtres
+                </Link>
+              ) : (
+                <Link href="/shop" className={buttonClass({ size: "sm" })}>
+                  Visiter la boutique
+                </Link>
+              )
+            }
+          />
         )}
         <CatalogViewPanels cards={othersGrid("cartes")} list={othersGrid("liste")} />
       </section>

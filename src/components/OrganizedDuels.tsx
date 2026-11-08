@@ -2,10 +2,12 @@
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { Swords, X } from "lucide-react";
 import { TileBody, tileClass } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
 import { Modal } from "@/components/Modal";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { acceptDuel, cancelDuel, declineDuel, proposeDuel, type ArrangedPlay } from "@/app/(game)/duel/actions";
 import { formatDateTime } from "@/lib/format";
@@ -24,7 +26,7 @@ export function ProposeDuel({ variant = "tile" }: { variant?: "tile" | "hero" })
   }, [state, toast]);
 
   return (
-    <div className="space-y-2">
+    <div id="proposer-un-duel" className="space-y-2">
       {variant === "hero" ? (
         <button
           type="button"
@@ -200,7 +202,18 @@ export function ChallengeList({
     <div className="space-y-6">
       <section className="space-y-3">
         <h2 className="font-display text-2xl font-bold uppercase">Demandes de duels en attente</h2>
-        {incoming.length === 0 && <p className="text-sm text-zinc-500">Aucune demande en attente.</p>}
+        {incoming.length === 0 && (
+          <EmptyState
+            icon={Swords}
+            title="Aucune demande en attente"
+            description="Défiez un pilote directement : sa demande apparaîtra ici dès qu’il l’aura envoyée."
+            action={
+              <a href="#proposer-un-duel" className={buttonClass({ variant: "ghost", size: "sm" })}>
+                Organiser un duel
+              </a>
+            }
+          />
+        )}
         <ul className="space-y-2">
           {incoming.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel p-3">
