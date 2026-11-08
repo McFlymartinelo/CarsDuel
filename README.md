@@ -31,11 +31,11 @@ Jeu de cartes automobile asynchrone. Next.js 16 (App Router) + PostgreSQL **pur*
 1. **Inscription** : pseudo, e-mail, mot de passe. Le compte est créé avec `email_verified = false` ; aucune session ni kit de départ à ce stade.
 2. Un code à 6 chiffres est envoyé (SMTP). Il est stocké **haché** (HMAC-SHA256 + `AUTH_OTP_PEPPER`), valable 10 minutes, avec au plus 5 tentatives et un seul code actif par `(user_id, purpose)`.
 3. La vérification crée la session opaque, marque le compte vérifié **une seule fois** et attribue le kit de départ **une seule fois**. Redirection : `/garage?bienvenue=1`.
-4. **Connexion** : e-mail + mot de passe. Un code `login` est envoyé pour un compte vérifié (`register` s'il ne l'est pas encore). Après validation : `/garage`.
+4. **Connexion** : e-mail + mot de passe. Pour un compte vérifié, la session est ouverte directement, sans code. Un compte dont l'inscription n'a pas été vérifiée doit reprendre le parcours d'inscription pour recevoir un nouveau code.
 5. **Renvoi** : cooldown serveur de 30 secondes. Le JWT OTP est gardé en mémoire côté client, jamais dans le stockage navigateur ni dans l'URL.
 6. **Changement de mot de passe** : mot de passe actuel obligatoire, puis toutes les autres sessions sont invalidées (la session courante est conservée).
 
-> **Pause temporaire** : `AUTH_OTP_ENABLED=0` désactive la vérification par code (connexion directe après le mot de passe, comptes marqués vérifiés). Défaut `1` — à rétablir dès que le SMTP est opérationnel.
+> **Pause temporaire** : `AUTH_OTP_ENABLED=0` désactive la vérification par code à l'inscription et marque les comptes actifs comme vérifiés. Les connexions aux comptes vérifiés restent directes, sans OTP. Défaut `1`.
 
 Limites assumées de ce lot :
 - le **changement d'e-mail** ne déclenche pas encore de nouvelle vérification OTP ;
@@ -49,7 +49,7 @@ Limites assumées de ce lot :
 | `AUTH_OTP_RESEND_MS` | `30000` | Cooldown de renvoi |
 | `AUTH_OTP_TTL_MS` | `600000` | Durée de vie d'un code (10 minutes) |
 | `AUTH_OTP_ECHO` | `0` | `1` pour exposer `devOtp` hors production |
-| `AUTH_OTP_ENABLED` | `1` | `0` pour mettre la vérification par code en pause (connexion directe, comptes marqués vérifiés) |
+| `AUTH_OTP_ENABLED` | `1` | `0` pour mettre la vérification par code à l'inscription en pause (comptes créés directement comme vérifiés) |
 | `AUTH_RATE_LIMIT_MAX` | `20` | Tentatives auth / IP / 15 min |
 | `AUTH_LOGIN_FAIL_MAX` | `5` | Échecs de connexion / e-mail / 15 min |
 | `AUTH_SIGNUP_RATE_LIMIT_MAX` | `5` | Inscriptions / IP / 1 h |

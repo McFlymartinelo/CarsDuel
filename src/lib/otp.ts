@@ -147,7 +147,8 @@ export type OtpFlagEnv = {
 
 /**
  * Interrupteur de pause : `AUTH_OTP_ENABLED=0` (ou false/off/no) désactive la
- * vérification par code et reconnecte directement après le mot de passe.
+ * vérification par code à l'inscription. Les connexions aux comptes vérifiés
+ * se font toujours directement après le mot de passe.
  * Actif par défaut, y compris en production, pour ne jamais l'oublier.
  */
 export function otpEnabled(env: OtpFlagEnv = process.env): boolean {

@@ -31,7 +31,7 @@ const TILES = [
     title: "Ma vitrine de trophées",
     text: "Vos victoires, vos titres et vos médailles.",
     image: hasVitrineImage ? VITRINE_IMAGE : undefined,
-    imageFit: "contain" as const,
+    imagePosition: "center" as const,
     icon: Trophy,
   },
   { href: "/garage/inventaire", title: "Mon inventaire", text: "Moteurs, boîtes, pneus et bonus.", image: "/garage/inventaire.webp", icon: Boxes },
@@ -41,7 +41,7 @@ const TILES = [
     title: "Le coin du collectionneur",
     text: "Toutes les cartes du jeu et votre progression.",
     image: "/garage/collectionneur.png",
-    imageFit: "contain" as const,
+    imagePosition: "center" as const,
     icon: Layers,
   },
   { href: "/garage/regles", title: "Règles du jeu", text: "Comment se déroule une course.", image: "/garage/regles.webp", icon: BookOpen },
@@ -130,7 +130,6 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
       title: "Ma vitrine",
       text: "Vos victoires et médailles",
       image: hasVitrineImage ? VITRINE_IMAGE : undefined,
-      imageFit: "contain" as const,
       icon: Trophy,
     },
     {
@@ -138,7 +137,6 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
       title: "Collection",
       text: "Toutes les cartes du jeu",
       image: "/garage/collectionneur.png",
-      imageFit: "contain" as const,
       icon: Layers,
     },
     {
@@ -254,14 +252,13 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {quickTiles.map(({ href, title, text, image, imageFit, icon, badge }) => (
+            {quickTiles.map(({ href, title, text, image, icon, badge }) => (
               <GarageQuickTile
                 key={href}
                 href={href}
                 title={title}
                 text={text}
                 image={image}
-                imageFit={imageFit}
                 icon={icon}
                 badge={badge}
               />
@@ -270,14 +267,14 @@ export default async function GaragePage({ searchParams }: { searchParams: Promi
         </>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {TILES.map(({ href, title, text, image, imageFit, icon }) => (
+          {TILES.map(({ href, title, text, image, imagePosition, icon }) => (
             <GarageTile
               key={href}
               href={href}
               title={title}
               text={text}
               image={image}
-              imageFit={imageFit}
+              imagePosition={imagePosition}
               icon={icon}
               badge={
                 href === "/garage/tirages" ? (

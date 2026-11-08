@@ -12,6 +12,7 @@ export function TileBody({
   badge,
   icon: Icon,
   imageFit = "cover",
+  imagePosition = "right",
 }: {
   title: string;
   text?: string;
@@ -19,6 +20,7 @@ export function TileBody({
   badge?: ReactNode;
   icon?: LucideIcon;
   imageFit?: "cover" | "contain";
+  imagePosition?: "right" | "center";
 }) {
   return (
     <>
@@ -29,7 +31,7 @@ export function TileBody({
             alt=""
             fill
             sizes="(min-width: 640px) 30vw, 70vw"
-            className={imageFit === "contain" ? "object-contain object-right" : "object-cover object-right"}
+            className={imageFit === "contain" ? "object-contain object-right" : `object-cover ${imagePosition === "center" ? "object-center" : "object-right"}`}
           />
         ) : (
           <span className="flex h-full items-center justify-center">

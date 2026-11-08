@@ -8,10 +8,9 @@ export const metadata = { title: "Connexion — CarsDuel" };
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  // Pas de redirect ici : après la validation OTP, Next relance ce composant
-  // serveur (cookie de session créé). Un redirect immédiat court-circuiterait
-  // l'animation de succès côté client. AuthPanel ne redirige que sur le montage
-  // initial, quand l'utilisateur est déjà connecté avant d'arriver ici.
+  // Pas de redirect ici : AuthPanel affiche un écran de succès après connexion,
+  // puis l'utilisateur continue vers le garage. Une session déjà présente est
+  // redirigée par AuthPanel à son montage.
   const signedIn = Boolean(await getCurrentUser());
 
   return (

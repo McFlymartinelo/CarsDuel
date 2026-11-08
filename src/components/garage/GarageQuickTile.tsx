@@ -9,7 +9,6 @@ export function GarageQuickTile({
   title,
   text,
   image,
-  imageFit = "cover",
   icon: Icon,
   badge,
 }: {
@@ -17,27 +16,30 @@ export function GarageQuickTile({
   title: string;
   text: string;
   image?: string;
-  imageFit?: "cover" | "contain";
   icon?: LucideIcon;
   badge?: ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className="group relative flex min-h-24 flex-col justify-end overflow-hidden rounded-xl border border-amber-500/25 bg-panel-deep p-3 transition hover:border-amber-400/60"
+      className="group relative flex min-h-28 flex-col justify-end overflow-hidden rounded-xl border border-amber-500/25 bg-panel-deep p-3 transition hover:border-amber-400/60 sm:min-h-32"
     >
       {image && (
-        <Image
-          src={image}
-          alt=""
-          fill
-          sizes="(min-width: 640px) 25vw, 50vw"
-          className={`opacity-50 transition group-hover:opacity-70 ${
-            imageFit === "contain" ? "object-contain p-2" : "object-cover object-right"
-          } [mask-image:linear-gradient(to_left,#000_20%,transparent_90%)]`}
-        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_28%)] sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[44%] sm:min-w-[220px] sm:max-w-[340px]"
+        >
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(min-width: 640px) 340px, 50vw"
+            className="object-cover object-center opacity-60 transition duration-300 group-hover:scale-[1.04] group-hover:opacity-85"
+          />
+        </span>
       )}
-      <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-panel-deep via-panel-deep/60 to-transparent" />
+      <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-panel-deep via-panel-deep/55 to-transparent" />
+      <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-panel-deep via-panel-deep/80 to-panel-deep/10 sm:via-panel-deep/65 sm:to-transparent" />
       <span className="relative z-10 flex min-w-0 flex-col gap-0.5">
         {badge && <span className="mb-0.5 flex">{badge}</span>}
         <span className="flex min-w-0 items-center gap-1.5">

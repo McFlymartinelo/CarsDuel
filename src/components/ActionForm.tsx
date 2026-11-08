@@ -27,6 +27,7 @@ export function ActionForm({
   confirmText,
   onSuccess,
   onResult,
+  onPendingChange,
   submitClassName,
 }: {
   action: Action;
@@ -41,15 +42,22 @@ export function ActionForm({
   onSuccess?: () => void;
   /** Reçoit l'état complet, y compris `data` (ex. défi OTP). */
   onResult?: (state: ActionState) => void;
+  /** Signale le début et la fin de l'action serveur. */
+  onPendingChange?: (pending: boolean) => void;
 }) {
   // Fermeture pilotée depuis la promesse de l'action, pas depuis l'état : après un
   // rafraîchissement RSC, ce formulaire peut être démonté (la carte équipée sort de la
   // liste des alternatives) avant que l'effet sur `state` n'ait pu appeler `onSuccess`.
   const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData) => {
-    const result = await action(prev, formData);
-    if (result?.ok) onSuccess?.();
-    onResult?.(result);
-    return result;
+    onPendingChange?.(true);
+    try {
+      const result = await action(prev, formData);
+      if (result?.ok) onSuccess?.();
+      onResult?.(result);
+      return result;
+    } finally {
+      onPendingChange?.(false);
+    }
   }, null);
   const formRef = useRef<HTMLFormElement>(null);
   const skipConfirm = useRef(false);

@@ -35,6 +35,7 @@ import type { OtpChallenge, OtpFlow, OtpPurpose, OtpResendData, OtpVerifyData, C
 const BLOCKED = "Trop de tentatives, réessayez plus tard.";
 const SIGNUP_GENERIC = "Impossible de créer le compte avec ces informations.";
 const BAD_CREDENTIALS = "Email ou mot de passe incorrect.";
+const UNVERIFIED_EMAIL = "Votre adresse e-mail n'est pas encore vérifiée. Reprenez l'inscription pour recevoir un nouveau code.";
 const INVALID_OTP = "Code incorrect ou expiré. Demandez un nouveau code.";
 
 /** IP client fiable selon TRUSTED_PROXY_COUNT (cf. src/lib/client-ip.ts), sinon "unknown". */
@@ -186,17 +187,17 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
 
   await withAdmin((c) => clearAuthAttempts(c, "login_fail_email", email));
 
-  // Pause de la vérification : mot de passe validé = session immédiate. Le
-  // compte est marqué vérifié (et reçoit son kit s'il ne l'avait pas encore).
-  if (!otpEnabled()) {
+  // L'OTP sert uniquement à confirmer l'adresse lors de l'inscription.
+  // Les anciens comptes non vérifiés peuvent reprendre le parcours d'inscription
+  // pour recevoir un nouveau code, mais une connexion ne déclenche jamais d'OTP.
+  if (!user.email_verified) {
+    if (otpEnabled()) return { ok: false, message: UNVERIFIED_EMAIL };
+    // Pause d'inscription : rendre le compte actif comme avant.
     await activateAccount(user.id);
-    await createSession(user.id);
-    return { ok: true, data: { redirectTo: "/garage" } };
   }
 
-  // Compte non vérifié : l'OTP d'inscription finalise la création du compte.
-  const purpose: OtpPurpose = user.email_verified ? "login" : "register";
-  return issueChallenge(user.id, user.email, purpose, ip);
+  await createSession(user.id);
+  return { ok: true, data: { redirectTo: "/garage" } };
 }
 
 export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState<CredentialsData>> {

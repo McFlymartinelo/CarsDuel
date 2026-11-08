@@ -26,10 +26,10 @@ export interface OtpVerifyData {
   redirectTo: string;
 }
 
-/** Connexion directe, sans code : renvoyée quand `AUTH_OTP_ENABLED=0`. */
+/** Connexion directe d'un compte vérifié, sans code OTP. */
 export interface SignedInData {
   redirectTo: string;
 }
 
-/** Réponse des actions de connexion / inscription : défi OTP ou session directe. */
+/** Une inscription peut demander un OTP ; la connexion établie ouvre une session directe. */
 export type CredentialsData = OtpChallenge | SignedInData;

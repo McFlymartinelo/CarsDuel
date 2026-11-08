@@ -9,6 +9,7 @@ type Props = {
   text: string;
   image?: string;
   imageFit?: "cover" | "contain";
+  imagePosition?: "right" | "center";
   /** Icône affichée devant le titre. */
   icon?: LucideIcon;
   /** Pastille optionnelle sous le texte (ex. disponibilité des tirages). */
@@ -16,10 +17,10 @@ type Props = {
 };
 
 /** Lien-carte du garage. */
-export function GarageTile({ href, title, text, image, badge, icon, imageFit }: Props) {
+export function GarageTile({ href, title, text, image, badge, icon, imageFit, imagePosition }: Props) {
   return (
     <Link href={href} className={tileClass()}>
-      <TileBody title={title} text={text} image={image} badge={badge} icon={icon} imageFit={imageFit} />
+      <TileBody title={title} text={text} image={image} badge={badge} icon={icon} imageFit={imageFit} imagePosition={imagePosition} />
     </Link>
   );
 }
