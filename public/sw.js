@@ -1,11 +1,29 @@
-/* CarsDuel — service worker Web Push.
+/* CarsDuel — service worker : Web Push + cache statique minimal.
  *
- * Pas de cache applicatif : Next.js gère ses assets. Ce worker sert uniquement
- * à afficher les notifications hors app et à ramener le joueur dans la PWA.
+ * Le cache ne concerne que des ressources publiques (coquille hors-ligne,
+ * icônes, logo, manifest, images et assets compilés). Les réponses /api, les
+ * pages authentifiées et les données joueur ne sont jamais mises en cache.
  *
- * Payload attendu :
+ * Payload push attendu :
  *   { title, body, url, tag, kind, icon, badge, actions: [{ action, title }], data }
  */
+
+const CACHE_PREFIX = "carsduel-";
+const STATIC_CACHE = `${CACHE_PREFIX}static-v1`;
+const ASSET_CACHE = `${CACHE_PREFIX}assets-v1`;
+const KEEP_CACHES = new Set([STATIC_CACHE, ASSET_CACHE]);
+
+const PRECACHE = [
+  "/offline.html",
+  "/logo.svg",
+  "/manifest.webmanifest",
+  "/icons/favicon-32.png",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-192-maskable.png",
+  "/icons/icon-512-maskable.png",
+  "/icons/apple-touch-icon.png",
+];
 
 const DEFAULT_TITLE = "CarsDuel";
 const DEFAULT_BODY = "Nouvelle notification";
@@ -13,17 +31,100 @@ const DEFAULT_URL = "/";
 const ICON = "/icons/icon-192.png";
 const BADGE = "/icons/favicon-32.png";
 
-self.addEventListener("install", () => {
-  self.skipWaiting();
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(STATIC_CACHE);
+      // Une ressource manquante ne doit pas empêcher l'installation du worker.
+      await Promise.allSettled(PRECACHE.map((url) => cache.add(url)));
+    })(),
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((name) => name.startsWith(CACHE_PREFIX) && !KEEP_CACHES.has(name))
+          .map((name) => caches.delete(name)),
+      );
+      await self.clients.claim();
+    })(),
+  );
 });
 
-// Présence d'un handler fetch : critère d'installabilité de la PWA.
-self.addEventListener("fetch", () => {
-  // Réseau direct.
+/** Mise à jour déclenchée par l'application, jamais automatiquement. */
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
+
+function isPrivateRequest(url) {
+  return (
+    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/auth/") ||
+    url.pathname.startsWith("/_next/data/")
+  );
+}
+
+function isCacheableAsset(request, url) {
+  if (request.method !== "GET") return false;
+  if (request.headers.get("RSC") === "1") return false;
+  if (isPrivateRequest(url)) return false;
+  if (url.pathname.startsWith("/_next/static/")) return true;
+  if (["style", "script", "font", "image"].includes(request.destination)) return true;
+  return ["/logo.svg", "/manifest.webmanifest", "/offline.html"].includes(url.pathname);
+}
+
+async function staleWhileRevalidate(event, request) {
+  const cache = await caches.open(ASSET_CACHE);
+  const cached = await cache.match(request);
+
+  const network = fetch(request)
+    .then((response) => {
+      if (response.ok && response.type === "basic") {
+        cache.put(request, response.clone()).catch(() => {});
+      }
+      return response;
+    })
+    .catch(() => cached);
+
+  if (cached) {
+    event.waitUntil(network.catch(() => {}));
+    return cached;
+  }
+  return network;
+}
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Uniquement le même domaine ; les requêtes RSC et mutations passent au réseau.
+  if (url.origin !== self.location.origin) return;
+  if (request.method !== "GET") return;
+
+  if (request.mode === "navigate") {
+    // Réseau d'abord : une page authentifiée n'est jamais servie depuis le cache.
+    event.respondWith(
+      fetch(request).catch(async () => {
+        const offline = await caches.match("/offline.html");
+        return (
+          offline ??
+          new Response("<h1>CarsDuel est hors ligne</h1>", {
+            status: 503,
+            headers: { "content-type": "text/html; charset=utf-8" },
+          })
+        );
+      }),
+    );
+    return;
+  }
+
+  if (isCacheableAsset(request, url)) {
+    event.respondWith(staleWhileRevalidate(event, request));
+  }
 });
 
 function parsePayload(event) {

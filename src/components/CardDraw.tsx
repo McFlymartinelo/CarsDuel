@@ -160,12 +160,12 @@ export function CardDraw({
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-[#030507]/80 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal aria-label={title}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-[#030507]/80 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:px-6 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pt-[max(1.5rem,env(safe-area-inset-top))]" role="dialog" aria-modal aria-label={title}>
       <div
         ref={setDialogPanel}
         tabIndex={-1}
         onKeyDown={onDialogKeyDown}
-        className="draw-modal relative my-auto flex max-h-[94dvh] w-full max-w-4xl flex-col items-center gap-4 overflow-y-auto rounded-3xl border border-amber-500/35 p-4 shadow-[0_24px_100px_rgba(0,0,0,0.8)] outline-none sm:gap-5 sm:p-7"
+        className="draw-modal relative my-auto flex max-h-[calc(94dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-4xl flex-col items-center gap-4 overflow-y-auto rounded-3xl border border-amber-500/35 p-4 shadow-[0_24px_100px_rgba(0,0,0,0.8)] outline-none sm:gap-5 sm:p-7"
       >
         <div aria-hidden className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/70 to-transparent" />
         <header className="relative flex w-full items-center justify-center">

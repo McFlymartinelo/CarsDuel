@@ -101,7 +101,7 @@ function PullCard({
       />
     </form>
       {chooseOpen && weekly && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#030507]/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choisir la carte hebdomadaire">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#030507]/80 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choisir la carte hebdomadaire">
           <div
             ref={setChoosePanel}
             tabIndex={-1}
@@ -130,7 +130,7 @@ function PullCard({
         </div>
       )}
       {open && weekly && cards[0] && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#030507]/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Révéler la rareté">
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#030507]/80 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Révéler la rareté">
           <div
             ref={setRevealPanel}
             tabIndex={-1}

@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { PageHeader } from "@/components/PageHeader";
 import { AccountForms } from "@/components/AccountForms";
+import { InstallApp } from "@/components/InstallApp";
 import { PushSettings } from "@/components/PushSettings";
 import { deleteAccount, updateEmail, updatePassword, updateUsername } from "./actions";
 
@@ -20,6 +21,7 @@ export default async function AccountPage() {
         updatePassword={updatePassword}
         deleteAccount={deleteAccount}
       />
+      <InstallApp />
       <h2 className="pt-2 font-display text-3xl font-bold uppercase">Notifications</h2>
       <p className="text-sm text-zinc-400">
         Recevez les alertes du jeu sur l&apos;écran verrouillé, même application fermée.

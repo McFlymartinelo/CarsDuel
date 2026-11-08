@@ -273,7 +273,7 @@ export function RecycleExchangeTiers({
 
       {tier && tierUi && TierIcon && (
         <div
-          className="fixed inset-0 z-[85] flex items-center justify-center overflow-y-auto bg-[#030507]/80 p-3 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-[85] flex items-center justify-center overflow-y-auto bg-[#030507]/80 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:px-6 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pt-[max(1.5rem,env(safe-area-inset-top))]"
           role="dialog"
           aria-modal="true"
           aria-label={`${tier.label} — ${step === "category" ? "choix de la catégorie" : "confirmation"}`}
@@ -282,7 +282,7 @@ export function RecycleExchangeTiers({
             ref={setDialogPanel}
             tabIndex={-1}
             onKeyDown={onDialogKeyDown}
-            className="relative my-auto flex max-h-[94dvh] w-full max-w-xl flex-col overflow-y-auto rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#141821] to-[#090b10] p-4 shadow-[0_24px_100px_rgba(0,0,0,0.85)] outline-none sm:p-6"
+            className="relative my-auto flex max-h-[calc(94dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-xl flex-col overflow-y-auto rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#141821] to-[#090b10] p-4 shadow-[0_24px_100px_rgba(0,0,0,0.85)] outline-none sm:p-6"
           >
             <button
               type="button"

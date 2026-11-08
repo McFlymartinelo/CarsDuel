@@ -90,7 +90,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-2 sm:p-4"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-4 sm:pb-[max(1rem,env(safe-area-inset-bottom))] sm:pt-[max(1rem,env(safe-area-inset-top))]"
       role="dialog"
       aria-modal
       aria-labelledby={labelledBy}
@@ -99,7 +99,7 @@ export function Modal({
         ref={panelRef}
         tabIndex={-1}
         onKeyDown={trapTab}
-        className={`max-h-[98dvh] w-full overflow-y-auto overscroll-contain rounded-2xl border border-line-strong bg-panel-raised p-3 shadow-2xl lg:max-h-[min(88dvh,52rem)] lg:p-5 ${size === "xl" ? "max-w-6xl" : size === "lg" || wide ? "max-w-3xl" : "max-w-md"}`}
+        className={`max-h-[calc(98dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full overflow-y-auto overscroll-contain rounded-2xl border border-line-strong bg-panel-raised p-3 shadow-2xl lg:max-h-[min(88dvh,52rem)] lg:p-5 ${size === "xl" ? "max-w-6xl" : size === "lg" || wide ? "max-w-3xl" : "max-w-md"}`}
       >
         {children}
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Rajdhani } from "next/font/google";
 import { LaunchGate } from "@/components/LaunchGate";
+import { PwaManager } from "@/components/PwaManager";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -10,7 +11,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#0a0c10",
+  colorScheme: "dark",
+  // L'interface est sombre uniquement : les deux préférences gardent la même
+  // teinte de barre système, sans flash clair au lancement.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0a0c10" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0c10" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -48,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Aller au contenu
         </a>
         <ToastProvider>
+          <PwaManager />
           <LaunchGate />
           {children}
         </ToastProvider>
