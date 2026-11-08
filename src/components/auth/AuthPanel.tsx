@@ -1,9 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Circle, LoaderCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Gift,
+  Layers,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Swords,
+  Tag,
+  User,
+} from "lucide-react";
 import { ActionForm } from "@/components/ActionForm";
+import { Logo } from "@/components/Logo";
 import { OtpForm } from "@/components/auth/OtpForm";
 import type { OtpChallenge, OtpFlow, OtpResendData, OtpVerifyData } from "@/lib/auth-types";
 import type { ActionState } from "@/lib/types";
@@ -15,6 +30,40 @@ type VerifyAction = (
   flow: OtpFlow,
 ) => Promise<ActionState<OtpVerifyData>>;
 type ResendAction = (otpToken: string) => Promise<ActionState<OtpResendData>>;
+
+type BaseProps = {
+  signedIn?: boolean;
+  /** Contrôle uniquement la vérification par code à l'inscription. */
+  otpEnabled?: boolean;
+  resendOtp: ResendAction;
+  verifyOtp: VerifyAction;
+};
+
+type Props = BaseProps &
+  (
+    | { mode: "login"; signIn: CredentialsAction }
+    | { mode: "register"; signUp: CredentialsAction }
+  );
+
+type Phase = "idle" | "loading" | "success";
+
+const FEATURES = [
+  {
+    icon: Swords,
+    title: "Duels fantômes",
+    text: "Affronte les configurations des autres pilotes, quand tu veux.",
+  },
+  {
+    icon: Layers,
+    title: "Collection",
+    text: "Moteurs, boîtes, pneus : assemble ta meilleure voiture.",
+  },
+  {
+    icon: Tag,
+    title: "Marketplace",
+    text: "Achète, échange et revends tes cartes entre joueurs.",
+  },
+] as const;
 
 function challengeFrom(state: ActionState): OtpChallenge | null {
   const data = state?.data as Partial<OtpChallenge> | undefined;
@@ -36,240 +85,427 @@ function challengeFrom(state: ActionState): OtpChallenge | null {
   return null;
 }
 
-/** Session créée sans OTP (pause de la vérification) : redirection interne. */
+/** Session créée sans OTP : redirection interne renvoyée par le serveur. */
 function redirectFrom(state: ActionState): string | null {
   const data = state?.data as { redirectTo?: unknown } | undefined;
   return state?.ok && typeof data?.redirectTo === "string" ? data.redirectTo : null;
 }
 
-export function AuthPanel({
-  signIn,
-  signUp,
-  resendOtp,
-  verifyOtp,
-  signedIn = false,
-  otpEnabled = true,
-}: {
-  signIn: CredentialsAction;
-  signUp: CredentialsAction;
-  resendOtp: ResendAction;
-  verifyOtp: VerifyAction;
-  signedIn?: boolean;
-  /** Contrôle uniquement la vérification par code à l'inscription. */
-  otpEnabled?: boolean;
-}) {
+function usernameFrom(state: ActionState): string | null {
+  const data = state?.data as { username?: unknown } | undefined;
+  return typeof data?.username === "string" && data.username ? data.username : null;
+}
+
+export function AuthPanel(props: Props) {
+  const { signedIn = false, otpEnabled = true, resendOtp, verifyOtp } = props;
+  const isLogin = props.mode === "login";
+  const credentialsAction = props.mode === "login" ? props.signIn : props.signUp;
   const router = useRouter();
+
   // Redirection uniquement si l'utilisateur était déjà connecté en arrivant :
-  // après une validation OTP, le rafraîchissement serveur met `signedIn` à true
-  // mais le composant n'est pas remonté. Il faut laisser l'animation se jouer.
+  // après une connexion, le succès s'affiche et l'utilisateur continue lui-même.
   const wasSignedIn = useRef(signedIn);
   useEffect(() => {
     if (wasSignedIn.current) router.replace("/garage");
   }, [router]);
 
+  const [phase, setPhase] = useState<Phase>("idle");
   const [challenge, setChallenge] = useState<OtpChallenge | null>(null);
-  const [flow, setFlow] = useState<OtpFlow>("login");
-  const [loginSuccess, setLoginSuccess] = useState<string | null>(null);
-  const [loginPending, setLoginPending] = useState(false);
-  const [loginStep, setLoginStep] = useState(0);
-  const loginStartedAt = useRef(0);
-  const loginRedirect = useRef<string | null>(null);
-  const loginStepTimer = useRef<number | null>(null);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  const [welcomeName, setWelcomeName] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  if (challenge) {
-    return (
-      <OtpForm
-        otpToken={challenge.otpToken}
-        emailMasked={challenge.emailMasked}
-        purpose={challenge.purpose}
-        flow={flow}
-        devOtp={challenge.devOtp}
-        retryAfter={challenge.retryAfter}
-        verifyAction={verifyOtp}
-        resendAction={resendOtp}
-        onBack={() => setChallenge(null)}
-      />
-    );
-  }
+  const result = useRef<ActionState>(null);
+  const minTimer = useRef<number | null>(null);
+  const minElapsed = useRef(false);
+  const revealRef = useRef<() => void>(() => {});
 
-  if (loginSuccess) {
-    return (
-      <section className="mx-auto w-full max-w-md rounded-2xl border border-line bg-panel p-6 text-center shadow-xl sm:p-8" aria-live="polite">
-        <div className="mx-auto grid size-16 place-items-center rounded-2xl border border-emerald-400/50 bg-emerald-400/10 text-emerald-300">
-          <Check size={32} strokeWidth={3} aria-hidden="true" />
-        </div>
-        <h2 className="mt-5 font-display text-3xl font-bold uppercase text-white">Bon retour !</h2>
-        <p className="mt-2 text-sm text-zinc-400">Tu es bien connecté.</p>
-        <ol className="mx-auto mt-6 grid max-w-xs gap-3 text-left text-sm">
-          {["Identifiants", "Contrôle de sécurité", "Authentification"].map((step) => (
-            <li key={step} className="flex items-center gap-3 text-emerald-300">
-              <span className="grid size-5 place-items-center rounded-full bg-emerald-400/15" aria-hidden="true">
-                <Check size={13} strokeWidth={3} />
-              </span>
-              {step}
-            </li>
-          ))}
-        </ol>
-        <button
-          type="button"
-          onClick={() => {
-            router.replace(loginSuccess);
-            router.refresh();
-          }}
-          className="mt-7 min-h-12 w-full rounded-lg bg-amber-500 px-4 font-semibold text-black hover:bg-amber-400"
-        >
-          Continuer <span aria-hidden="true">→</span>
-        </button>
-      </section>
-    );
-  }
+  const clearMinTimer = () => {
+    if (minTimer.current !== null) {
+      window.clearTimeout(minTimer.current);
+      minTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (minTimer.current !== null) {
+        window.clearTimeout(minTimer.current);
+        minTimer.current = null;
+      }
+    };
+  }, []);
+
+  /**
+   * Déclenché dès la soumission native (avant l'action serveur) pour que les
+   * feux de départ soient visibles même si la réponse revient très vite.
+   */
+  const startLoading = () => {
+    clearMinTimer();
+    result.current = null;
+    minElapsed.current = false;
+    revealRef.current = () => {};
+    setChallenge(null);
+    setRedirectTo(null);
+    setWelcomeName(null);
+    setPhase("loading");
+
+    minTimer.current = window.setTimeout(() => {
+      minTimer.current = null;
+      minElapsed.current = true;
+      revealRef.current();
+    }, isLogin ? 1550 : 1450);
+  };
+
+  const handlePendingChange = (pending: boolean) => {
+    if (pending) {
+      startLoading();
+      return;
+    }
+
+    const state = result.current;
+    const nextChallenge = challengeFrom(state);
+    const nextRedirect = redirectFrom(state);
+
+    // Erreur de formulaire : on rend la main tout de suite.
+    if (!nextChallenge && !nextRedirect) {
+      clearMinTimer();
+      setPhase("idle");
+      return;
+    }
+
+    // La suite est révélée à la fin du temps minimum, que le serveur ait
+    // répondu avant ou après les feux de départ.
+    revealRef.current = () => {
+      if (nextChallenge) {
+        setChallenge(nextChallenge);
+        setPhase("idle");
+        return;
+      }
+      if (nextRedirect) {
+        setRedirectTo(nextRedirect);
+        setWelcomeName(usernameFrom(state));
+        setPhase("success");
+      }
+    };
+
+    if (minElapsed.current) revealRef.current();
+  };
+
+  const handleResult = (state: ActionState) => {
+    result.current = state;
+  };
+
+  const enterGarage = () => {
+    if (!redirectTo) return;
+    router.replace(redirectTo);
+    router.refresh();
+  };
+
+  const dataState =
+    phase === "loading" ? "loading" : phase === "success" ? "success" : challenge ? "otp" : "form";
 
   return (
-    <div className="relative">
-    <div className={`grid gap-6 sm:grid-cols-2 ${loginPending ? "invisible" : ""}`} aria-hidden={loginPending}>
-      <section className="rounded-lg border border-line bg-panel p-5">
-        <h2 className="mb-3 font-display text-xl font-bold uppercase tracking-wide">Connexion</h2>
-        <ActionForm
-          action={signIn}
-          submitLabel="Se connecter"
-          className="flex flex-col gap-3"
-          onPendingChange={(pending) => {
-            if (pending) {
-              loginStartedAt.current = Date.now();
-              loginRedirect.current = null;
-              setLoginStep(0);
-              setLoginPending(true);
-              loginStepTimer.current = window.setInterval(() => {
-                setLoginStep((step) => Math.min(2, step + 1));
-              }, 650);
-              return;
-            }
-
-            const target = loginRedirect.current;
-            // Let the three visible stages play before showing the result, even
-            // when the server responds almost immediately.
-            const remaining = Math.max(0, 1950 - (Date.now() - loginStartedAt.current));
-            window.setTimeout(() => {
-              if (loginStepTimer.current !== null) {
-                window.clearInterval(loginStepTimer.current);
-                loginStepTimer.current = null;
-              }
-              setLoginPending(false);
-              if (target) setLoginSuccess(target);
-            }, remaining);
-          }}
-          onResult={(result) => {
-            const target = redirectFrom(result);
-            if (target) {
-              loginRedirect.current = target;
-              return;
-            }
-            const next = challengeFrom(result);
-            if (next) {
-              setFlow("login");
-              setChallenge(next);
-            }
-          }}
-        >
-          <label htmlFor="signin-email" className="sr-only">Adresse e-mail</label>
-          <input id="signin-email" name="email" type="email" placeholder="Email" required autoComplete="email" />
-          <label htmlFor="signin-password" className="sr-only">Mot de passe</label>
-          <input
-            id="signin-password"
-            name="password"
-            type="password"
-            placeholder="Mot de passe"
-            required
-            autoComplete="current-password"
-          />
-        </ActionForm>
-        <p className="mt-3 text-xs text-zinc-500">
-          Après confirmation de l’adresse e-mail à l’inscription, la connexion se fait directement avec votre mot de passe.
+    <section className="auth-card" data-state={dataState}>
+      <div className="auth-hero">
+        <Logo size={86} className="auth-hero-logo" />
+        <p className="auth-kicker">
+          <span className="auth-leds" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
+          Accès pilote
         </p>
-      </section>
-
-      <section className="rounded-lg border border-line bg-panel p-5">
-        <h2 className="mb-1 font-display text-xl font-bold uppercase tracking-wide">Créer un compte</h2>
-        <p className="mb-3 text-sm text-zinc-400">
-          Le garage démarre vide. Vous tirez ensuite un moteur commun, une boîte commune, 5 cartes
-          bonus, et vous recevez un jeu de chaque pneu.
-          {otpEnabled
-            ? " Un code à 6 chiffres vérifie votre adresse e-mail à l'inscription."
-            : " La vérification par e-mail est temporairement en pause."}
+        <h1>
+          Le garage
+          <br />
+          est ouvert
+        </h1>
+        <p className="auth-hero-lead">
+          Reprends le volant là où tu l’as laissé : un duel à lancer, un réglage à trouver, une carte
+          à dénicher.
         </p>
-        <ActionForm
-          action={signUp}
-          submitLabel="S'inscrire"
-          variant="ghost"
-          className="flex flex-col gap-3"
-          onResult={(result) => {
-            const target = redirectFrom(result);
-            if (target) {
-              router.replace(target);
-              router.refresh();
-              return;
-            }
-            const next = challengeFrom(result);
-            if (next) {
-              setFlow("register");
-              setChallenge(next);
-            }
-          }}
-        >
-          <label htmlFor="signup-username" className="sr-only">Pseudo</label>
-          <input
-            id="signup-username"
-            name="username"
-            type="text"
-            placeholder="Pseudo"
-            required
-            minLength={3}
-            maxLength={24}
-            autoComplete="username"
-          />
-          <label htmlFor="signup-email" className="sr-only">Adresse e-mail</label>
-          <input id="signup-email" name="email" type="email" placeholder="Email" required autoComplete="email" />
-          <label htmlFor="signup-password" className="sr-only">Mot de passe</label>
-          <input
-            id="signup-password"
-            name="password"
-            type="password"
-            placeholder="Mot de passe (8+ caractères)"
-            required
-            minLength={8}
-            maxLength={128}
-            autoComplete="new-password"
-          />
-        </ActionForm>
-      </section>
-    </div>
-    {loginPending && (
-      <section className="absolute inset-0 z-10 grid place-items-center rounded-lg border border-line bg-panel/95 p-6 text-center shadow-xl backdrop-blur-sm" aria-live="polite" aria-busy="true">
-        <div>
-          <LoaderCircle className="mx-auto animate-spin text-cyan-400" size={52} strokeWidth={2.5} aria-hidden="true" />
-          <h2 className="mt-5 font-display text-2xl font-bold uppercase text-white">
-            {loginStep === 0 ? "Vérification des identifiants" : loginStep === 1 ? "Contrôle de sécurité" : "Authentification"}
-          </h2>
-          <p className="mt-2 text-sm text-zinc-400">Connexion sécurisée en cours…</p>
-          <ol className="mx-auto mt-6 grid max-w-xs gap-3 text-left text-sm">
-            {["Identifiants", "Contrôle de sécurité", "Authentification"].map((step, index) => (
-              <li key={step} className={`flex items-center gap-3 ${index < loginStep ? "text-emerald-300" : index === loginStep ? "text-cyan-300" : "text-zinc-500"}`}>
-                {index < loginStep ? (
-                  <span className="grid size-5 place-items-center rounded-full bg-emerald-400/15" aria-hidden="true">
-                    <Check size={13} strokeWidth={3} />
-                  </span>
-                ) : index === loginStep ? (
-                  <LoaderCircle className="animate-spin text-cyan-300" size={18} aria-hidden="true" />
+        <ul className="auth-features">
+          {FEATURES.map(({ icon: Icon, title, text }) => (
+            <li key={title}>
+              <span className="auth-feature-icon">
+                <Icon size={14} aria-hidden="true" />
+              </span>
+              <span>
+                <strong>{title}</strong>
+                <small>{text}</small>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="auth-hero-art" aria-hidden="true" />
+      </div>
+
+      <div className="auth-form-side">
+        <div className="contents" inert={phase !== "idle"}>
+          {challenge ? (
+            <OtpForm
+              otpToken={challenge.otpToken}
+              emailMasked={challenge.emailMasked}
+              purpose={challenge.purpose}
+              flow={props.mode}
+              devOtp={challenge.devOtp}
+              retryAfter={challenge.retryAfter}
+              verifyAction={verifyOtp}
+              resendAction={resendOtp}
+              onBack={() => setChallenge(null)}
+            />
+          ) : (
+            <>
+              <div className="auth-pane-head">
+                <h2>{isLogin ? "Bon retour au garage" : "Crée ton garage"}</h2>
+                <p>
+                  {isLogin
+                    ? "Identifie-toi pour reprendre ta saison."
+                    : "Ton kit de départ t’attend à l’inscription."}
+                </p>
+              </div>
+
+              <div className="contents" onSubmitCapture={startLoading}>
+                <ActionForm
+                  action={credentialsAction}
+                  submitLabel={
+                    <>
+                      {isLogin ? "Entrer dans le garage" : "Créer mon garage"}
+                      <ArrowRight size={16} aria-hidden="true" />
+                    </>
+                  }
+                  submitClassName="auth-cta"
+                  variant="none"
+                  className="auth-form"
+                  onPendingChange={handlePendingChange}
+                  onResult={handleResult}
+                  feedback="inline"
+                >
+                {isLogin ? (
+                  <>
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="login-email">
+                        Adresse e-mail
+                      </label>
+                      <div className="auth-control">
+                        <Mail size={15} aria-hidden="true" />
+                        <input
+                          id="login-email"
+                          className="auth-input"
+                          name="email"
+                          type="email"
+                          placeholder="pilote@carsduel.fr"
+                          autoComplete="email"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="login-password">
+                        Mot de passe
+                      </label>
+                      <div className="auth-control">
+                        <Lock size={15} aria-hidden="true" />
+                        <input
+                          id="login-password"
+                          className="auth-input"
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Ton mot de passe"
+                          autoComplete="current-password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="auth-eye"
+                          onClick={() => setShowPassword((value) => !value)}
+                          aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                          aria-pressed={showPassword}
+                        >
+                          {showPassword ? (
+                            <EyeOff size={15} aria-hidden="true" />
+                          ) : (
+                            <Eye size={15} aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 ) : (
-                  <Circle className="text-zinc-600" size={18} aria-hidden="true" />
+                  <>
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="register-username">
+                        Pseudo
+                      </label>
+                      <div className="auth-control">
+                        <User size={15} aria-hidden="true" />
+                        <input
+                          id="register-username"
+                          className="auth-input"
+                          name="username"
+                          type="text"
+                          placeholder="Ton pseudo"
+                          autoComplete="username"
+                          minLength={3}
+                          maxLength={24}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="register-email">
+                        Adresse e-mail
+                      </label>
+                      <div className="auth-control">
+                        <Mail size={15} aria-hidden="true" />
+                        <input
+                          id="register-email"
+                          className="auth-input"
+                          name="email"
+                          type="email"
+                          placeholder="pilote@carsduel.fr"
+                          autoComplete="email"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="register-password">
+                        Mot de passe
+                      </label>
+                      <div className="auth-control">
+                        <Lock size={15} aria-hidden="true" />
+                        <input
+                          id="register-password"
+                          className="auth-input"
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="8 caractères minimum"
+                          autoComplete="new-password"
+                          minLength={8}
+                          maxLength={128}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="auth-eye"
+                          onClick={() => setShowPassword((value) => !value)}
+                          aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                          aria-pressed={showPassword}
+                        >
+                          {showPassword ? (
+                            <EyeOff size={15} aria-hidden="true" />
+                          ) : (
+                            <Eye size={15} aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="auth-kit">
+                      <Gift size={16} aria-hidden="true" />
+                      <span>
+                        <strong>Kit de départ offert</strong>
+                        <small>1 moteur · 1 boîte · 5 cartes bonus · 1 jeu de pneus</small>
+                      </span>
+                    </div>
+                  </>
                 )}
-                {step}
-              </li>
-            ))}
-          </ol>
+              </ActionForm>
+              </div>
+
+              {!isLogin && (
+                <p className="auth-fineprint">
+                  <ShieldCheck size={12} aria-hidden="true" />
+                  <span>
+                    {otpEnabled
+                      ? "Un code à 6 chiffres confirme ton adresse e-mail à l’inscription."
+                      : "La vérification par e-mail est temporairement en pause."}
+                  </span>
+                </p>
+              )}
+
+              <p className="auth-switch">
+                {isLogin ? (
+                  <>
+                    Pas encore de garage ? <Link href="/auth/inscription">Créer un compte</Link>
+                  </>
+                ) : (
+                  <>
+                    Déjà pilote ? <Link href="/auth/login">Se connecter</Link>
+                  </>
+                )}
+              </p>
+            </>
+          )}
         </div>
-      </section>
-    )}
+
+        {phase === "loading" && <LoadingLayer register={!isLogin} />}
+        {phase === "success" && (
+          <SuccessLayer register={!isLogin} username={welcomeName} onContinue={enterGarage} />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function LoadingLayer({ register }: { register: boolean }) {
+  return (
+    <div className="auth-layer" role="status" aria-live="polite" aria-busy="true">
+      <div className="auth-layer-inner">
+        <div className="auth-lights" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((index) => (
+            <i key={index} style={{ "--i": index } as CSSProperties} />
+          ))}
+        </div>
+        <p className="auth-layer-kicker">{register ? "Inscription en cours" : "Connexion en cours"}</p>
+        <h2 className="auth-layer-title">
+          {register ? "Préparation du garage…" : "Ouverture du garage…"}
+        </h2>
+        <p className="auth-layer-sub">
+          {register ? "On crée ton compte et ton kit de départ." : "On vérifie tes identifiants."}
+        </p>
+        <span className="auth-track" aria-hidden="true">
+          <i />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SuccessLayer({
+  register,
+  username,
+  onContinue,
+}: {
+  register: boolean;
+  username: string | null;
+  onContinue: () => void;
+}) {
+  return (
+    <div className="auth-layer is-success" role="status" aria-live="polite">
+      <div className="auth-finish-strip" aria-hidden="true" />
+      <div className="auth-success-burst" aria-hidden="true" />
+      <div className="auth-layer-inner">
+        <span className="auth-success-badge">
+          <Check size={30} strokeWidth={3} aria-hidden="true" />
+        </span>
+        <p className="auth-layer-kicker">{register ? "Compte créé" : "Connexion réussie"}</p>
+        <h2 className="auth-layer-title">
+          {register ? "Ton garage t’attend" : username ? `Bon retour, ${username}` : "Bon retour au garage"}
+        </h2>
+        <p className="auth-layer-sub">
+          {register
+            ? "Ton kit de départ est prêt : 1 moteur, 1 boîte, 5 cartes bonus."
+            : "Ton garage est prêt. Tu peux reprendre ta saison."}
+        </p>
+        <button type="button" className="auth-cta" onClick={onContinue} autoFocus>
+          Entrer dans le garage <ArrowRight size={16} aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
 }

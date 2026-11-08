@@ -29,6 +29,8 @@ export interface OtpVerifyData {
 /** Connexion directe d'un compte vérifié, sans code OTP. */
 export interface SignedInData {
   redirectTo: string;
+  /** Pseudo du joueur, pour le message de bienvenue. */
+  username?: string;
 }
 
 /** Une inscription peut demander un OTP ; la connexion établie ouvre une session directe. */

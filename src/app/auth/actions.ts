@@ -170,9 +170,17 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   if (!allowed) return { ok: false, message: BLOCKED };
 
   const { rows } = await withAdmin((c) =>
-    c.query<{ id: string; email: string; password_hash: string; email_verified: boolean }>(
-      `select id, email, password_hash, email_verified
-         from users where lower(email) = lower($1) limit 1`,
+    c.query<{
+      id: string;
+      email: string;
+      password_hash: string;
+      email_verified: boolean;
+      username: string | null;
+    }>(
+      `select u.id, u.email, u.password_hash, u.email_verified, p.username
+         from users u
+         left join profiles p on p.id = u.id
+        where lower(u.email) = lower($1) limit 1`,
       [email],
     ),
   );
@@ -197,7 +205,10 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   }
 
   await createSession(user.id);
-  return { ok: true, data: { redirectTo: "/garage" } };
+  return {
+    ok: true,
+    data: { redirectTo: "/garage", username: user.username ?? undefined },
+  };
 }
 
 export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState<CredentialsData>> {
