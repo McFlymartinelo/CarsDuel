@@ -18,7 +18,7 @@ function CardGrid({ cards }: { cards: TradeOffer["items"][number]["user_cards"][
     return <p className="rounded-lg border border-dashed border-line-strong bg-[#0b0e13] px-3 py-6 text-center text-xs text-zinc-500">Aucune carte.</p>;
   }
   return (
-    <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,7rem),1fr))] gap-2">
       {cards.map((card) => (
         <TradeCardTile key={card.id} card={card} />
       ))}
