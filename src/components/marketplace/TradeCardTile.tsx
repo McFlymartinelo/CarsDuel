@@ -196,7 +196,9 @@ export function TradeCardTile({
         {CATEGORY_LABEL[t.category]}
         {theme.tag ? ` · ${theme.tag}` : ""}
       </p>
-      <p className="line-clamp-1 text-[10px] text-zinc-500">{summary}</p>
+      {t.category !== "moteur" && t.category !== "boite" && (
+        <p className="line-clamp-1 text-[10px] text-zinc-500">{summary}</p>
+      )}
       <TradeCondition template={t} card={card} />
     </>
   );
