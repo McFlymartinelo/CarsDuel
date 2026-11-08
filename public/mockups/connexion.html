@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup — Connexion</title>
+  <link rel="stylesheet" href="./mockup.css">
+  <link rel="stylesheet" href="./connexion.css">
+</head>
+<body class="auth-mockup">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-padlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 6.5"/></symbol>
+  </svg>
+
+  <div class="layout">
+    <div class="notes">
+      <p class="kicker">Mockup / proposition</p>
+      <h1>Connexion</h1>
+      <p class="intro">Un seul chemin, une seule carte : on choisit d’abord ce qu’on vient faire. Le garage redevient le décor au lieu d’un fond noir.</p>
+
+      <figure class="before">
+        <img src="./connexion-avant.jpg" alt="Écran de connexion actuel">
+        <figcaption><span>Avant</span><b>2 formulaires concurrents</b></figcaption>
+      </figure>
+
+      <h2>Hiérarchie</h2>
+      <ul>
+        <li>Connexion et inscription ne sont plus côte à côte : un <strong>sélecteur d’onglets</strong>, une action principale.</li>
+        <li>Un seul bouton ambre par écran, sur l’action attendue.</li>
+      </ul>
+
+      <h2>Identité</h2>
+      <ul>
+        <li>Logo, accroche et <strong>3 promesses</strong> à gauche ; le formulaire reste compact à droite.</li>
+        <li>Fond atelier plus lisible, halo ambre et filet lumineux sur la carte.</li>
+      </ul>
+
+      <h2>Formulaire</h2>
+      <ul>
+        <li><strong>Labels visibles</strong> au-dessus des champs, icônes, œil sur le mot de passe, focus ambre.</li>
+        <li>Cibles de 44–48 px, champs plus contrastés, texte d’aide supprimé.</li>
+      </ul>
+
+      <h2>Inscription</h2>
+      <ul>
+        <li>Le pavé de règles devient un <strong>kit de départ</strong> : 1 moteur, 1 boîte, 5 cartes, 1 jeu de pneus.</li>
+        <li>Le code à 6 chiffres est annoncé au bon endroit, en note discrète.</li>
+      </ul>
+
+      <h2>Animations (démo)</h2>
+      <ul>
+        <li><strong>Connexion</strong> : 5 feux s’allument en 0,6 s puis passent au vert ; le garage s’ouvre à ~1,5 s. Pas d’étapes inventées.</li>
+        <li><strong>Inscription</strong> : mêmes feux, puis le code à 6 chiffres se remplit et se valide en cascade.</li>
+        <li>Les deux boutons de la maquette sont cliquables : lance-les pour voir les séquences.</li>
+        <li>« Rejouer l’animation » n’existe que pour la démo ; dans l’app, on enchaîne sur le garage.</li>
+      </ul>
+
+      <p class="foot">Maquette statique — rien n’est encore implémenté. Les visuels sont ceux de l’app.</p>
+      <div class="legend-row">
+        <span class="legend">960 × 640 · ordinateur</span>
+        <span class="legend">390 × 844 · mobile</span>
+      </div>
+    </div>
+
+    <div class="auth-stage">
+      <div class="screen">
+        <span class="screen-label">Ordinateur — proposition</span>
+        <div class="browser">
+          <div class="browser-bar">
+            <span class="traffic"><i></i><i></i><i></i></span>
+            <span class="url"><svg><use href="#i-padlock"/></svg><b>carsduel.app/connexion</b></span>
+            <span style="width:33px"></span>
+          </div>
+          <div class="viewport">
+            <div class="login-scene">
+              <header class="scene-top">
+                <span class="scene-brand">
+                  <img src="/logo.svg" alt="">
+                  <span>CarsDuel<small>Duels automobiles</small></span>
+                </span>
+                <button class="scene-link" type="button">Règles du jeu</button>
+              </header>
+
+              <section class="auth-card" data-auth data-mode="login">
+                <section class="auth-hero">
+                  <img class="hero-logo" src="/logo.svg" alt="">
+                  <p class="hero-kicker"><span class="leds"><i></i><i></i><i></i><i></i><i></i></span>Accès pilote</p>
+                  <h1>Le garage<br>est ouvert</h1>
+                  <p class="hero-lead">Reprends le volant là où tu l’as laissé : un duel à lancer, un réglage à trouver, une carte à dénicher.</p>
+                  <ul class="hero-list">
+                    <li>
+                      <span class="ico"><svg><use href="#i-swords"/></svg></span>
+                      <span><strong>Duels fantômes</strong><small>Affronte les configurations des autres pilotes, quand tu veux.</small></span>
+                    </li>
+                    <li>
+                      <span class="ico"><svg><use href="#i-layers"/></svg></span>
+                      <span><strong>Collection</strong><small>Moteurs, boîtes, pneus : assemble ta meilleure voiture.</small></span>
+                    </li>
+                    <li>
+                      <span class="ico"><svg><use href="#i-tag"/></svg></span>
+                      <span><strong>Marketplace</strong><small>Achète, échange et revends tes cartes entre joueurs.</small></span>
+                    </li>
+                  </ul>
+                  <img class="hero-art" src="/pulls/weekly-engine-gearbox.webp" alt="" aria-hidden="true">
+                </section>
+
+                <section class="auth-form-side">
+                  <div class="auth-tabs">
+                    <button type="button" data-mode-btn="login" aria-pressed="true">Connexion</button>
+                    <button type="button" data-mode-btn="register" aria-pressed="false">Inscription</button>
+                  </div>
+
+                  <form class="auth-pane" data-pane="login">
+                    <div class="pane-head">
+                      <h2>Bon retour au garage</h2>
+                      <p>Identifie-toi pour reprendre ta saison.</p>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="d-login-email">Adresse e-mail</label>
+                      <div class="control">
+                        <svg><use href="#i-mail"/></svg>
+                        <input id="d-login-email" type="email" placeholder="pilote@carsduel.fr" autocomplete="email">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="d-login-password">Mot de passe</label>
+                      <div class="control">
+                        <svg><use href="#i-lock"/></svg>
+                        <input id="d-login-password" type="password" placeholder="Ton mot de passe" autocomplete="current-password">
+                        <button class="eye" type="button" data-eye aria-label="Afficher le mot de passe"><svg><use href="#i-eye"/></svg></button>
+                      </div>
+                    </div>
+                    <button class="auth-cta" type="submit">Entrer dans le garage <svg><use href="#i-arrow"/></svg></button>
+                    <p class="auth-switch">Pas encore de garage ? <button class="link" type="button" data-mode-btn="register">Créer un compte</button></p>
+                  </form>
+
+                  <form class="auth-pane" data-pane="register" hidden>
+                    <div class="pane-head">
+                      <h2>Crée ton garage</h2>
+                      <p>Ton kit de départ t’attend à l’inscription.</p>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="d-reg-username">Pseudo</label>
+                      <div class="control">
+                        <svg><use href="#i-user"/></svg>
+                        <input id="d-reg-username" type="text" placeholder="Ton pseudo" autocomplete="username">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="d-reg-email">Adresse e-mail</label>
+                      <div class="control">
+                        <svg><use href="#i-mail"/></svg>
+                        <input id="d-reg-email" type="email" placeholder="pilote@carsduel.fr" autocomplete="email">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="d-reg-password">Mot de passe</label>
+                      <div class="control">
+                        <svg><use href="#i-lock"/></svg>
+                        <input id="d-reg-password" type="password" placeholder="8 caractères minimum" autocomplete="new-password">
+                        <button class="eye" type="button" data-eye aria-label="Afficher le mot de passe"><svg><use href="#i-eye"/></svg></button>
+                      </div>
+                    </div>
+                    <div class="kit">
+                      <svg><use href="#i-gift"/></svg>
+                      <span><strong>Kit de départ offert</strong><small>1 moteur · 1 boîte · 5 cartes bonus · 1 jeu de pneus</small></span>
+                    </div>
+                    <button class="auth-cta" type="submit">Créer mon garage <svg><use href="#i-arrow"/></svg></button>
+                    <p class="fineprint"><svg><use href="#i-shield"/></svg><span>Un code à 6 chiffres confirme ton adresse e-mail à l’inscription.</span></p>
+                    <p class="auth-switch">Déjà pilote ? <button class="link" type="button" data-mode-btn="login">Se connecter</button></p>
+                  </form>
+                </section>
+
+                <div class="auth-overlay" data-overlay hidden>
+                  <div class="layer-inner">
+                    <div class="start-lights" data-lights aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                    <p class="layer-kicker" data-overlay-kicker>Connexion en cours</p>
+                    <h2 class="layer-title" data-overlay-title>Ouverture du garage…</h2>
+                    <p class="layer-sub" data-overlay-sub>On vérifie tes identifiants.</p>
+                    <div class="load-track" aria-hidden="true"><i data-track></i></div>
+                  </div>
+                </div>
+
+                <div class="auth-otp" data-otp hidden>
+                  <div class="layer-inner">
+                    <button class="layer-back" type="button" data-back>← Modifier l’e-mail</button>
+                    <div class="layer-emblem"><svg><use href="#i-shield"/></svg></div>
+                    <p class="layer-kicker">Vérification</p>
+                    <h2 class="layer-title">Vérifie ton e-mail</h2>
+                    <p class="layer-sub">Code envoyé à <b>p•••••@carsduel.fr</b></p>
+                    <div class="otp-digits" data-digits aria-label="Code à 6 chiffres">
+                      <span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <p class="otp-hint" data-otp-hint>Réception du code…</p>
+                    <p class="otp-resend">Renvoyer le code dans <b>28 s</b></p>
+                  </div>
+                </div>
+
+                <div class="auth-success" data-success hidden>
+                  <div class="finish-strip" aria-hidden="true"></div>
+                  <div class="success-burst" aria-hidden="true"></div>
+                  <div class="layer-inner">
+                    <div class="success-badge"><svg><use href="#i-check"/></svg></div>
+                    <p class="layer-kicker" data-success-kicker>Connexion réussie</p>
+                    <h2 class="layer-title" data-success-title>Bon retour, Marty</h2>
+                    <p class="layer-sub" data-success-sub>Ton garage est prêt. Dans l’app, tu y arrives directement.</p>
+                    <button class="auth-cta" type="button" data-replay>Rejouer l’animation <svg><use href="#i-arrow"/></svg></button>
+                    <button class="layer-back is-bottom" type="button" data-back>Retour au formulaire</button>
+                  </div>
+                </div>
+              </section>
+
+              <p class="scene-foot">Duels de cartes automobiles · Jouable sur mobile et ordinateur</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen">
+        <span class="screen-label">Mobile — proposition</span>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="m-app">
+              <div class="statusbar">
+                <span>9:41</span>
+                <span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span>
+              </div>
+              <div class="m-scene">
+                <div class="m-brand">
+                  <img src="/logo.svg" alt="">
+                  <span class="wm">CarsDuel</span>
+                </div>
+                <div class="m-hero">
+                  <h1>Le garage<br>est ouvert</h1>
+                  <p>Reprends le volant là où tu l’as laissé.</p>
+                  <ul class="m-features">
+                    <li>
+                      <span class="ico"><svg><use href="#i-swords"/></svg></span>
+                      <span><strong>Duels fantômes</strong><small>Affronte les configurations des autres pilotes, quand tu veux.</small></span>
+                    </li>
+                    <li>
+                      <span class="ico"><svg><use href="#i-layers"/></svg></span>
+                      <span><strong>Collection</strong><small>Moteurs, boîtes, pneus : assemble ta meilleure voiture.</small></span>
+                    </li>
+                    <li>
+                      <span class="ico"><svg><use href="#i-tag"/></svg></span>
+                      <span><strong>Marketplace</strong><small>Achète, échange et revends tes cartes entre joueurs.</small></span>
+                    </li>
+                  </ul>
+                </div>
+
+                <section class="m-sheet" data-auth data-mode="login">
+                  <div class="m-grab"></div>
+                  <div class="auth-tabs">
+                    <button type="button" data-mode-btn="login" aria-pressed="true">Connexion</button>
+                    <button type="button" data-mode-btn="register" aria-pressed="false">Inscription</button>
+                  </div>
+
+                  <form class="auth-pane" data-pane="login">
+                    <div class="pane-head">
+                      <h2>Bon retour au garage</h2>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="m-login-email">Adresse e-mail</label>
+                      <div class="control">
+                        <svg><use href="#i-mail"/></svg>
+                        <input id="m-login-email" type="email" placeholder="pilote@carsduel.fr" autocomplete="email">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="m-login-password">Mot de passe</label>
+                      <div class="control">
+                        <svg><use href="#i-lock"/></svg>
+                        <input id="m-login-password" type="password" placeholder="Ton mot de passe" autocomplete="current-password">
+                        <button class="eye" type="button" data-eye aria-label="Afficher le mot de passe"><svg><use href="#i-eye"/></svg></button>
+                      </div>
+                    </div>
+                    <button class="auth-cta" type="submit">Entrer dans le garage <svg><use href="#i-arrow"/></svg></button>
+                    <p class="auth-switch">Pas encore de garage ? <button class="link" type="button" data-mode-btn="register">Créer un compte</button></p>
+                  </form>
+
+                  <form class="auth-pane" data-pane="register" hidden>
+                    <div class="pane-head">
+                      <h2>Crée ton garage</h2>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="m-reg-username">Pseudo</label>
+                      <div class="control">
+                        <svg><use href="#i-user"/></svg>
+                        <input id="m-reg-username" type="text" placeholder="Ton pseudo" autocomplete="username">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="m-reg-email">Adresse e-mail</label>
+                      <div class="control">
+                        <svg><use href="#i-mail"/></svg>
+                        <input id="m-reg-email" type="email" placeholder="pilote@carsduel.fr" autocomplete="email">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="field-label" for="m-reg-password">Mot de passe</label>
+                      <div class="control">
+                        <svg><use href="#i-lock"/></svg>
+                        <input id="m-reg-password" type="password" placeholder="8 caractères minimum" autocomplete="new-password">
+                        <button class="eye" type="button" data-eye aria-label="Afficher le mot de passe"><svg><use href="#i-eye"/></svg></button>
+                      </div>
+                    </div>
+                    <div class="kit">
+                      <svg><use href="#i-gift"/></svg>
+                      <span><strong>Kit de départ offert</strong><small>1 moteur · 1 boîte · 5 cartes · 1 jeu de pneus</small></span>
+                    </div>
+                    <button class="auth-cta" type="submit">Créer mon garage <svg><use href="#i-arrow"/></svg></button>
+                    <p class="fineprint"><svg><use href="#i-shield"/></svg><span>Un code à 6 chiffres confirme ton adresse e-mail.</span></p>
+                    <p class="auth-switch">Déjà pilote ? <button class="link" type="button" data-mode-btn="login">Se connecter</button></p>
+                  </form>
+
+                  <div class="auth-overlay" data-overlay hidden>
+                    <div class="layer-inner">
+                      <div class="start-lights" data-lights aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                      <p class="layer-kicker" data-overlay-kicker>Connexion en cours</p>
+                      <h2 class="layer-title" data-overlay-title>Ouverture du garage…</h2>
+                      <p class="layer-sub" data-overlay-sub>On vérifie tes identifiants.</p>
+                      <div class="load-track" aria-hidden="true"><i data-track></i></div>
+                    </div>
+                  </div>
+
+                  <div class="auth-otp" data-otp hidden>
+                    <div class="layer-inner">
+                      <button class="layer-back" type="button" data-back>← Modifier l’e-mail</button>
+                      <div class="layer-emblem"><svg><use href="#i-shield"/></svg></div>
+                      <p class="layer-kicker">Vérification</p>
+                      <h2 class="layer-title">Vérifie ton e-mail</h2>
+                      <p class="layer-sub">Code envoyé à <b>p•••••@carsduel.fr</b></p>
+                      <div class="otp-digits" data-digits aria-label="Code à 6 chiffres">
+                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                      </div>
+                      <p class="otp-hint" data-otp-hint>Réception du code…</p>
+                      <p class="otp-resend">Renvoyer le code dans <b>28 s</b></p>
+                    </div>
+                  </div>
+
+                  <div class="auth-success" data-success hidden>
+                    <div class="finish-strip" aria-hidden="true"></div>
+                    <div class="success-burst" aria-hidden="true"></div>
+                    <div class="layer-inner">
+                      <div class="success-badge"><svg><use href="#i-check"/></svg></div>
+                      <p class="layer-kicker" data-success-kicker>Connexion réussie</p>
+                      <h2 class="layer-title" data-success-title>Bon retour, Marty</h2>
+                      <p class="layer-sub" data-success-sub>Ton garage est prêt. Dans l’app, tu y arrives directement.</p>
+                      <button class="auth-cta" type="button" data-replay>Rejouer l’animation <svg><use href="#i-arrow"/></svg></button>
+                      <button class="layer-back is-bottom" type="button" data-back>Retour au formulaire</button>
+                    </div>
+                  </div>
+                </section>
+                <span class="m-home"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll("[data-auth]").forEach((card) => {
+      const tabs = card.querySelectorAll(".auth-tabs [data-mode-btn]");
+      const panes = card.querySelectorAll("[data-pane]");
+      const overlay = card.querySelector("[data-overlay]");
+      const otp = card.querySelector("[data-otp]");
+      const success = card.querySelector("[data-success]");
+      const lightsWrap = card.querySelector("[data-lights]");
+      const lights = lightsWrap ? Array.from(lightsWrap.querySelectorAll("i")) : [];
+      const track = card.querySelector("[data-track]");
+      const digits = Array.from(card.querySelectorAll("[data-digits] span"));
+      const otpHint = card.querySelector("[data-otp-hint]");
+      let timers = [];
+
+      card.dataset.state = "form";
+
+      const later = (fn, delay) => {
+        timers.push(window.setTimeout(fn, delay));
+      };
+
+      const clearTimers = () => {
+        timers.forEach((timer) => window.clearTimeout(timer));
+        timers = [];
+      };
+
+      const setLayer = (layer) => {
+        [overlay, otp, success].forEach((node) => {
+          if (node) node.hidden = node !== layer;
+        });
+        card.dataset.state = !layer ? "form" : layer === overlay ? "loading" : layer === otp ? "otp" : "success";
+      };
+
+      const reset = () => {
+        clearTimers();
+        setLayer(null);
+        lights.forEach((light) => light.classList.remove("is-on"));
+        if (lightsWrap) lightsWrap.classList.remove("is-go");
+        if (track) {
+          track.style.transition = "none";
+          track.style.width = "0";
+        }
+        digits.forEach((digit) => {
+          digit.textContent = "";
+          digit.classList.remove("is-filled", "is-ok", "is-next");
+        });
+        if (otpHint) otpHint.textContent = "Réception du code…";
+      };
+
+      const successFor = (mode) => {
+        const kicker = card.querySelector("[data-success-kicker]");
+        const title = card.querySelector("[data-success-title]");
+        const sub = card.querySelector("[data-success-sub]");
+        if (kicker) kicker.textContent = mode === "register" ? "Compte créé" : "Connexion réussie";
+        if (title) title.textContent = mode === "register" ? "Ton garage t’attend" : "Bon retour, Marty";
+        if (sub) {
+          sub.textContent = mode === "register"
+            ? "Ton kit de départ est prêt : 1 moteur, 1 boîte, 5 cartes bonus."
+            : "Ton garage est prêt. Dans l’app, tu y arrives directement.";
+        }
+        setLayer(success);
+      };
+
+      const play = (mode) => {
+        if (!overlay) return;
+        reset();
+
+        const kicker = card.querySelector("[data-overlay-kicker]");
+        const title = card.querySelector("[data-overlay-title]");
+        const sub = card.querySelector("[data-overlay-sub]");
+        if (kicker) kicker.textContent = mode === "register" ? "Inscription en cours" : "Connexion en cours";
+        if (title) title.textContent = mode === "register" ? "Préparation du garage…" : "Ouverture du garage…";
+        if (sub) sub.textContent = mode === "register" ? "On crée ton compte et ton kit de départ." : "On vérifie tes identifiants.";
+
+        setLayer(overlay);
+
+        if (track) {
+          track.style.transition = "none";
+          track.style.width = "0";
+          void track.offsetWidth;
+          track.style.transition = "";
+          track.style.width = "100%";
+        }
+
+        lights.forEach((light, index) => {
+          later(() => light.classList.add("is-on"), 110 + index * 115);
+        });
+        later(() => {
+          if (lightsWrap) lightsWrap.classList.add("is-go");
+        }, 800);
+
+        later(() => {
+          if (mode === "login") {
+            later(() => successFor("login"), 650);
+            return;
+          }
+
+          later(() => {
+            setLayer(otp);
+            digits.forEach((digit) => digit.classList.remove("is-filled", "is-ok", "is-next"));
+            if (digits[0]) digits[0].classList.add("is-next");
+            if (otpHint) otpHint.textContent = "Réception du code…";
+
+            const code = "481602";
+            code.split("").forEach((value, index) => {
+              later(() => {
+                digits.forEach((digit) => digit.classList.remove("is-next"));
+                if (digits[index]) {
+                  digits[index].textContent = value;
+                  digits[index].classList.add("is-filled");
+                }
+                if (digits[index + 1]) digits[index + 1].classList.add("is-next");
+                if (index === 0 && otpHint) otpHint.textContent = "Saisie du code…";
+
+                if (index === code.length - 1) {
+                  later(() => {
+                    if (otpHint) otpHint.textContent = "Code validé.";
+                    digits.forEach((digit) => {
+                      digit.classList.remove("is-filled", "is-next");
+                      digit.classList.add("is-ok");
+                    });
+                  }, 280);
+                  later(() => successFor("register"), 1050);
+                }
+              }, 260 + index * 165);
+            });
+          }, 420);
+        }, 900);
+      };
+
+      card.querySelectorAll("[data-mode-btn]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (card.dataset.state !== "form") reset();
+          const mode = button.dataset.modeBtn;
+          card.dataset.mode = mode;
+          tabs.forEach((tab) => tab.setAttribute("aria-pressed", String(tab === button)));
+          panes.forEach((pane) => { pane.hidden = pane.dataset.pane !== mode; });
+        });
+      });
+
+      card.querySelectorAll("form[data-pane]").forEach((form) => {
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          play(form.dataset.pane === "register" ? "register" : "login");
+        });
+      });
+
+      card.querySelectorAll("[data-replay]").forEach((button) => {
+        button.addEventListener("click", () => play(card.dataset.mode === "register" ? "register" : "login"));
+      });
+
+      card.querySelectorAll("[data-back]").forEach((button) => {
+        button.addEventListener("click", reset);
+      });
+    });
+
+    document.querySelectorAll("[data-eye]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const input = button.closest(".control").querySelector("input");
+        const reveal = input.type === "password";
+        input.type = reveal ? "text" : "password";
+        button.classList.toggle("is-on", reveal);
+        button.setAttribute("aria-label", reveal ? "Masquer le mot de passe" : "Afficher le mot de passe");
+      });
+    });
+
+    // Aperçu direct de l'onglet inscription : connexion.html?mode=register
+    if (new URLSearchParams(location.search).get("mode") === "register") {
+      document.querySelectorAll('.auth-tabs [data-mode-btn="register"]').forEach((tab) => tab.click());
+    }
+  </script>
+</body>
+</html>
