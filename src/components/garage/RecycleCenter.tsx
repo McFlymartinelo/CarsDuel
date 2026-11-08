@@ -557,7 +557,7 @@ export function RecycleCenter({
               type="button"
               onClick={() => selectTab(key)}
               aria-current={active ? "true" : undefined}
-              className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 font-display text-sm font-semibold uppercase tracking-wide transition-colors ${
+              className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-1.5 font-display text-[13px] font-semibold uppercase tracking-wide transition-colors sm:gap-1.5 sm:px-2 sm:text-sm ${
                 active ? "bg-amber-500 text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
               }`}
             >

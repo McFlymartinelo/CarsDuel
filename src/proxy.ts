@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Ce n'est pas une authentification. requireUser() (session relue en base) fait foi.
 const PUBLIC_PATHS = new Set(["/sw.js", "/api/push/vapid", "/api/push/dispatch"]);
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const hasSession = request.cookies.has("gb_session");
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith("/auth");
@@ -16,5 +16,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|html)$).*)"],
 };

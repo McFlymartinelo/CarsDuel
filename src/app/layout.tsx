@@ -46,7 +46,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={rajdhani.variable}>
+    <html lang="fr" className={rajdhani.variable} data-scroll-behavior="smooth">
       <body className="min-h-screen antialiased">
         <a
           href="#contenu"
