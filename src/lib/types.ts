@@ -393,6 +393,13 @@ export type NotificationKind =
   | "duel_won"
   | "duel_lost"
   | "duel_request"
+  | "duel_accepted"
+  | "duel_declined"
+  | "trade_received"
+  | "trade_accepted"
+  | "trade_declined"
+  | "trade_expired"
+  | "trade_failed"
   | "payout";
 
 export interface NotificationItem {
@@ -400,6 +407,8 @@ export interface NotificationItem {
   at: string;
   label: string;
   amount: number;
+  item_count?: number;
+  expires_at?: string | null;
   unread: boolean;
 }
 

@@ -3,23 +3,46 @@
 import { useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Check, Coins, ShieldCheck, Swords, Tag, Trophy, UserRound, X, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, Bell, Check, Coins, ShieldCheck, Swords, Tag, Trophy, UserRound, X, type LucideIcon } from "lucide-react";
 import { markNotificationsSeen } from "@/app/(game)/notifications";
 import { formatDateTime } from "@/lib/format";
 import type { NotificationFeed, NotificationItem, NotificationKind } from "@/lib/types";
 
 const coins = (n: number) => `${n.toLocaleString("fr-FR")} 🪙`;
 
-const KINDS: Record<NotificationKind, { icon: LucideIcon; tone: string; href: string; text: (i: NotificationItem) => string }> = {
+const EXCHANGE_HREF = "/marketplace?espace=echanges";
+const KINDS: Record<NotificationKind, { icon: LucideIcon; tone: string; href: string; text: (i: NotificationItem) => string; detail?: (i: NotificationItem) => string }> = {
   offer_received: { icon: Tag, tone: "text-amber-300", href: "/marketplace", text: (i) => `Offre de ${coins(i.amount)} sur ${i.label}` },
   sale: { icon: Coins, tone: "text-emerald-400", href: "/marketplace", text: (i) => `${i.label} vendu : +${coins(i.amount)}` },
   offer_accepted: { icon: Check, tone: "text-emerald-400", href: "/garage", text: (i) => `Offre acceptée sur ${i.label} (${coins(i.amount)})` },
   offer_rejected: { icon: X, tone: "text-red-400", href: "/marketplace", text: (i) => `Offre refusée sur ${i.label} : ${coins(i.amount)} remboursées` },
   duel_won: { icon: ShieldCheck, tone: "text-emerald-400", href: "/duel", text: (i) => `Vous avez repoussé ${i.label}${i.amount > 0 ? ` : +${coins(i.amount)}` : ""}` },
   duel_lost: { icon: Swords, tone: "text-red-400", href: "/duel", text: (i) => `${i.label} a battu votre configuration` },
-  duel_request: { icon: UserRound, tone: "text-amber-300", href: "/duel/organises", text: (i) => `Demande de duel par ${i.label}` },
+  duel_request: { icon: UserRound, tone: "text-amber-300", href: "/duel/organises", text: (i) => `${i.label} vous défie en duel`, detail: () => "Demande en attente · Répondez depuis les duels organisés" },
+  duel_accepted: { icon: Check, tone: "text-emerald-400", href: "/duel/organises", text: (i) => `${i.label} a accepté votre défi` },
+  duel_declined: { icon: X, tone: "text-red-400", href: "/duel/organises", text: (i) => `${i.label} a refusé votre défi` },
+  trade_received: { icon: ArrowLeftRight, tone: "text-amber-300", href: EXCHANGE_HREF, text: (i) => `Proposition d’échange de ${i.label}`, detail: tradeDetail },
+  trade_accepted: { icon: Check, tone: "text-emerald-400", href: EXCHANGE_HREF, text: (i) => `Échange conclu avec ${i.label}`, detail: tradeDetail },
+  trade_declined: { icon: X, tone: "text-red-400", href: EXCHANGE_HREF, text: (i) => `${i.label} a refusé votre échange`, detail: tradeDetail },
+  trade_expired: { icon: X, tone: "text-zinc-400", href: EXCHANGE_HREF, text: (i) => `Échange expiré avec ${i.label}`, detail: tradeDetail },
+  trade_failed: { icon: X, tone: "text-red-400", href: EXCHANGE_HREF, text: (i) => `Échange impossible avec ${i.label}`, detail: (i) => `L’échange n’a pas pu aboutir · ${tradeContents(i)}` },
   payout: { icon: Trophy, tone: "text-amber-300", href: "/leaderboard", text: (i) => `${i.label} : +${coins(i.amount)}` },
 };
+
+function tradeContents(i: NotificationItem) {
+  const cards = i.item_count ?? 0;
+  const count = `${cards} carte${cards === 1 ? "" : "s"}`;
+  return `${count}${i.amount > 0 ? ` · ${coins(i.amount)}` : ""}`;
+}
+
+function tradeDetail(i: NotificationItem) {
+  const contents = tradeContents(i);
+  if (i.expires_at && new Date(i.expires_at).getTime() > Date.now()) {
+    const hours = Math.max(1, Math.ceil((new Date(i.expires_at).getTime() - Date.now()) / 3_600_000));
+    return `${contents} · expire dans ${hours} h`;
+  }
+  return contents;
+}
 
 /** Cloche du Nav. Le badge compte les événements postérieurs à la dernière fermeture du panneau. */
 export function NotificationBell({ feed }: { feed: NotificationFeed }) {
@@ -61,6 +84,7 @@ export function NotificationBell({ feed }: { feed: NotificationFeed }) {
                   <k.icon size={18} strokeWidth={1.8} className={`mt-0.5 shrink-0 ${k.tone}`} />
                   <span className="min-w-0 flex-1">
                     <span className={`block leading-snug ${i.unread ? "text-white" : "text-zinc-300"}`}>{k.text(i)}</span>
+                    {k.detail && <span className="mt-0.5 block text-xs text-zinc-400">{k.detail(i)}</span>}
                     <span className="text-xs text-zinc-500">{formatDateTime(i.at)}</span>
                   </span>
                   {i.unread && <span aria-hidden className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-400" />}
