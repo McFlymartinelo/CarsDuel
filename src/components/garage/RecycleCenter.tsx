@@ -244,6 +244,9 @@ function PlaceInBinForm({
         variant="none"
         submitClassName="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-amber-300 transition hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-200 active:scale-95"
         className="flex w-full"
+        feedback="toast"
+        toastKey="recycle-add"
+        toastSuccess={max > 1 ? `${qty} cartes placées dans la benne.` : "Carte placée dans la benne."}
       >
         {selected.map((id) => (
           <input key={id} type="hidden" name="card_id" value={id} />
@@ -722,6 +725,9 @@ export function RecycleCenter({
                           variant="none"
                           submitClassName="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-zinc-600 bg-zinc-800/60 px-2 py-1.5 text-center text-xs font-semibold leading-tight text-zinc-200 transition hover:border-zinc-400 hover:bg-zinc-700/70 hover:text-white active:scale-95"
                           className="flex w-1/2"
+                          feedback="toast"
+                          toastKey="recycle-remove"
+                          toastSuccess={count > 1 ? `${count} cartes retirées de la benne.` : "Carte retirée de la benne."}
                         >
                           {ids.map((id) => (
                             <input key={id} type="hidden" name="card_id" value={id} />

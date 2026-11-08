@@ -69,6 +69,8 @@ export function SellDialog({
             }
             variant="none"
             submitClassName="mt-5 flex min-h-12 w-full items-center justify-center rounded-lg bg-gradient-to-b from-amber-400 to-amber-500 px-3 text-sm font-bold uppercase tracking-wide text-black shadow-lg shadow-amber-950/40 transition hover:from-amber-300 hover:to-amber-400 disabled:opacity-50"
+            feedback="toast"
+            toastKey="market-list"
             onSuccess={() => setOpen(false)}
             className="mt-4 flex flex-col items-stretch gap-4"
           >

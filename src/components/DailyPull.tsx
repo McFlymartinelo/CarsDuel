@@ -5,6 +5,7 @@ import { CardDraw, DrawProgress } from "@/components/CardDraw";
 import { Cog, Settings2 } from "lucide-react";
 import { PullCountdown } from "@/components/PullCountdown";
 import { TileBody, tileClass } from "@/components/ActionTile";
+import { useToast } from "@/components/ui/Toast";
 import type { ActionState, DrawnCard } from "@/lib/types";
 import { RARITY_LABEL } from "@/lib/format";
 
@@ -48,13 +49,18 @@ function PullCard({
   const cards = state?.ok ? state.data?.cards ?? [] : [];
   const revealedRarity = cards[0]?.rarity ?? "commune";
   const rarityGlow = RARITY_GLOW[revealedRarity];
+  const { toast } = useToast();
 
   useEffect(() => {
     if (state?.ok && (state.data?.cards.length ?? 0) > 0) {
       if (weekly) setOpen(true);
       else setShowCard(true);
+    } else if (state && !state.ok) {
+      // Le tirage réussi se révèle dans sa propre mise en scène : seule l'erreur
+      // a besoin d'un retour non bloquant.
+      toast({ tone: "error", title: state.message ?? "Le tirage a échoué.", key: "pull" });
     }
-  }, [state, weekly]);
+  }, [state, weekly, toast]);
 
   return (
     <>
@@ -81,7 +87,6 @@ function PullCard({
           </button>
         )}
       />
-      {state && !state.ok && <p className="mt-2 text-sm text-red-400">{state.message}</p>}
     </form>
       {chooseOpen && weekly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#030507]/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choisir la carte hebdomadaire">

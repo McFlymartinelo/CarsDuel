@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { Modal } from "@/components/Modal";
+import { useToast } from "@/components/ui/Toast";
 import type { ActionState } from "@/lib/types";
 
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
@@ -29,6 +30,9 @@ export function ActionForm({
   onResult,
   onPendingChange,
   submitClassName,
+  feedback = "inline",
+  toastKey,
+  toastSuccess,
 }: {
   action: Action;
   submitLabel: React.ReactNode;
@@ -44,7 +48,17 @@ export function ActionForm({
   onResult?: (state: ActionState) => void;
   /** Signale le début et la fin de l'action serveur. */
   onPendingChange?: (pending: boolean) => void;
+  /**
+   * `toast` affiche le retour dans une notification flottante au lieu d'un
+   * message inline. À réserver aux actions sans validation de champ.
+   */
+  feedback?: "inline" | "toast";
+  /** Clé de déduplication du toast (une seule notification par action). */
+  toastKey?: string;
+  /** Message de succès si l'action n'en renvoie pas. */
+  toastSuccess?: string;
 }) {
+  const { toast } = useToast();
   // Fermeture pilotée depuis la promesse de l'action, pas depuis l'état : après un
   // rafraîchissement RSC, ce formulaire peut être démonté (la carte équipée sort de la
   // liste des alternatives) avant que l'effet sur `state` n'ait pu appeler `onSuccess`.
@@ -54,7 +68,27 @@ export function ActionForm({
       const result = await action(prev, formData);
       if (result?.ok) onSuccess?.();
       onResult?.(result);
+      if (feedback === "toast") {
+        if (result?.ok) {
+          const title = toastSuccess ?? result.message;
+          if (title) toast({ tone: "success", title, key: toastKey });
+        } else {
+          toast({
+            tone: "error",
+            title: result?.message ?? "L'action n'a pas abouti. Réessayez.",
+            key: toastKey,
+          });
+        }
+      }
       return result;
+    } catch {
+      const failure: ActionState = {
+        ok: false,
+        message: "Une erreur inattendue est survenue. Réessayez dans un instant.",
+      };
+      if (feedback === "toast") toast({ tone: "error", title: failure.message ?? "", key: toastKey });
+      onResult?.(failure);
+      return failure;
     } finally {
       onPendingChange?.(false);
     }
@@ -101,8 +135,10 @@ export function ActionForm({
       >
         {pending ? "…" : submitLabel}
       </button>
-      {state?.message && (
-        <p className={`w-full text-sm ${state.ok ? "text-emerald-400" : "text-red-400"}`}>{state.message}</p>
+      {feedback === "inline" && state?.message && (
+        <p role={state.ok ? undefined : "alert"} className={`w-full text-sm ${state.ok ? "text-emerald-400" : "text-red-400"}`}>
+          {state.message}
+        </p>
       )}
       {open && (
         <Modal labelledBy="confirm-title" onClose={() => setOpen(false)}>

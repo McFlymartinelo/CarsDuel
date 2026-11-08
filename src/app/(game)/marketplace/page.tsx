@@ -129,17 +129,17 @@ export default async function MarketplacePage({
             {offersOn(x.id).map((off) => (
               <div key={off.id} className="mt-2 flex flex-wrap items-center gap-2 rounded bg-zinc-800 p-2 text-sm">
                 <span>Offre : <b>{off.amount} 🪙</b></span>
-                <ActionForm action={respondOffer} submitLabel="Accepter" className="flex">
+                <ActionForm action={respondOffer} submitLabel="Accepter" className="flex" feedback="toast" toastKey="offer-respond">
                   <input type="hidden" name="offer_id" value={off.id} />
                   <input type="hidden" name="accept" value="true" />
                 </ActionForm>
-                <ActionForm action={respondOffer} submitLabel="Refuser" variant="ghost" className="flex">
+                <ActionForm action={respondOffer} submitLabel="Refuser" variant="ghost" className="flex" feedback="toast" toastKey="offer-respond">
                   <input type="hidden" name="offer_id" value={off.id} />
                   <input type="hidden" name="accept" value="false" />
                 </ActionForm>
               </div>
             ))}
-            <ActionForm action={cancelListing} submitLabel="Retirer l'annonce" variant="danger" className="mt-2 flex">
+            <ActionForm action={cancelListing} submitLabel="Retirer l'annonce" variant="danger" className="mt-2 flex" feedback="toast" toastKey="listing-cancel">
               <input type="hidden" name="listing_id" value={x.id} />
             </ActionForm>
           </>,
@@ -163,6 +163,8 @@ export default async function MarketplacePage({
                 submitLabel={`Acheter — ${x.price} 🪙`}
                 confirmText={`Acheter ${x.user_cards.card_templates.name} pour ${x.price} pièces ?`}
                 className="flex"
+                feedback="toast"
+                toastKey="market-buy"
               >
                 <input type="hidden" name="listing_id" value={x.id} />
               </ActionForm>
@@ -174,13 +176,15 @@ export default async function MarketplacePage({
                 variant="ghost"
                 confirmText="Envoyer une offre de {amount} pièces ?"
                 className="mt-2 flex items-end gap-2"
+                feedback="toast"
+                toastKey="market-offer"
               >
                 <input type="hidden" name="listing_id" value={x.id} />
                 <input name="amount" type="number" min={10} required placeholder="Montant (min. 10)" className="w-28" />
               </ActionForm>
             )}
             {myOffer && (
-              <ActionForm action={withdrawOffer} submitLabel="Retirer mon offre" variant="ghost" className="mt-2 flex items-center gap-2">
+              <ActionForm action={withdrawOffer} submitLabel="Retirer mon offre" variant="ghost" className="mt-2 flex items-center gap-2" feedback="toast" toastKey="offer-withdraw">
                 <input type="hidden" name="offer_id" value={myOffer.id} />
                 <span className="text-sm text-amber-300">Offre en cours : {myOffer.amount} 🪙 (séquestre)</span>
               </ActionForm>

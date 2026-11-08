@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { Boxes, Recycle } from "lucide-react";
 import { Modal } from "@/components/Modal";
+import { useToast } from "@/components/ui/Toast";
 import { processRecycleBin } from "@/app/(game)/garage/actions";
 import { formatKg, RECYCLE_CUBE_WEIGHT_KG } from "@/lib/recycle";
 import type { ActionState } from "@/lib/types";
@@ -73,10 +74,17 @@ export function RecycleLaunch({
   const [open, setOpen] = useState(false);
   const disabled = cubes < 1;
   const missingKg = Math.max(0, Math.round((RECYCLE_CUBE_WEIGHT_KG - (weightKg % RECYCLE_CUBE_WEIGHT_KG)) * 100) / 100);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (state?.ok) setOpen(false);
-  }, [state]);
+    if (!state) return;
+    if (state.ok) {
+      setOpen(false);
+      toast({ tone: "success", title: state.message ?? "Recyclage effectué.", key: "recycle-process" });
+    } else {
+      toast({ tone: "error", title: state.message ?? "Le recyclage a échoué.", key: "recycle-process" });
+    }
+  }, [state, toast]);
 
   return (
     <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
@@ -97,10 +105,6 @@ export function RecycleLaunch({
       )}
       {disabled && cardCount === 0 && (
         <p className="text-xs text-zinc-500">Déposez des pièces dans la benne pour commencer.</p>
-      )}
-
-      {state?.message && (
-        <p className={`max-w-sm text-sm ${state.ok ? "text-emerald-400" : "text-red-400"}`}>{state.message}</p>
       )}
 
       {open && (
@@ -129,8 +133,6 @@ export function RecycleLaunch({
               </dd>
             </div>
           </dl>
-
-          {state && !state.ok && <p className="mt-3 text-sm text-red-400">{state.message}</p>}
 
           {pending ? (
             <CrushAnimation />

@@ -123,6 +123,8 @@ export function ShopBuyForm({
             className="flex flex-wrap gap-2"
             variant="none"
             submitClassName={buyBtn}
+            feedback="toast"
+            toastKey="shop-buy"
             onResult={(state) => {
               if (state?.ok) setRaw("1");
             }}

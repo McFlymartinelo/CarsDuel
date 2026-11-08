@@ -1,12 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { Swords, X } from "lucide-react";
+import { X } from "lucide-react";
 import { TileBody, tileClass } from "@/components/ActionTile";
 import { DuelCinema } from "@/components/DuelCinema";
 import { Modal } from "@/components/Modal";
-import { buttonClass } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import { acceptDuel, cancelDuel, declineDuel, proposeDuel, type ArrangedPlay } from "@/app/(game)/duel/actions";
 import { formatDateTime } from "@/lib/format";
 import type { ActionState, DuelReport } from "@/lib/types";
@@ -14,14 +14,14 @@ import type { ActionState, DuelReport } from "@/lib/types";
 export function ProposeDuel({ variant = "tile" }: { variant?: "tile" | "hero" }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(proposeDuel, null);
-  const [sent, setSent] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (state?.ok && state.data?.username) {
-      setSent(state.data.username);
       setOpen(false);
+      toast({ tone: "success", title: `Demande de duel envoyée à ${state.data.username}.`, key: "duel-propose" });
     }
-  }, [state]);
+  }, [state, toast]);
 
   return (
     <div className="space-y-2">
@@ -60,7 +60,6 @@ export function ProposeDuel({ variant = "tile" }: { variant?: "tile" | "hero" })
           <TileBody title="Proposer un duel" text="Défiez directement un pilote" image="/duel/direct.webp" />
         </button>
       )}
-      {sent && <p className="text-sm text-emerald-400">Demande envoyée à {sent}.</p>}
       {open && (
         <Modal labelledBy="propose-title" onClose={pending ? undefined : () => setOpen(false)}>
           <div className="flex items-start justify-between gap-4">
@@ -121,6 +120,9 @@ export function ChallengeList({
   const lastState = useRef<ActionState<ArrangedPlay>>(null);
   const [pending, setPending] = useState(false);
   const [slow, setSlow] = useState(false);
+  const [declining, startDecline] = useTransition();
+  const [cancelling, startCancel] = useTransition();
+  const { toast } = useToast();
   const play = !hideResult && state?.ok ? state.data : undefined;
   const report: DuelReport | undefined = play?.kind === "duel" ? play.report : undefined;
   const forfeit = play?.kind === "forfeit" ? play : undefined;
@@ -161,6 +163,34 @@ export function ChallengeList({
     }
   }
 
+  function decline(challengeId: string) {
+    if (declining) return;
+    startDecline(async () => {
+      const fd = new FormData();
+      fd.set("challenge_id", challengeId);
+      try {
+        await declineDuel(fd);
+        toast({ tone: "success", title: "Demande de duel refusée.", key: "duel-decline" });
+      } catch {
+        toast({ tone: "error", title: "La demande n'a pas pu être refusée.", key: "duel-decline" });
+      }
+    });
+  }
+
+  function cancel(challengeId: string) {
+    if (cancelling) return;
+    startCancel(async () => {
+      const fd = new FormData();
+      fd.set("challenge_id", challengeId);
+      try {
+        await cancelDuel(fd);
+        toast({ tone: "success", title: "Demande de duel annulée.", key: "duel-cancel" });
+      } catch {
+        toast({ tone: "error", title: "La demande n'a pas pu être annulée.", key: "duel-cancel" });
+      }
+    });
+  }
+
   function close() {
     setAsk(null);
     setHideResult(true);
@@ -182,10 +212,14 @@ export function ChallengeList({
                 <button type="button" onClick={() => { setHideResult(true); setAsk(c.id); }} className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-semibold text-black hover:bg-amber-400">
                   Accepter
                 </button>
-                <form action={declineDuel}>
-                  <input type="hidden" name="challenge_id" value={c.id} />
-                  <button className="rounded-lg border border-zinc-600 px-3 py-1.5 text-sm hover:bg-zinc-800">Décliner</button>
-                </form>
+                <button
+                  type="button"
+                  onClick={() => decline(c.id)}
+                  disabled={declining}
+                  className="rounded-lg border border-zinc-600 px-3 py-1.5 text-sm hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-50"
+                >
+                  Décliner
+                </button>
               </div>
             </li>
           ))}
@@ -198,10 +232,14 @@ export function ChallengeList({
             {outgoing.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel p-3 text-sm">
                 <span>En attente de {c.name} · {formatDateTime(c.at)}</span>
-                <form action={cancelDuel}>
-                  <input type="hidden" name="challenge_id" value={c.id} />
-                  <button className="rounded-lg border border-zinc-600 px-3 py-1.5 hover:bg-zinc-800">Annuler</button>
-                </form>
+                <button
+                  type="button"
+                  onClick={() => cancel(c.id)}
+                  disabled={cancelling}
+                  className="rounded-lg border border-zinc-600 px-3 py-1.5 hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-50"
+                >
+                  Annuler
+                </button>
               </li>
             ))}
           </ul>

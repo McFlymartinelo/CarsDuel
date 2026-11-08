@@ -52,6 +52,8 @@ export function ExtendWarrantyDialog({
             <ActionForm
               action={action}
               submitLabel="Prolonger"
+              feedback="toast"
+              toastKey="extend-warranty"
               onSuccess={() => setOpen(false)}
               className="flex flex-1 flex-wrap items-end gap-2 [&>button]:min-h-11 [&>button]:flex-1 [&>button]:rounded-lg sm:[&>button]:min-h-10"
             >

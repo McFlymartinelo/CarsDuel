@@ -1,26 +1,37 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Image from "next/image";
 import { Bolt, ChevronRight } from "lucide-react";
 import { tileClass, TileBody } from "@/components/ActionTile";
 import { Modal } from "@/components/Modal";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { panelClass } from "@/components/ui/Panel";
+import { useToast } from "@/components/ui/Toast";
 import { claimQuest } from "@/app/(game)/quests";
 import { QUEST_COPY, questDone, type DailyQuestState } from "@/lib/quests";
 import type { ActionState } from "@/lib/types";
 
 function Claim({ quest }: { quest: string }) {
   const [state, formAction, pending] = useActionState(claimQuest, null as ActionState<{ coins: number }>);
-  if (state?.ok) return <p className="text-sm font-semibold text-emerald-400">+5 pièces</p>;
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!state) return;
+    toast(
+      state.ok
+        ? { tone: "success", title: "Défi récupéré : +5 pièces.", key: "quest-claim" }
+        : { tone: "error", title: state.message ?? "La récompense n'a pas pu être récupérée.", key: "quest-claim" },
+    );
+  }, [state, toast]);
+
+  if (state?.ok) return <p className="text-sm font-semibold text-emerald-400">Récupéré</p>;
   return (
     <form action={formAction} className="space-y-1">
       <input type="hidden" name="quest" value={quest} />
       <Button type="submit" size="sm" className="text-sm" disabled={pending}>
         {pending ? "Récupération…" : "Récupérer mes 5 pièces"}
       </Button>
-      {state && !state.ok && <p className="text-xs text-red-400">{state.message}</p>}
     </form>
   );
 }

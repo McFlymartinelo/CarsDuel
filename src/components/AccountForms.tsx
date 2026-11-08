@@ -1,13 +1,19 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import type { ActionState } from "@/lib/types";
 
 type Action = (prev: ActionState, fd: FormData) => Promise<ActionState>;
 
+/** Les erreurs de saisie restent près du champ ; seuls les succès passent en toast. */
 function Status({ state }: { state: ActionState }) {
-  if (!state?.message) return null;
-  return <p className={`text-sm ${state.ok ? "text-emerald-400" : "text-red-400"}`}>{state.message}</p>;
+  if (!state?.message || state.ok) return null;
+  return (
+    <p role="alert" className="text-sm text-red-400">
+      {state.message}
+    </p>
+  );
 }
 
 const field = "flex flex-col gap-1 text-sm";
@@ -42,6 +48,17 @@ export function AccountForms({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePw, setDeletePw] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (nameState?.ok) toast({ tone: "success", title: nameState.message ?? "Pseudo mis à jour.", key: "profile-username" });
+  }, [nameState, toast]);
+  useEffect(() => {
+    if (mailState?.ok) toast({ tone: "success", title: mailState.message ?? "E-mail mis à jour.", key: "profile-email" });
+  }, [mailState, toast]);
+  useEffect(() => {
+    if (pwState?.ok) toast({ tone: "success", title: pwState.message ?? "Mot de passe mis à jour.", key: "profile-password" });
+  }, [pwState, toast]);
 
   useEffect(() => setName(username), [username]);
   useEffect(() => setMail(email), [email]);

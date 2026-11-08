@@ -84,7 +84,7 @@ export function ChallengeTile({ challengeKey, name, condition, item, reward, own
           <strong className="font-display text-sm font-bold text-amber-300">{reward}</strong>
           <span className="font-display text-[8px] font-bold uppercase tracking-[0.12em] text-amber-400/70">pièces</span>
         </span>
-        <ActionForm action={claimCollectorChallenge} submitLabel={<><Star size={14} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />Réclamer</>} submitClassName={`${CTA} lg:h-8 lg:w-auto lg:gap-1.5 lg:px-4 lg:text-[11px] ${compact ? CTA_COMPACT : ""}`} variant="none" className="contents">
+        <ActionForm action={claimCollectorChallenge} submitLabel={<><Star size={14} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />Réclamer</>} submitClassName={`${CTA} lg:h-8 lg:w-auto lg:gap-1.5 lg:px-4 lg:text-[11px] ${compact ? CTA_COMPACT : ""}`} variant="none" className="contents" feedback="toast" toastKey="collector-claim">
           <input type="hidden" name="challenge" value={challengeKey} />
         </ActionForm>
       </div>}

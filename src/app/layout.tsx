@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Rajdhani } from "next/font/google";
 import { LaunchGate } from "@/components/LaunchGate";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 const rajdhani = Rajdhani({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-rajdhani" });
@@ -40,8 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={rajdhani.variable}>
       <body className="min-h-screen antialiased">
-        <LaunchGate />
-        {children}
+        <ToastProvider>
+          <LaunchGate />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

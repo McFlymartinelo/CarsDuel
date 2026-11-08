@@ -233,7 +233,7 @@ export function Inventory({
           return (
             <Card key={c.id} template={t} card={c} image={cardImageUrl(t)} tirePerfs={tirePerfs} quantity={count}>
               {c.is_listed && listings[c.id] && (
-                <ActionForm action={cancelListing} submitLabel="Retirer de la vente" variant="danger" className="flex">
+                <ActionForm action={cancelListing} submitLabel="Retirer de la vente" variant="danger" className="flex" feedback="toast" toastKey="listing-cancel">
                   <input type="hidden" name="listing_id" value={listings[c.id]} />
                 </ActionForm>
               )}
@@ -246,6 +246,8 @@ export function Inventory({
                       submitLabel="Réparation sous garantie constructeur"
                       submitClassName="w-full rounded-lg border border-emerald-500/70 px-3 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/10"
                       className="flex w-full"
+                      feedback="toast"
+                      toastKey="repair-card"
                     >
                       <input type="hidden" name="card_id" value={c.id} />
                     </ActionForm>

@@ -115,7 +115,14 @@ export function ChangeCardDialog({
                     Choisir
                   </button>
                 ) : (
-                  <ActionForm action={equipCard} submitLabel="Équiper" className="flex" onSuccess={() => setOpen(false)}>
+                  <ActionForm
+                    action={equipCard}
+                    submitLabel="Équiper"
+                    className="flex"
+                    feedback="toast"
+                    toastKey={`equip-${slot}`}
+                    onSuccess={() => setOpen(false)}
+                  >
                     <input type="hidden" name="card_id" value={alt.id} />
                     {deckId && <input type="hidden" name="deck_id" value={deckId} />}
                   </ActionForm>
