@@ -175,13 +175,23 @@ export function CardDraw({
         </header>
         {weekly && <DrawProgress step={3} />}
         {reduce || done ? (
-          <div className="grid max-h-[58dvh] w-full grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
-            {cards.map((c) => (
-              <div key={c.id} className="min-h-72">
-                <Face card={c} />
+          cards.length === 1 ? (
+            // Une seule carte : pleine largeur disponible et centrée, pour éviter
+            // un titre étiré sur plusieurs lignes et un popup qui déborde.
+            <div className="flex max-h-[58dvh] w-full justify-center overflow-y-auto">
+              <div className="w-full max-w-[19rem]">
+                <Face card={cards[0]} />
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="grid max-h-[58dvh] w-full grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
+              {cards.map((c) => (
+                <div key={c.id} className="min-h-72">
+                  <Face card={c} />
+                </div>
+              ))}
+            </div>
+          )
         ) : (
           <div className="relative flex min-h-0 flex-col items-center justify-center">
             <div className="draw-platform pointer-events-none absolute bottom-0 left-1/2 h-16 w-[140%] -translate-x-1/2" />
