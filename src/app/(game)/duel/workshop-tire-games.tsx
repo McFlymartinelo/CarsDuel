@@ -1,16 +1,18 @@
 "use client";
 
-/** Mini-jeux pneus : carcasse, équilibrage, sculpture, crevaison, profondeur, gonflage. */
+/** Mini-jeux pneus : carcasse, équilibrage, sculpture, crevaison, profondeur, gonflage, permutation, flancs, balourd, gomme, sens de montage. */
 
 import { useEffect, useRef, useState, type ComponentType, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { Eraser, RotateCcw, RotateCw } from "lucide-react";
+import { Car, Cloud, CloudRain, Eraser, RotateCcw, RotateCw, Sun, Wind } from "lucide-react";
 import {
   ActionButton,
   GameBoard,
   GameFrame,
+  PartArt,
   ProbeBoard,
   Rotary,
   SmallButton,
+  angleDelta,
   clamp,
   norm360,
   useClock,
@@ -1040,6 +1042,669 @@ function InflationGame({ name, onWin, onMiss }: GameProps) {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Permutation des roues (classer par usure)                           */
+/* ------------------------------------------------------------------ */
+
+const WHEEL_SLOTS = [
+  { id: "avg", label: "AVG", x: 21, y: 30 },
+  { id: "avd", label: "AVD", x: 79, y: 30 },
+  { id: "arg", label: "ARG", x: 21, y: 72 },
+  { id: "ard", label: "ARD", x: 79, y: 72 },
+] as const;
+const WEAR_RANK_LABEL = ["Meilleur", "2e meilleur", "3e meilleur", "Plus usé"];
+
+const shuffleValues = <T,>(values: T[]) => {
+  const result = [...values];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+function createWheelRound() {
+  const bases = [16, 29, 43, 58];
+  const wears = shuffleValues(bases.map((base) => base + Math.floor(Math.random() * 7)));
+  return { wears, slotRanks: shuffleValues([0, 1, 2, 3]) };
+}
+
+function WheelPermutationGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createWheelRound);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [placed, setPlaced] = useState<(number | null)[]>(() => WHEEL_SLOTS.map(() => null));
+  const [message, setMessage] = useState("Sélectionnez un pneu, puis l'emplacement qui correspond à son rang d'usure.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const win = useWinOnce(onWin);
+  const sorted = [...round.wears].sort((a, b) => a - b);
+  const rankOfWheel = (index: number) => sorted.indexOf(round.wears[index]);
+  const count = placed.filter((entry) => entry != null).length;
+
+  const install = (slotIndex: number) => {
+    if (placed[slotIndex] != null) {
+      setMessage("Cet emplacement est déjà occupé.");
+      return;
+    }
+    if (selected == null) {
+      setTone("bad");
+      setMessage("Sélectionnez d'abord une roue dans la réserve.");
+      return;
+    }
+    const rank = rankOfWheel(selected);
+    if (rank !== round.slotRanks[slotIndex]) {
+      setTone("bad");
+      setMessage(`Ce pneu est le ${WEAR_RANK_LABEL[rank].toLowerCase()}, l'emplacement demande le ${WEAR_RANK_LABEL[round.slotRanks[slotIndex]].toLowerCase()}.`);
+      onMiss();
+      return;
+    }
+    const next = placed.map((entry, index) => (index === slotIndex ? selected : entry));
+    setPlaced(next);
+    setSelected(null);
+    setTone("ok");
+    setMessage(`${WHEEL_SLOTS[slotIndex].label} équipé. Encore ${4 - next.filter((entry) => entry != null).length}.`);
+    if (next.every((entry) => entry != null)) {
+      setMessage("Permutation terminée : chaque roue est à sa place.");
+      win();
+    }
+  };
+
+  return (
+    <GameFrame name={name} badge={`${count} / 4`} message={message} tone={tone}>
+      <GameBoard className="p-3">
+        <PartArt src="/cards/pneus/_route.webp" opacity={0.08} />
+        <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="relative mx-auto aspect-[200/260] w-full max-w-[230px] shrink-0">
+            <svg viewBox="0 0 200 260" className="absolute inset-0 h-full w-full" aria-hidden>
+              <defs>
+                <linearGradient id="car-body" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#3f3f46" />
+                  <stop offset="45%" stopColor="#1f2127" />
+                  <stop offset="100%" stopColor="#0b0c10" />
+                </linearGradient>
+              </defs>
+              <ellipse cx="100" cy="246" rx="82" ry="8" fill="#000" opacity=".55" />
+              <rect x="55" y="18" width="90" height="224" rx="34" fill="url(#car-body)" stroke="#71717a" strokeWidth="2" />
+              <path d="M70 62 Q100 44 130 62 L136 94 H64 Z" fill="#0a0c11" stroke="#52525b" strokeWidth="1.4" />
+              <path d="M70 178 Q100 160 130 178 L134 210 H66 Z" fill="#0a0c11" stroke="#52525b" strokeWidth="1.4" />
+              <path d="M68 100 H132 M68 162 H132" stroke="#52525b" strokeWidth="1.2" opacity=".7" />
+              <rect x="76" y="106" width="48" height="50" rx="8" fill="#101218" stroke="#3f3f46" strokeWidth="1" />
+              <text x="100" y="136" fontSize="8" letterSpacing="2" textAnchor="middle" fill="#52525b">CARSDUEL</text>
+              {WHEEL_SLOTS.map((slot) => (
+                <rect key={slot.id} x={slot.x < 50 ? 26 : 150} y={slot.y < 50 ? 62 : 170} width="24" height="40" rx="8" fill="#0a0b0e" stroke="#27272a" strokeWidth="1" />
+              ))}
+            </svg>
+            {WHEEL_SLOTS.map((slot, index) => {
+              const wheel = placed[index];
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  onClick={() => install(index)}
+                  aria-label={`Emplacement ${slot.label}, ${WEAR_RANK_LABEL[round.slotRanks[index]]}${wheel != null ? `, pneu ${round.wears[wheel]} pour cent d'usure` : ""}`}
+                  className={`absolute grid h-[18%] w-[31%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-lg border-2 text-center transition ${
+                    wheel != null
+                      ? "border-emerald-400/60 bg-emerald-500/10"
+                      : "border-dashed border-amber-400/50 bg-black/55 hover:border-amber-300"
+                  }`}
+                  style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
+                >
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-300">{slot.label}</span>
+                  <span className="text-[8px] font-semibold leading-tight text-amber-200">{WEAR_RANK_LABEL[round.slotRanks[index]]}</span>
+                  {wheel != null && <span className="text-[9px] font-bold tabular-nums text-emerald-200">{round.wears[wheel]} %</span>}
+                </button>
+              );
+            })}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Réserve de roues</p>
+            <div className="grid grid-cols-2 gap-2">
+              {round.wears.map((wear, index) => {
+                const used = placed.includes(index);
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    disabled={used}
+                    aria-pressed={selected === index}
+                    onClick={() => {
+                      setSelected((value) => (value === index ? null : index));
+                      setTone("idle");
+                      setMessage(`Pneu ${index + 1} sélectionné · usure ${wear} %. Choisissez son emplacement.`);
+                    }}
+                    className={`rounded-xl border p-1.5 transition disabled:opacity-30 ${
+                      selected === index ? "border-amber-300 bg-amber-500/10" : "border-line bg-black/35 hover:border-zinc-500"
+                    }`}
+                  >
+                    <span className="mx-auto block aspect-square w-full max-w-[86px]">
+                      <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
+                        <TireFace cx={50} cy={50} size={46} variant="worn" />
+                      </svg>
+                    </span>
+                    <span className="block text-center text-[10px] font-semibold text-zinc-300">Pneu {index + 1}</span>
+                    <span className="block text-center text-[10px] font-bold tabular-nums text-amber-200">{wear} % usure</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-center text-[9px] text-zinc-500">Le meilleur pneu est celui qui affiche le moins d&apos;usure.</p>
+          </div>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Inspection des flancs (tourner, toucher les dommages)               */
+/* ------------------------------------------------------------------ */
+
+type SidewallKind = "cut" | "bulge" | "object" | "scratch";
+type SidewallDefect = { angle: number; radius: number; kind: SidewallKind };
+const SIDEWALL_LABEL: Record<Exclude<SidewallKind, "scratch">, string> = {
+  cut: "coupure",
+  bulge: "hernie",
+  object: "objet incrusté",
+};
+
+function createSidewallDefects(): SidewallDefect[] {
+  const angles = shuffleValues(Array.from({ length: 12 }, (_, index) => index * 30));
+  const kinds = shuffleValues(["cut", "bulge", "object"] as const);
+  return shuffleValues(
+    angles.slice(0, 5).map((angle, index): SidewallDefect => ({
+      angle,
+      radius: index < 3 ? 72 + Math.floor(Math.random() * 8) : 54 + Math.floor(Math.random() * 8),
+      kind: index < 3 ? kinds[index] : "scratch",
+    })),
+  );
+}
+
+function SidewallDefectIcon({ kind }: { kind: SidewallKind }) {
+  if (kind === "cut") return <path d="M-7 -8 L7 8 M-2 -8 L9 3" stroke="#f87171" strokeWidth="2.4" strokeLinecap="round" />;
+  if (kind === "bulge") return <><circle r="9" fill="rgba(251,191,36,.25)" stroke="#fbbf24" strokeWidth="2" /><circle r="3.5" fill="none" stroke="#fde68a" strokeWidth="1.2" /></>;
+  if (kind === "object") return <><path d="M-7 7 L5 -5" stroke="#d4d4d8" strokeWidth="2.8" strokeLinecap="round" /><circle cx="6.5" cy="-6.5" r="3.2" fill="#a1a1aa" stroke="#e4e4e7" /></>;
+  return <path d="M-7 -3 Q0 1 8 -2" stroke="#71717a" strokeWidth="1.4" fill="none" strokeLinecap="round" />;
+}
+
+function SidewallInspectionGame({ name, onWin, onMiss }: GameProps) {
+  const [defects] = useState(createSidewallDefects);
+  const [rotation, setRotation] = useState(0);
+  const [found, setFound] = useState<boolean[]>(() => defects.map(() => false));
+  const [dismissed, setDismissed] = useState<boolean[]>(() => defects.map(() => false));
+  const [message, setMessage] = useState("Faites tourner le pneu, puis touchez chaque dommage du flanc. Les simples rayures ne comptent pas.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const drag = useRef<{ pointer: number; base: number } | null>(null);
+  const win = useWinOnce(onWin);
+  const count = found.filter(Boolean).length;
+
+  const angleAt = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return (Math.atan2(event.clientY - (rect.top + rect.height / 2), event.clientX - (rect.left + rect.width / 2)) * 180) / Math.PI;
+  };
+
+  const mark = (index: number) => {
+    if (found[index] || dismissed[index]) return;
+    if (defects[index].kind === "scratch") {
+      setDismissed((list) => list.map((value, i) => value || i === index));
+      setTone("bad");
+      setMessage("Simple rayure superficielle : ce n'est pas un dommage structurel.");
+      onMiss();
+      return;
+    }
+    const next = found.map((value, i) => value || i === index);
+    setFound(next);
+    setTone("ok");
+    const remaining = next.filter((value) => !value).length;
+    setMessage(remaining > 0 ? `Dommage relevé (${SIDEWALL_LABEL[defects[index].kind as Exclude<SidewallKind, "scratch">]}). Encore ${remaining}.` : "Tous les dommages du flanc sont relevés.");
+    if (next.every(Boolean)) win();
+  };
+
+  const spin = (delta: number) => setRotation((value) => norm360(Math.round((value + delta) / 5) * 5));
+
+  return (
+    <GameFrame
+      name={name}
+      badge={`${count} / 3`}
+      message={message}
+      tone={tone}
+      footer={
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <SmallButton onClick={() => spin(-15)} aria-label="Tourner le pneu à gauche"><RotateCcw size={18} className="mx-auto" /></SmallButton>
+          <span className="text-xs text-zinc-500">Glissez le pneu ou tournez par pas de 15°</span>
+          <SmallButton onClick={() => spin(15)} aria-label="Tourner le pneu à droite"><RotateCw size={18} className="mx-auto" /></SmallButton>
+        </div>
+      }
+    >
+      <GameBoard className="p-2">
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(251,191,36,.09),transparent_64%)]" />
+        <div className="relative mx-auto aspect-square w-full max-w-[360px] touch-none select-none">
+          <div
+            className="absolute inset-0"
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              drag.current = { pointer: angleAt(event), base: rotation };
+            }}
+            onPointerMove={(event) => {
+              if (!drag.current) return;
+              setRotation(norm360(drag.current.base + angleDelta(angleAt(event), drag.current.pointer)));
+            }}
+            onPointerUp={() => (drag.current = null)}
+            onPointerCancel={() => (drag.current = null)}
+          />
+          <div className="pointer-events-none absolute inset-0" style={{ transform: `rotate(${rotation}deg)` }}>
+            <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden>
+              <ellipse cx="100" cy="192" rx="56" ry="7" fill="#000000" opacity=".5" />
+              <TireFace variant="worn" size={88} />
+              <circle cx="100" cy="100" r="79" fill="none" stroke="#3f3f46" strokeWidth="1" strokeDasharray="3 4" opacity=".7" />
+              <text x="100" y="100" fontSize="5.2" letterSpacing="1.7" textAnchor="middle" fill="#71717a" opacity=".75">FLANC EXTÉRIEUR</text>
+            </svg>
+          </div>
+          {defects.map((defect, index) => {
+            const absoluteAngle = defect.angle + rotation;
+            const at = {
+              x: 50 + (defect.radius / 2) * Math.sin((absoluteAngle * Math.PI) / 180),
+              y: 50 - (defect.radius / 2) * Math.cos((absoluteAngle * Math.PI) / 180),
+            };
+            const isFound = found[index];
+            const isDismissed = dismissed[index];
+            return (
+              <button
+                key={index}
+                type="button"
+                disabled={isFound || isDismissed}
+                onClick={() => mark(index)}
+                aria-label={`Zone du flanc ${index + 1}${isFound ? ", dommage relevé" : isDismissed ? ", rayure écartée" : ""}`}
+                className={`absolute z-10 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 transition disabled:opacity-60 ${
+                  isFound
+                    ? "border-emerald-400 bg-emerald-500/20"
+                    : isDismissed
+                      ? "border-zinc-600 bg-black/50"
+                      : "border-zinc-500/70 bg-black/65 hover:border-amber-300 hover:bg-amber-500/15"
+                }`}
+                style={{ left: `${at.x}%`, top: `${at.y}%` }}
+              >
+                <svg viewBox="-12 -12 24 24" className="h-6 w-6" aria-hidden style={{ transform: `rotate(${rotation}deg)` }}>
+                  <SidewallDefectIcon kind={defect.kind} />
+                  {isFound && <circle r="11" fill="none" stroke="#34d399" strokeWidth="1.6" strokeDasharray="3 2" />}
+                </svg>
+              </button>
+            );
+          })}
+          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full border border-line bg-black/65 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-zinc-400">
+            {rotation}° · 3 dommages à trouver
+          </span>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Mesure du balourd (vibration et masses correctrices)                */
+/* ------------------------------------------------------------------ */
+
+type BalanceMass = { grams: number; angle: number };
+const BALANCE_WEIGHTS = [5, 10, 15, 20] as const;
+const BALANCE_TARGET = 5;
+const balanceHour = (deg: number) => Math.round(norm360(deg) / 30) || 12;
+
+function createTireBalanceRound() {
+  return {
+    heavyAngle: Math.floor(Math.random() * 12) * 30,
+    heavyGrams: 10 + Math.floor(Math.random() * 5) * 5,
+  };
+}
+
+function TireBalanceMeasureGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createTireBalanceRound);
+  const [masses, setMasses] = useState<BalanceMass[]>([]);
+  const [cursor, setCursor] = useState(0);
+  const [weight, setWeight] = useState<(typeof BALANCE_WEIGHTS)[number]>(10);
+  const [message, setMessage] = useState("La roue vibre : mesurez le balourd, puis ajoutez des masses à l'opposé du point lourd.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const tick = useClock(45);
+  const win = useWinOnce(onWin);
+
+  const vector = [{ angle: round.heavyAngle, grams: round.heavyGrams }, ...masses].reduce(
+    (total, item) => ({
+      x: total.x + item.grams * Math.sin((item.angle * Math.PI) / 180),
+      y: total.y - item.grams * Math.cos((item.angle * Math.PI) / 180),
+    }),
+    { x: 0, y: 0 },
+  );
+  const residual = Math.hypot(vector.x, vector.y);
+  const residualAngle = norm360((Math.atan2(vector.x, -vector.y) * 180) / Math.PI);
+  const amp = Math.min(5, residual * 0.3);
+  const wobbleX = Math.sin(tick / 2.5) * amp;
+  const wobbleY = Math.cos(tick / 3.2) * amp;
+  const heavyAt = { x: 100 + 76 * Math.sin((round.heavyAngle * Math.PI) / 180), y: 100 - 76 * Math.cos((round.heavyAngle * Math.PI) / 180) };
+  const cursorAt = { x: 100 + 62 * Math.sin((cursor * Math.PI) / 180), y: 100 - 62 * Math.cos((cursor * Math.PI) / 180) };
+
+  const place = () => {
+    if (masses.length >= 6) {
+      setTone("bad");
+      setMessage("Retirez une masse avant d'en poser une autre.");
+      return;
+    }
+    setMasses((list) => [...list, { grams: weight, angle: cursor }]);
+    setTone("idle");
+    setMessage(`Masse de ${weight} g posée à ${balanceHour(cursor)} h : le balourd résiduel change.`);
+  };
+
+  const check = () => {
+    if (residual <= BALANCE_TARGET) {
+      setTone("ok");
+      setMessage(`Balourd résiduel ${residual.toFixed(1)} g : la roue ne vibre plus.`);
+      win();
+      return;
+    }
+    setTone("bad");
+    setMessage(`Encore ${residual.toFixed(0)} g de balourd vers ${balanceHour(residualAngle)} h : ajoutez du poids à l'opposé.`);
+    onMiss();
+  };
+
+  return (
+    <GameFrame
+      name={name}
+      badge={`${masses.length} masse${masses.length > 1 ? "s" : ""}`}
+      message={message}
+      tone={tone}
+      footer={
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {BALANCE_WEIGHTS.map((grams) => (
+              <SmallButton key={grams} aria-pressed={weight === grams} onClick={() => setWeight(grams)} className={weight === grams ? "border-amber-300 text-amber-200" : ""}>
+                {grams} g
+              </SmallButton>
+            ))}
+            <SmallButton onClick={place} className="border-amber-400/40 text-amber-200">Poser</SmallButton>
+            <SmallButton disabled={masses.length === 0} onClick={() => setMasses((list) => list.slice(0, -1))}>
+              <Eraser size={13} className="mr-1 inline" aria-hidden />Retirer
+            </SmallButton>
+          </div>
+          <ActionButton onClick={check}>Lancer la mesure</ActionButton>
+        </div>
+      }
+    >
+      <GameBoard className="p-2">
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,.08),transparent_66%)]" />
+        <Rotary angle={cursor} onChange={(value) => setCursor(norm360(Math.round(value / 30) * 30))} label="Position de la masse correctrice" step={30} className="relative mx-auto aspect-square w-full max-w-[340px]">
+          <svg viewBox="0 0 200 200" className="h-full w-full" aria-hidden>
+            <defs>
+              <radialGradient id="tire-balance-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="60%" stopColor="#fbbf24" stopOpacity="0" />
+                <stop offset="88%" stopColor="#fbbf24" stopOpacity=".08" />
+                <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <ellipse cx="100" cy="188" rx="62" ry="8" fill="#000000" opacity=".55" />
+            <circle cx="100" cy="100" r="99" fill="url(#tire-balance-glow)" />
+            <g transform={`translate(${wobbleX.toFixed(2)} ${wobbleY.toFixed(2)})`}>
+              <TireFace size={86} />
+              <circle cx="100" cy="100" r="96" fill="none" stroke="#27272a" strokeWidth="2" />
+              <g transform={`translate(${heavyAt.x} ${heavyAt.y})`} style={{ filter: "drop-shadow(0 0 6px rgba(248,113,113,.8))" }}>
+                <circle r="11" fill="rgba(239,68,68,.35)" stroke="#f87171" strokeWidth="2" />
+                <text y="3" fontSize="7" fontWeight="700" fill="#fecaca" textAnchor="middle">{round.heavyGrams}</text>
+              </g>
+              {masses.map((mass, index) => {
+                const at = { x: 100 + 76 * Math.sin((mass.angle * Math.PI) / 180), y: 100 - 76 * Math.cos((mass.angle * Math.PI) / 180) };
+                return (
+                  <g key={index} transform={`translate(${at.x} ${at.y}) rotate(${mass.angle})`} style={{ filter: "drop-shadow(0 0 3px rgba(251,191,36,.6))" }}>
+                    <rect x="-7" y="-4" width="14" height="8" rx="2" fill="#fbbf24" stroke="#fde68a" strokeWidth="1" />
+                    <text x="0" y="2.6" fontSize="5" fontWeight="700" fill="#451a03" textAnchor="middle">{mass.grams}</text>
+                  </g>
+                );
+              })}
+              <circle cx={cursorAt.x} cy={cursorAt.y} r="10" fill="none" stroke="#34d399" strokeWidth="2.2" strokeDasharray="5 3" />
+              <circle cx={cursorAt.x} cy={cursorAt.y} r="2.4" fill="#6ee7b7" />
+              <line x1="100" y1="100" x2={100 + Math.min(50, residual * 2.2) * Math.sin((residualAngle * Math.PI) / 180)} y2={100 - Math.min(50, residual * 2.2) * Math.cos((residualAngle * Math.PI) / 180)} stroke={residual <= BALANCE_TARGET ? "#34d399" : "#f87171"} strokeWidth="3" strokeLinecap="round" />
+            </g>
+            <path d="M100 176 V188 M82 188 H118" stroke="#52525b" strokeWidth="4" strokeLinecap="round" />
+            <text x="100" y="196" fontSize="5" letterSpacing="1.2" textAnchor="middle" fill="#71717a">BANC D&apos;ÉQUILIBRAGE</text>
+          </svg>
+        </Rotary>
+        <p className="px-2 pb-1 text-center text-xs text-zinc-300">
+          Balourd initial : <b className="text-red-300">{round.heavyGrams} g à {balanceHour(round.heavyAngle)} h</b> · résiduel : <b className={residual <= BALANCE_TARGET ? "text-emerald-300" : "text-amber-200"}>{residual.toFixed(0)} g</b> · objectif ≤ {BALANCE_TARGET} g
+        </p>
+        {masses.length > 0 && <p className="px-2 pb-1 text-center text-[10px] text-zinc-500">{masses.map((mass) => `${mass.grams} g à ${balanceHour(mass.angle)} h`).join(" · ")}</p>}
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Choix de la gomme (conditions de piste)                             */
+/* ------------------------------------------------------------------ */
+
+type CompoundId = "route" | "sport" | "semi" | "slick" | "pluie";
+const COMPOUND_IDS: CompoundId[] = ["route", "sport", "semi", "slick", "pluie"];
+const COMPOUNDS: Record<CompoundId, { name: string; description: string; variant: "road" | "worn" | "slick"; color: string }> = {
+  route: { name: "Route", description: "Polyvalente, longévité et confort au quotidien.", variant: "road", color: "#a1a1aa" },
+  sport: { name: "Sport", description: "Grip sur le sec et la pluie légère, usage routier.", variant: "road", color: "#fbbf24" },
+  semi: { name: "Semi-slick", description: "Compromis piste humide et usage loisir.", variant: "slick", color: "#38bdf8" },
+  slick: { name: "Slick", description: "Adhérence maximale sur piste sèche.", variant: "slick", color: "#34d399" },
+  pluie: { name: "Pluie", description: "Évacuation maximale de l'eau sur sol détrempé.", variant: "worn", color: "#60a5fa" },
+};
+
+type CompoundCondition = {
+  id: CompoundId;
+  title: string;
+  detail: string;
+  icon: "sun" | "rain" | "cloud" | "wind" | "car";
+};
+
+const COMPOUND_CONDITIONS: CompoundCondition[] = [
+  { id: "slick", title: "Piste sèche · grip maximal", detail: "Circuit fermé, temps sec et chaud.", icon: "sun" },
+  { id: "pluie", title: "Pluie forte · évacuer l'eau", detail: "Sol détrempé avec risque d'aquaplaning.", icon: "rain" },
+  { id: "semi", title: "Piste humide · usage mixte", detail: "Sol humide, sans flaque profonde.", icon: "cloud" },
+  { id: "route", title: "Route ouverte · usage quotidien", detail: "Trajets réguliers, priorité à la polyvalence.", icon: "car" },
+  { id: "sport", title: "Route sportive · sec et pluie légère", detail: "Conduite dynamique, adhérence polyvalente.", icon: "wind" },
+];
+
+function ConditionIcon({ icon }: { icon: CompoundCondition["icon"] }) {
+  if (icon === "sun") return <Sun size={24} aria-hidden />;
+  if (icon === "rain") return <CloudRain size={24} aria-hidden />;
+  if (icon === "cloud") return <Cloud size={24} aria-hidden />;
+  if (icon === "wind") return <Wind size={24} aria-hidden />;
+  return <Car size={24} aria-hidden />;
+}
+
+function createCompoundRound() {
+  const condition = COMPOUND_CONDITIONS[Math.floor(Math.random() * COMPOUND_CONDITIONS.length)];
+  const others = shuffleValues(COMPOUND_IDS.filter((id) => id !== condition.id)).slice(0, 3);
+  return { condition, options: shuffleValues([condition.id, ...others]) };
+}
+
+function TireCompoundGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createCompoundRound);
+  const [selected, setSelected] = useState<CompoundId | null>(null);
+  const [message, setMessage] = useState("Lisez les conditions de piste, puis choisissez le composé de gomme adapté.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const win = useWinOnce(onWin);
+
+  const validate = () => {
+    if (!selected) return;
+    if (selected === round.condition.id) {
+      setTone("ok");
+      setMessage(`Gomme ${COMPOUNDS[selected].name} adaptée : le pneu est prêt pour ces conditions.`);
+      win();
+      return;
+    }
+    setTone("bad");
+    setMessage(`Gomme ${COMPOUNDS[selected].name} inadaptée : ${COMPOUNDS[selected].description}`);
+    onMiss();
+  };
+
+  return (
+    <GameFrame
+      name={name}
+      badge={selected ? `${COMPOUNDS[selected].name} sélectionnée` : "4 gommes"}
+      message={message}
+      tone={tone}
+      footer={<ActionButton onClick={validate} disabled={selected == null}>Valider la gomme</ActionButton>}
+    >
+      <GameBoard className="p-3">
+        <div className="relative z-10 space-y-3">
+          <div className="flex items-center gap-3 rounded-xl border border-line bg-black/40 p-2.5">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200">
+              <ConditionIcon icon={round.condition.icon} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-[.18em] text-zinc-500">Conditions</p>
+              <p className="text-sm font-semibold text-zinc-100">{round.condition.title}</p>
+              <p className="text-[10px] text-zinc-400">{round.condition.detail}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {round.options.map((id) => {
+              const compound = COMPOUNDS[id];
+              const active = selected === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    setSelected(id);
+                    setTone("idle");
+                    setMessage(`Gomme ${compound.name} sélectionnée : vérifiez qu'elle correspond aux conditions.`);
+                  }}
+                  className={`rounded-xl border p-2 text-left transition ${
+                    active ? "border-amber-300 bg-amber-500/10" : "border-line bg-black/35 hover:border-zinc-500"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="h-14 w-14 shrink-0">
+                      <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
+                        <TireFace cx={50} cy={50} size={46} variant={compound.variant} />
+                        <circle cx="50" cy="50" r="47" fill="none" stroke={compound.color} strokeWidth="2" strokeDasharray="4 4" opacity=".8" />
+                      </svg>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-display text-sm font-bold" style={{ color: compound.color }}>{compound.name}</span>
+                      <span className="mt-0.5 block text-[9px] leading-snug text-zinc-400">{compound.description}</span>
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-center text-[10px] text-zinc-500">Une seule gomme correspond exactement aux conditions affichées.</p>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Contrôle du sens de montage (rotation et face extérieure)           */
+/* ------------------------------------------------------------------ */
+
+function createDirectionRound() {
+  // La flèche de rotation dépend du côté de la roue ; la face extérieure reste toujours visible.
+  const targetRot = Math.random() < 0.5 ? 0 : 1;
+  const wheelSide = targetRot === 0 ? "droite" : "gauche";
+  const targetSide = 0;
+  let startRot = Math.random() < 0.5 ? 0 : 1;
+  const startSide = Math.random() < 0.5 ? 0 : 1;
+  if (startRot === targetRot && startSide === targetSide) startRot = startRot === 0 ? 1 : 0;
+  return { targetRot, wheelSide, targetSide, startRot, startSide };
+}
+
+function DirectionWheel({ rot, side, target = false }: { rot: number; side: number; target?: boolean }) {
+  return (
+    <div className={`relative aspect-square w-full ${target ? "rounded-xl border border-emerald-500/35 bg-emerald-500/5 p-1" : ""}`}>
+      <svg viewBox="0 0 200 200" className="h-full w-full" aria-hidden>
+        <ellipse cx="100" cy="189" rx="54" ry="7" fill="#000" opacity=".5" />
+        <TireFace size={86} variant={side === 0 ? "road" : "worn"} />
+        {side === 1 && <circle cx="100" cy="100" r="96" fill="#0b0c10" opacity=".52" />}
+        <circle cx="100" cy="100" r="96" fill="none" stroke={target ? "#34d399" : side === 0 ? "#a1a1aa" : "#52525b"} strokeWidth="2" />
+        <g transform={rot === 0 ? undefined : "translate(200 0) scale(-1 1)"}>
+          <path d="M35 30 H150" stroke={target ? "#34d399" : "#fbbf24"} strokeWidth="4" strokeLinecap="round" />
+          <path d="M150 30 L138 22 L138 38 Z" fill={target ? "#34d399" : "#fbbf24"} />
+          <text x="92" y="20" fontSize="7" fontWeight="700" letterSpacing="1.8" textAnchor="middle" fill={target ? "#6ee7b7" : "#fde68a"}>ROTATION</text>
+        </g>
+        <rect x="52" y="166" width="96" height="15" rx="5" fill="#09090b" stroke={target ? "#34d399" : "#52525b"} />
+        <text x="100" y="176.5" fontSize="7" fontWeight="700" letterSpacing="1.2" textAnchor="middle" fill={side === 0 ? "#e4e4e7" : "#a1a1aa"}>
+          {side === 0 ? "EXTÉRIEUR" : "INTÉRIEUR"}
+        </text>
+        <path d="M100 100 V74" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" opacity=".8" />
+        <circle cx="100" cy="100" r="5" fill="#f59e0b" stroke="#fde68a" strokeWidth="1.2" />
+      </svg>
+    </div>
+  );
+}
+
+function TireDirectionGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createDirectionRound);
+  const [rot, setRot] = useState(round.startRot);
+  const [side, setSide] = useState(round.startSide);
+  const [message, setMessage] = useState("Comparez l'orientation actuelle à la cible, puis corrigez le sens et la face du pneu.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const win = useWinOnce(onWin);
+  const matches = (rot === round.targetRot ? 1 : 0) + (side === round.targetSide ? 1 : 0);
+
+  const validate = () => {
+    if (rot === round.targetRot && side === round.targetSide) {
+      setTone("ok");
+      setMessage("Sens de rotation et face extérieure conformes : le pneu est monté correctement.");
+      win();
+      return;
+    }
+    const fails: string[] = [];
+    if (rot !== round.targetRot) fails.push("le sens de rotation est inversé");
+    if (side !== round.targetSide) fails.push("la face extérieure n'est pas visible");
+    setTone("bad");
+    setMessage(`Montage incorrect : ${fails.join(" et ")}.`);
+    onMiss();
+  };
+
+  return (
+    <GameFrame
+      name={name}
+      badge={`${matches} / 2 repères`}
+      message={message}
+      tone={tone}
+      footer={
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <SmallButton onClick={() => { setRot((value) => (value === 0 ? 1 : 0)); setTone("idle"); setMessage("Sens de rotation inversé : comparez la flèche à la cible."); }}>
+              Inverser le sens
+            </SmallButton>
+            <SmallButton onClick={() => { setSide((value) => (value === 0 ? 1 : 0)); setTone("idle"); setMessage("Pneu retourné : vérifiez la face extérieure."); }}>
+              Retourner le pneu
+            </SmallButton>
+          </div>
+          <ActionButton onClick={validate}>Valider le montage</ActionButton>
+        </div>
+      }
+    >
+      <GameBoard className="p-3">
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Orientation actuelle</p>
+            <DirectionWheel rot={rot} side={side} />
+          </div>
+          <div className="w-[38%] max-w-[150px] shrink-0">
+            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-widest text-emerald-300">Cible</p>
+            <DirectionWheel rot={round.targetRot} side={round.targetSide} target />
+            <p className="mt-1 text-center text-[9px] leading-tight text-zinc-400">
+              Roue {round.wheelSide} · flèche {round.targetRot === 0 ? "à droite" : "à gauche"} · face extérieure visible
+            </p>
+          </div>
+        </div>
+        <div className="relative z-10 mt-2 grid grid-cols-2 gap-2">
+          <span className={`rounded-lg border px-2 py-1 text-center text-[10px] font-semibold ${rot === round.targetRot ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-line bg-black/30 text-zinc-500"}`}>
+            Sens : {rot === round.targetRot ? "conforme" : "à corriger"}
+          </span>
+          <span className={`rounded-lg border px-2 py-1 text-center text-[10px] font-semibold ${side === round.targetSide ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-line bg-black/30 text-zinc-500"}`}>
+            Face : {side === round.targetSide ? "conforme" : "à corriger"}
+          </span>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
 export const TIRE_GAMES = {
   carcass: CarcassInspectionGame,
   balance: WheelBalanceGame,
@@ -1047,4 +1712,9 @@ export const TIRE_GAMES = {
   puncture: PunctureRepairGame,
   depth: DepthCheckGame,
   inflation: InflationGame,
+  rotateWheels: WheelPermutationGame,
+  sidewall: SidewallInspectionGame,
+  tireBalance: TireBalanceMeasureGame,
+  tireCompound: TireCompoundGame,
+  tireDirection: TireDirectionGame,
 } satisfies Record<string, ComponentType<GameProps>>;

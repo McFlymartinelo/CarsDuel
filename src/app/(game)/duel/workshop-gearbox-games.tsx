@@ -1,16 +1,18 @@
 "use client";
 
-/** Mini-jeux boîte : fourchettes, synchronisation, diagnostic, train de pignons, tringlerie, étanchéité. */
+/** Mini-jeux boîte : fourchettes, synchronisation, diagnostic, train de pignons, tringlerie, étanchéité, bruit, roulements, sélecteur, huile, jeu axial. */
 
-import { useEffect, useRef, useState, type ComponentType, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Droplet } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ComponentType, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Droplet, RotateCw } from "lucide-react";
 import {
   ActionButton,
   GameBoard,
   GameFrame,
   GearSvg,
+  PartArt,
   SmallButton,
   clamp,
+  useClock,
   useWinOnce,
   type GameProps,
   type Tone,
@@ -940,6 +942,753 @@ function TightnessTestGame({ name, onWin, onMiss }: GameProps) {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Diagnostic d'un rapport bruyant (comparer des signaux animés)       */
+/* ------------------------------------------------------------------ */
+
+const NOISY_COUNT = 52;
+const shuffleValues = <T,>(values: T[]) => {
+  const result = [...values];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+function noisySamples(faulty: boolean, spike: number, phase: number) {
+  return Array.from({ length: NOISY_COUNT }, (_, i) => {
+    const t = i / (NOISY_COUNT - 1);
+    const base = 0.42 + 0.18 * Math.sin((t + phase) * Math.PI * 5) + 0.07 * Math.sin((t + phase) * Math.PI * 13);
+    if (!faulty) return base;
+    if (i === spike) return 1;
+    if (i === spike + 1) return 0.74;
+    if (i === spike - 1) return 0.68;
+    return base;
+  });
+}
+
+function NoisySignal({ faulty, spike, phase, scan }: { faulty: boolean; spike: number; phase: number; scan: number }) {
+  const points = noisySamples(faulty, spike, phase)
+    .map((value, i) => `${(i / (NOISY_COUNT - 1)) * 100},${(26 - value * 21).toFixed(1)}`)
+    .join(" ");
+  return (
+    <svg viewBox="0 0 100 30" className="h-11 w-full rounded-md border border-line bg-black/55" aria-hidden>
+      <line x1="0" y1="27" x2="100" y2="27" stroke="#3f3f46" strokeWidth=".5" />
+      <polyline points={points} fill="none" stroke="#fbbf24" strokeWidth="1.3" strokeLinejoin="round" />
+      <line x1={scan} y1="1" x2={scan} y2="29" stroke="#34d399" strokeWidth=".8" strokeOpacity=".65" />
+    </svg>
+  );
+}
+
+function createNoisyRound() {
+  return {
+    faulty: Math.floor(Math.random() * 5),
+    spike: 20 + Math.floor(Math.random() * 16),
+  };
+}
+
+function NoisyGearDiagnosisGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createNoisyRound);
+  const [cleared, setCleared] = useState<boolean[]>([false, false, false, false, false]);
+  const [message, setMessage] = useState("Comparez les 5 signaux : l'un produit un à-coup régulier dans sa courbe.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const tick = useClock(45);
+  const scan = (tick * 1.6) % 100;
+  const win = useWinOnce(onWin);
+
+  const designate = (index: number) => {
+    if (cleared[index]) return;
+    if (index === round.faulty) {
+      setTone("ok");
+      setMessage(`Rapport ${index + 1} : signal irrégulier, roulement ou synchro à contrôler.`);
+      win();
+      return;
+    }
+    setCleared((list) => list.map((value, i) => value || i === index));
+    setTone("bad");
+    setMessage(`Rapport ${index + 1} : signal régulier, ce n'est pas lui.`);
+    onMiss();
+  };
+
+  return (
+    <GameFrame name={name} badge={`${cleared.filter(Boolean).length} / 5 écartés`} message={message} tone={tone}>
+      <GameBoard className="p-3">
+        <div className="relative z-10 space-y-2">
+          <p className="text-center text-[11px] text-zinc-400">
+            Objectif : isoler <b className="text-amber-200">1 rapport sur 5</b>. Un signal sain reste lisse ; le rapport bruyant montre un pic net.
+          </p>
+          {[0, 1, 2, 3, 4].map((index) => {
+            const faulty = index === round.faulty;
+            return (
+              <div
+                key={index}
+                className={`grid grid-cols-[2.4rem_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border p-2 ${
+                  cleared[index] ? "border-line bg-black/20 opacity-45" : faulty ? "border-line bg-black/35" : "border-line bg-black/35"
+                }`}
+              >
+                <span className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-black/40 font-display text-base font-bold text-zinc-200">{index + 1}</span>
+                <div>
+                  <span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Rapport {index + 1} · signal boîte</span>
+                  <NoisySignal faulty={faulty} spike={round.spike} phase={index * 0.09} scan={scan} />
+                </div>
+                <SmallButton disabled={cleared[index]} onClick={() => designate(index)} className="border-amber-400/30 text-amber-200" aria-label={`Signaler le rapport ${index + 1} comme bruyant`}>
+                  Signaler
+                </SmallButton>
+              </div>
+            );
+          })}
+          <p className="text-center text-[10px] text-zinc-500">La ligne verte balaie les signaux pour faciliter la comparaison. Aucun son n&apos;est nécessaire.</p>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Montage des roulements (associer, orienter le joint)                */
+/* ------------------------------------------------------------------ */
+
+const BEARING_TYPES = ["6205", "6207", "6305", "6308"] as const;
+type BearingType = (typeof BEARING_TYPES)[number];
+const BEARING_LABEL: Record<BearingType, string> = {
+  "6205": "Ø 25 mm",
+  "6207": "Ø 35 mm",
+  "6305": "Ø 25 mm · large",
+  "6308": "Ø 40 mm",
+};
+
+function BearingArt({ seal = 0 }: { seal?: number }) {
+  return (
+    <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
+      <circle cx="50" cy="50" r="45" fill="#111318" stroke="#71717a" strokeWidth="2" />
+      <circle cx="50" cy="50" r="36" fill="none" stroke="#52525b" strokeWidth="7" />
+      <circle cx="50" cy="50" r="30" fill="#1c1f25" stroke="#a1a1aa" strokeWidth="1.2" />
+      {Array.from({ length: 9 }, (_, i) => {
+        const angle = (i / 9) * Math.PI * 2;
+        return <circle key={i} cx={50 + Math.cos(angle) * 25} cy={50 + Math.sin(angle) * 25} r="4.2" fill="#d4d4d8" stroke="#3f3f46" strokeWidth="1" />;
+      })}
+      <circle cx="50" cy="50" r="17" fill="#0b0c0f" stroke="#a1a1aa" strokeWidth="1.2" />
+      <circle cx="50" cy="50" r="8" fill="#27272a" stroke="#71717a" strokeWidth="1" />
+      <path d={seal === 0 ? "M13 33 A40 40 0 0 0 13 67" : "M87 33 A40 40 0 0 1 87 67"} fill="none" stroke="#f59e0b" strokeWidth="7" strokeLinecap="round" style={{ filter: "drop-shadow(0 0 3px rgba(245,158,11,.55))" }} />
+    </svg>
+  );
+}
+
+function createBearingRound() {
+  const types = shuffleValues([...BEARING_TYPES]);
+  return { types, seals: types.map(() => (Math.random() < 0.5 ? 0 : 1)) };
+}
+
+function BearingAssemblyGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createBearingRound);
+  const [installed, setInstalled] = useState<({ type: BearingType; seal: number } | null)[]>(() => round.types.map(() => null));
+  const [selected, setSelected] = useState<BearingType | null>(null);
+  const [message, setMessage] = useState("Choisissez un roulement, puis son poste sur l'arbre : la référence doit correspondre.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const win = useWinOnce(onWin);
+  const count = installed.filter(Boolean).length;
+
+  const place = (index: number) => {
+    if (installed[index]) {
+      setMessage("Ce poste est déjà équipé.");
+      return;
+    }
+    if (selected == null) {
+      setTone("bad");
+      setMessage("Sélectionnez d'abord un roulement dans la réserve.");
+      return;
+    }
+    if (selected !== round.types[index]) {
+      setTone("bad");
+      setMessage(`Le poste ${index + 1} demande un ${round.types[index]} (${BEARING_LABEL[round.types[index]]}), pas un ${selected}.`);
+      onMiss();
+      return;
+    }
+    setInstalled((list) => list.map((entry, i) => (i === index ? { type: selected, seal: 0 } : entry)));
+    setSelected(null);
+    setTone("ok");
+    setMessage(`Roulement ${selected} monté au poste ${index + 1}. Orientez le joint du bon côté.`);
+  };
+
+  const flip = (index: number) => {
+    setInstalled((list) => list.map((entry, i) => (i === index && entry ? { ...entry, seal: entry.seal === 0 ? 1 : 0 } : entry)));
+    setTone("idle");
+    setMessage(`Joint du poste ${index + 1} retourné.`);
+  };
+
+  const check = () => {
+    if (count < 4) {
+      setTone("bad");
+      setMessage(`Il manque ${4 - count} roulement${4 - count > 1 ? "s" : ""}.`);
+      return;
+    }
+    const wrong = installed.filter((entry, i) => entry != null && entry.seal !== round.seals[i]).length;
+    if (wrong > 0) {
+      setTone("bad");
+      setMessage(`${wrong} joint${wrong > 1 ? "s" : ""} mal orienté${wrong > 1 ? "s" : ""} : le côté orange doit suivre la flèche.`);
+      onMiss();
+      return;
+    }
+    setTone("ok");
+    setMessage("Roulements montés dans l'ordre et correctement orientés.");
+    win();
+  };
+
+  return (
+    <GameFrame
+      name={name}
+      badge={`${count} / 4`}
+      message={message}
+      tone={tone}
+      footer={<ActionButton onClick={check} disabled={count < 4}>Contrôler l&apos;arbre</ActionButton>}
+    >
+      <GameBoard className="p-3">
+        <div className="relative z-10 space-y-3">
+          <p className="text-center text-[11px] text-zinc-400">Objectif : 4 roulements. Le côté orange du joint doit pointer vers la flèche du poste.</p>
+          <div className="relative">
+            <span aria-hidden className="absolute inset-x-3 top-1/2 h-2 -translate-y-1/2 rounded-full bg-gradient-to-r from-zinc-700 via-zinc-500 to-zinc-700" />
+            <div className="relative grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {round.types.map((type, index) => {
+                const entry = installed[index];
+                const goodSeal = entry?.seal === round.seals[index];
+                return (
+                  <div key={index} className="rounded-xl border border-line bg-black/55 p-2">
+                    <div className="flex items-center justify-between text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
+                      <span>Poste {index + 1}</span>
+                      <span className={goodSeal && entry ? "text-emerald-300" : "text-amber-300"}>{round.seals[index] === 0 ? "◀ joint" : "joint ▶"}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => place(index)}
+                      aria-label={`Poste ${index + 1}, roulement ${type}${entry ? " monté" : " vide"}`}
+                      className={`mt-1 grid aspect-square w-full place-items-center rounded-lg border bg-zinc-950/70 p-1 transition ${
+                        entry ? (goodSeal ? "border-emerald-400/50" : "border-amber-400/70") : "border-dashed border-zinc-600 hover:border-amber-300"
+                      }`}
+                    >
+                      <span className="h-full w-full">
+                        <BearingArt seal={entry?.seal ?? round.seals[index]} />
+                      </span>
+                      <span className="mt-1 block text-center font-display text-[11px] font-bold text-zinc-300">{type}</span>
+                    </button>
+                    {entry ? (
+                      <SmallButton onClick={() => flip(index)} className="mt-1 flex w-full items-center justify-center gap-1 py-1.5 text-[10px]">
+                        <RotateCw size={12} aria-hidden /> Retourner
+                      </SmallButton>
+                    ) : (
+                      <p className="mt-1 text-center text-[9px] text-zinc-600">{BEARING_LABEL[type]}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Roulements disponibles</p>
+            <div className="grid grid-cols-4 gap-2">
+              {BEARING_TYPES.map((type) => {
+                const used = installed.some((entry) => entry?.type === type);
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    disabled={used}
+                    aria-pressed={selected === type}
+                    onClick={() => {
+                      setSelected((value) => (value === type ? null : type));
+                      setTone("idle");
+                      setMessage(`Roulement ${type} sélectionné : touchez son poste.`);
+                    }}
+                    className={`rounded-lg border p-1 transition disabled:opacity-30 ${
+                      selected === type ? "border-amber-300 bg-amber-500/10" : "border-line bg-black/30 hover:border-zinc-500"
+                    }`}
+                  >
+                    <span className="mx-auto block h-12 w-12"><BearingArt /></span>
+                    <span className="block text-[10px] font-bold text-zinc-300">{type}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Réglage du sélecteur (grille, position interdite)                   */
+/* ------------------------------------------------------------------ */
+
+type SelectorGear = number | "R";
+const SELECTOR_GATE: SelectorGear[][] = [
+  [1, 2],
+  [3, 4],
+  [5, "R"],
+];
+const selectorGear = (col: number, row: number): SelectorGear | 0 => {
+  if (row === 0) return 0;
+  return SELECTOR_GATE[col][row < 0 ? 0 : 1];
+};
+
+function createSelectorRound() {
+  const forbidden = 1 + Math.floor(Math.random() * 5);
+  const pool = ([1, 2, 3, 4, 5, "R"] as SelectorGear[]).filter((gear) => gear !== forbidden);
+  return { forbidden, targets: shuffleValues(pool).slice(0, 3) };
+}
+
+function SelectorGearButton({
+  col,
+  row,
+  gear,
+  forbidden,
+  target,
+  onEngage,
+}: {
+  col: number;
+  row: number;
+  gear: SelectorGear | 0;
+  forbidden: boolean;
+  target: boolean;
+  onEngage: (col: number, row: number) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onEngage(col, row)}
+      aria-label={`Rapport ${gear}${forbidden ? ", position interdite" : target ? ", cible" : ""}`}
+      className={`absolute grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border text-xs font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 ${
+        forbidden
+          ? "border-red-500/60 bg-red-500/10 text-red-200 hover:bg-red-500/20"
+          : target
+            ? "border-amber-300/70 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
+            : "border-zinc-600 bg-black/40 text-zinc-200 hover:border-zinc-400"
+      }`}
+      style={{ left: `${20 + col * 30}%`, top: `${50 + row * 26}%` }}
+    >
+      {gear}
+    </button>
+  );
+}
+
+function SelectorAdjustmentGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createSelectorRound);
+  const [knob, setKnob] = useState({ col: 1, row: 0 });
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState("Guidez le sélecteur : passez par le point mort et évitez la position barrée en rouge.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const blocked = useRef(false);
+  const win = useWinOnce(onWin);
+
+  const blockedMessage = useCallback(() => {
+    if (!blocked.current) {
+      blocked.current = true;
+      setTone("bad");
+      setMessage("Passez par le point mort avant de changer de colonne.");
+      onMiss();
+    }
+  }, [onMiss]);
+
+  const engage = useCallback((col: number, row: number) => {
+    if (row !== 0 && knob.row !== 0) {
+      blockedMessage();
+      return;
+    }
+    if (col !== knob.col && knob.row !== 0) {
+      blockedMessage();
+      return;
+    }
+    blocked.current = false;
+    const gear = selectorGear(col, row);
+    if (gear !== 0 && gear === round.forbidden) {
+      setKnob({ col, row: 0 });
+      setTone("bad");
+      setMessage(`Position ${gear} interdite : le sélecteur bute et revient au point mort.`);
+      onMiss();
+      return;
+    }
+    setKnob({ col, row });
+    if (gear === 0) {
+      setTone("idle");
+      setMessage(`Point mort. Rapport demandé : ${round.targets[progress]}.`);
+      return;
+    }
+    if (gear === round.targets[progress]) {
+      const next = progress + 1;
+      setProgress(next);
+      setTone("ok");
+      if (next >= round.targets.length) {
+        setMessage("Sélection réglée : tous les rapports passent sans blocage.");
+        win();
+        return;
+      }
+      setMessage(`Rapport ${gear} engagé. Prochain : ${round.targets[next]}.`);
+      return;
+    }
+    setTone("bad");
+    setMessage(`Rapport ${gear} engagé au lieu du ${round.targets[progress]}. Revenez au point mort.`);
+    onMiss();
+  }, [blockedMessage, knob.col, knob.row, onMiss, progress, round, win]);
+
+  const move = (dc: number, dr: number) => {
+    const col = clamp(knob.col + dc, 0, 2);
+    const row = clamp(knob.row + dr, -1, 1);
+    if (col === knob.col && row === knob.row) return;
+    if (dc !== 0 && knob.row !== 0) {
+      blockedMessage();
+      return;
+    }
+    engage(col, row);
+  };
+
+  const neutral = () => {
+    setKnob({ col: 1, row: 0 });
+    blocked.current = false;
+    setTone("idle");
+    setMessage(`Point mort. Rapport demandé : ${round.targets[progress]}.`);
+  };
+
+  const pad = (label: string, dc: number, dr: number, icon: ReactNode) => (
+    <SmallButton onClick={() => move(dc, dr)} aria-label={label} className="grid h-11 w-11 place-items-center p-0">
+      {icon}
+    </SmallButton>
+  );
+
+  return (
+    <GameFrame name={name} badge={`${progress} / ${round.targets.length}`} message={message} tone={tone}>
+      <GameBoard className="p-3">
+        <div className="relative z-10 space-y-2">
+          <Chips items={round.targets} current={progress} />
+          <div className="flex items-center justify-center gap-3">
+            <div
+              role="application"
+              tabIndex={0}
+              aria-label="Grille du sélecteur : flèches du clavier pour déplacer"
+              onKeyDown={(event) => {
+                const map: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+                const direction = map[event.key];
+                if (!direction) return;
+                event.preventDefault();
+                move(direction[0], direction[1]);
+              }}
+              className="relative aspect-square w-full max-w-[250px] touch-none select-none rounded-xl border border-zinc-700 bg-zinc-900/80 outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
+                <path d="M20 25 V75 M50 25 V75 M80 25 V75 M20 50 H80" stroke="#52525b" strokeWidth="4" strokeLinecap="round" fill="none" />
+                <circle cx={20 + knob.col * 30} cy={50 + knob.row * 26} r="3.4" fill="#f59e0b" stroke="#fde68a" strokeWidth="1.3" />
+              </svg>
+              {[0, 1, 2].flatMap((col) =>
+                [-1, 1].map((row) => {
+                  const gear = selectorGear(col, row);
+                  return (
+                    <SelectorGearButton
+                      key={`b${col}-${row}`}
+                      col={col}
+                      row={row}
+                      gear={gear}
+                      forbidden={gear === round.forbidden}
+                      target={gear === round.targets[progress]}
+                      onEngage={engage}
+                    />
+                  );
+                }),
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-1" role="group" aria-label="Commande du sélecteur">
+              <span />
+              {pad("Vers l'avant", 0, -1, <ArrowUp size={17} />)}
+              <span />
+              {pad("À gauche", -1, 0, <ArrowLeft size={17} />)}
+              <SmallButton onClick={neutral} aria-label="Revenir au point mort" className="grid h-11 w-11 place-items-center p-0 text-sm">
+                N
+              </SmallButton>
+              {pad("À droite", 1, 0, <ArrowRight size={17} />)}
+              <span />
+              {pad("Vers l'arrière", 0, 1, <ArrowDown size={17} />)}
+              <span />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
+            <span className="rounded-full border border-amber-300/40 bg-amber-500/10 px-2 py-0.5 text-amber-200">cible</span>
+            <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-red-200">interdit</span>
+            <span>Rapport engagé : <b className="text-zinc-200">{selectorGear(knob.col, knob.row) || "point mort"}</b></span>
+          </div>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Choix de l'huile de boîte (lire les caractéristiques)               */
+/* ------------------------------------------------------------------ */
+
+const OIL_VISCOSITIES = ["75W-80", "75W-90", "75W-85", "80W-90"] as const;
+const OIL_NORMS = ["GL-4", "GL-5"] as const;
+const OIL_SPEC_TEMPS = [140, 160, 180] as const;
+type OilSpec = { viscosity: (typeof OIL_VISCOSITIES)[number]; norm: (typeof OIL_NORMS)[number]; temp: number };
+type OilOption = OilSpec & { id: string };
+
+function createOilRound() {
+  const spec: OilSpec = {
+    viscosity: OIL_VISCOSITIES[Math.floor(Math.random() * OIL_VISCOSITIES.length)],
+    norm: OIL_NORMS[Math.floor(Math.random() * OIL_NORMS.length)],
+    temp: OIL_SPEC_TEMPS[Math.floor(Math.random() * OIL_SPEC_TEMPS.length)],
+  };
+  const other = <T,>(values: readonly T[], current: T) => values.find((value) => value !== current)!;
+  const lowerTemp = spec.temp - 20;
+  const candidates: Omit<OilOption, "id">[] = [
+    { ...spec },
+    { ...spec, viscosity: other(OIL_VISCOSITIES, spec.viscosity) },
+    { ...spec, norm: other(OIL_NORMS, spec.norm) },
+    { ...spec, temp: lowerTemp },
+  ];
+  const labels = ["A", "B", "C", "D"];
+  const options: OilOption[] = shuffleValues(candidates).map((oil, index) => ({ ...oil, id: labels[index] }));
+  return { spec, options };
+}
+
+function OilBottle({ active = false, uid }: { active?: boolean; uid: string }) {
+  const gradientId = `oil-body-${uid}`;
+  return (
+    <svg viewBox="0 0 70 102" className="h-full w-full" aria-hidden>
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={active ? "#b45309" : "#92400e"} />
+          <stop offset="45%" stopColor={active ? "#f59e0b" : "#d97706"} />
+          <stop offset="100%" stopColor={active ? "#78350f" : "#60300b"} />
+        </linearGradient>
+      </defs>
+      <rect x="24" y="4" width="22" height="12" rx="3" fill="#27272a" stroke="#71717a" strokeWidth="1.3" />
+      <path d="M26 16 H44 L50 28 V90 Q50 98 42 98 H28 Q20 98 20 90 V28 Z" fill={`url(#${gradientId})`} stroke="#18181b" strokeWidth="1.4" />
+      <rect x="24" y="38" width="22" height="30" rx="3" fill="#f5f5f4" opacity=".92" />
+      <path d="M35 45 C31 51 29 54 29 58 A6 6 0 0 0 41 58 C41 54 39 51 35 45 Z" fill="#b45309" />
+      <text x="35" y="76" fontSize="6" fontWeight="700" textAnchor="middle" fill="#fde68a">HUILE</text>
+      <path d="M24 90 H46" stroke="#fde68a" strokeWidth="1" opacity=".4" />
+    </svg>
+  );
+}
+
+function GearOilChoiceGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createOilRound);
+  const [selected, setSelected] = useState<OilOption | null>(null);
+  const [message, setMessage] = useState("Lisez les caractéristiques requises, puis sélectionnez l'huile qui les respecte toutes.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const win = useWinOnce(onWin);
+
+  const validate = () => {
+    if (!selected) return;
+    if (selected.viscosity === round.spec.viscosity && selected.norm === round.spec.norm && selected.temp === round.spec.temp) {
+      setTone("ok");
+      setMessage(`Huile ${selected.id} conforme : la boîte est correctement lubrifiée.`);
+      win();
+      return;
+    }
+    const fails: string[] = [];
+    if (selected.viscosity !== round.spec.viscosity) fails.push(`viscosité ${selected.viscosity}`);
+    if (selected.norm !== round.spec.norm) fails.push(`norme ${selected.norm}`);
+    if (selected.temp !== round.spec.temp) fails.push(`température ${selected.temp} °C`);
+    setTone("bad");
+    setMessage(`Huile ${selected.id} non conforme : ${fails.join(", ")}.`);
+    onMiss();
+  };
+
+  return (
+    <GameFrame
+      name={name}
+      badge={selected ? `Huile ${selected.id}` : "4 huiles"}
+      message={message}
+      tone={tone}
+      footer={<ActionButton onClick={validate} disabled={selected == null}>Valider l&apos;huile</ActionButton>}
+    >
+      <GameBoard className="p-3">
+        <PartArt src="/cards/boite/_manuelle.webp" opacity={0.1} />
+        <div className="relative z-10 space-y-3">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2.5">
+            <p className="text-[9px] font-semibold uppercase tracking-[.2em] text-emerald-300">Caractéristiques requises</p>
+            <div className="mt-1.5 grid grid-cols-3 gap-1.5 text-center text-[10px]">
+              <span className="rounded-lg border border-line bg-black/35 px-1 py-1.5"><b className="block text-zinc-400">Viscosité</b><b className="text-emerald-200">{round.spec.viscosity}</b></span>
+              <span className="rounded-lg border border-line bg-black/35 px-1 py-1.5"><b className="block text-zinc-400">Norme</b><b className="text-emerald-200">{round.spec.norm}</b></span>
+              <span className="rounded-lg border border-line bg-black/35 px-1 py-1.5"><b className="block text-zinc-400">Temp. max ≥</b><b className="text-emerald-200">{round.spec.temp} °C</b></span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {round.options.map((option) => {
+              const active = selected?.id === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    setSelected(option);
+                    setTone("idle");
+                    setMessage(`Huile ${option.id} sélectionnée : vérifiez chaque caractéristique avant de valider.`);
+                  }}
+                  className={`rounded-xl border p-2 text-left transition ${
+                    active ? "border-amber-300 bg-amber-500/10" : "border-line bg-black/35 hover:border-zinc-500"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="h-16 w-11 shrink-0"><OilBottle active={active} uid={option.id} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-display text-sm font-bold text-zinc-100">Huile {option.id}</span>
+                      <span className="mt-1 block text-[10px] text-zinc-300">{option.viscosity}</span>
+                      <span className="block text-[10px] text-zinc-300">{option.norm} · {option.temp} °C</span>
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="flex items-center justify-center gap-1.5 text-center text-[10px] text-zinc-500">
+            <Droplet size={11} aria-hidden /> Une seule huile respecte les trois critères.
+          </p>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Contrôle du jeu axial (jauge de tolérance)                          */
+/* ------------------------------------------------------------------ */
+
+const AXIAL_MAX = 0.4;
+const axialAngle = (value: number) => -120 + (value / AXIAL_MAX) * 240;
+const fmtAxial = (value: number) => `${value.toFixed(2).replace(".", ",")} mm`;
+
+function createAxialRound() {
+  const low = [0.04, 0.06, 0.08, 0.10, 0.12, 0.14][Math.floor(Math.random() * 6)];
+  const high = Math.round((low + 0.05 + Math.random() * 0.06) * 100) / 100;
+  const start = Math.random() < 0.5 ? Math.max(0, low - 0.04 - Math.random() * 0.04) : high + 0.04 + Math.random() * 0.05;
+  return { low, high, start: Math.round(clamp(start, 0, AXIAL_MAX) * 100) / 100 };
+}
+
+function AxialPlayGame({ name, onWin, onMiss }: GameProps) {
+  const [round] = useState(createAxialRound);
+  const [value, setValue] = useState(round.start);
+  const [message, setMessage] = useState("Réglez la position de l'arbre jusqu'à la plage verte de la jauge.");
+  const [tone, setTone] = useState<Tone>("idle");
+  const win = useWinOnce(onWin);
+  const inBand = value >= round.low && value <= round.high;
+  const needle = axialAngle(value);
+  const bandFrom = axialAngle(round.low);
+  const bandTo = axialAngle(round.high);
+  const lowAt = gaugePoint(38, bandFrom);
+  const highAt = gaugePoint(38, bandTo);
+
+  const set = (next: number) => {
+    setValue(Math.round(clamp(next, 0, AXIAL_MAX) * 100) / 100);
+    setTone("idle");
+    setMessage("Ajustez finement, puis validez la mesure.");
+  };
+
+  const validate = () => {
+    if (inBand) {
+      setTone("ok");
+      setMessage(`Jeu axial ${fmtAxial(value)} : dans la tolérance constructeur.`);
+      win();
+      return;
+    }
+    setTone("bad");
+    setMessage(value < round.low ? "Jeu axial trop faible : l'arbre est bridé." : "Jeu axial trop important : l'arbre flotte.");
+    onMiss();
+  };
+
+  return (
+    <GameFrame
+      name={name}
+      badge={fmtAxial(value)}
+      message={message}
+      tone={tone}
+      footer={
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <SmallButton onClick={() => set(value - 0.05)} aria-label="Réduire le jeu de 5 centièmes">−0,05</SmallButton>
+            <SmallButton onClick={() => set(value - 0.01)} aria-label="Réduire le jeu de 1 centième">−0,01</SmallButton>
+            <span className={`min-w-24 text-center font-display text-lg font-bold tabular-nums ${inBand ? "text-emerald-300" : "text-amber-200"}`}>{fmtAxial(value)}</span>
+            <SmallButton onClick={() => set(value + 0.01)} aria-label="Augmenter le jeu de 1 centième">+0,01</SmallButton>
+            <SmallButton onClick={() => set(value + 0.05)} aria-label="Augmenter le jeu de 5 centièmes">+0,05</SmallButton>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={AXIAL_MAX}
+            step={0.01}
+            value={value}
+            aria-label="Jeu axial mesuré, en millimètres"
+            onChange={(event) => set(Number(event.target.value))}
+            className="h-8 w-full accent-amber-400"
+          />
+          <ActionButton onClick={validate}>Valider la mesure</ActionButton>
+        </div>
+      }
+    >
+      <GameBoard className="p-3">
+        <div className="relative z-10 space-y-2">
+          <p className="text-center text-xs font-semibold text-emerald-200">Tolérance : {fmtAxial(round.low)} à {fmtAxial(round.high)}</p>
+          <div className="flex items-center gap-2">
+            <svg viewBox="-62 -62 124 112" className="w-[58%] max-w-[230px]" role="img" aria-label={`Jauge de jeu axial : ${fmtAxial(value)}, plage ${fmtAxial(round.low)} à ${fmtAxial(round.high)}`}>
+              <defs>
+                <linearGradient id="axial-bezel" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#e4e4e7" />
+                  <stop offset="30%" stopColor="#71717a" />
+                  <stop offset="58%" stopColor="#27272a" />
+                  <stop offset="82%" stopColor="#a1a1aa" />
+                  <stop offset="100%" stopColor="#3f3f46" />
+                </linearGradient>
+                <radialGradient id="axial-face" cx="42%" cy="34%" r="72%">
+                  <stop offset="0%" stopColor="#26262c" />
+                  <stop offset="100%" stopColor="#0b0b0e" />
+                </radialGradient>
+              </defs>
+              <circle r="57" fill="#000000" opacity=".45" />
+              <circle r="55" fill="url(#axial-face)" stroke="url(#axial-bezel)" strokeWidth="5.5" />
+              <path d={gaugeArc(45, -120, 120)} fill="none" stroke="#3f3f46" strokeWidth="6" strokeLinecap="round" />
+              <path d={gaugeArc(45, bandFrom, bandTo)} fill="none" stroke="#34d399" strokeWidth="6" style={{ filter: "drop-shadow(0 0 4px rgba(52,211,153,.6))" }} />
+              {Array.from({ length: 9 }, (_, i) => {
+                const v = i * 0.05;
+                const deg = axialAngle(v);
+                const outer = gaugePoint(50, deg);
+                const inner = gaugePoint(i % 2 === 0 ? 40 : 43, deg);
+                return <line key={i} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke={i % 2 === 0 ? "#d4d4d8" : "#71717a"} strokeWidth={i % 2 === 0 ? 1 : .5} strokeLinecap="round" />;
+              })}
+              <text x={lowAt.x} y={lowAt.y} fontSize="4.4" fill="#6ee7b7" textAnchor="middle">{round.low.toFixed(2)}</text>
+              <text x={highAt.x} y={highAt.y} fontSize="4.4" fill="#6ee7b7" textAnchor="middle">{round.high.toFixed(2)}</text>
+              <g transform={`rotate(${needle})`} style={{ filter: `drop-shadow(0 0 4px ${inBand ? "rgba(52,211,153,.8)" : "rgba(251,191,36,.55)"})` }}>
+                <path d="M0 2 L-2.6 -31 L0 -39 L2.6 -31 Z" fill={inBand ? "#6ee7b7" : "#fbbf24"} />
+              </g>
+              <circle r="7" fill="#27272a" stroke="url(#axial-bezel)" strokeWidth="1.2" />
+              <circle r="2.5" fill="#111114" stroke="#71717a" strokeWidth=".7" />
+              <rect x="-36" y="22" width="72" height="22" rx="6" fill="#09090b" stroke={inBand ? "#34d399" : "#3f3f46"} />
+              <text y="38" fontSize="12" fontWeight="700" fill={inBand ? "#6ee7b7" : "#fde68a"} textAnchor="middle">{fmtAxial(value)}</text>
+              <text y="50" fontSize="4" letterSpacing="1.5" textAnchor="middle" fill="#71717a">JEU AXIAL</text>
+            </svg>
+            <svg viewBox="0 0 120 100" className="w-[40%] max-w-[150px]" role="img" aria-label={`Arbre déplacé de ${fmtAxial(value)}`}>
+              <ellipse cx="60" cy="88" rx="50" ry="7" fill="#000" opacity=".45" />
+              <rect x="10" y="30" width="100" height="36" rx="8" fill="#1b1d22" stroke="#52525b" strokeWidth="1.4" />
+              <g transform={`translate(${(value / AXIAL_MAX) * 26} 0)`}>
+                <rect x="18" y="38" width="76" height="20" rx="4" fill="#3f3f46" stroke="#a1a1aa" strokeWidth="1.2" />
+                <rect x="78" y="34" width="14" height="28" rx="3" fill="#71717a" stroke="#d4d4d8" strokeWidth="1" />
+                <circle cx="34" cy="48" r="8" fill="#27272a" stroke="#a1a1aa" strokeWidth="1.2" />
+              </g>
+              <path d="M35 24 H78" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" markerEnd="url(#axial-arrow)" />
+              <defs>
+                <marker id="axial-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+                  <path d="M0 0 L10 5 L0 10 Z" fill="#fbbf24" />
+                </marker>
+              </defs>
+              <text x="60" y="19" fontSize="5.4" textAnchor="middle" fill="#fde68a">DÉPLACEMENT</text>
+            </svg>
+          </div>
+          <p className="text-center text-[10px] text-zinc-500">Déplacez l&apos;arbre au centième de millimètre. La cible est matérialisée en vert.</p>
+        </div>
+      </GameBoard>
+    </GameFrame>
+  );
+}
+
 export const GEARBOX_GAMES = {
   forks: ForkSelectionGame,
   sync: SyncBenchGame,
@@ -947,4 +1696,9 @@ export const GEARBOX_GAMES = {
   pinions: PinionAssemblyGame,
   linkage: LinkageGame,
   tightness: TightnessTestGame,
+  noisyGear: NoisyGearDiagnosisGame,
+  bearings: BearingAssemblyGame,
+  selector: SelectorAdjustmentGame,
+  gearOil: GearOilChoiceGame,
+  axialPlay: AxialPlayGame,
 } satisfies Record<string, ComponentType<GameProps>>;
