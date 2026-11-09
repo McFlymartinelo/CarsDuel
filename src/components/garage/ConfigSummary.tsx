@@ -1,6 +1,6 @@
 import { Cog, Settings2 } from "lucide-react";
 import { TireIcon } from "./icons";
-import { TIRE_THEME } from "@/lib/format";
+import { RARITY_THEME, TIRE_THEME } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
 import type { SlotKey } from "./SlotTabs";
 import type { UserCard } from "@/lib/types";
@@ -34,15 +34,29 @@ export function ConfigSummary({
         const template = card?.card_templates;
         const img = template ? cardImageUrl(template) : null;
         const tireTheme = slot === "pneus" ? TIRE_THEME[template?.tire_type ?? ""] : undefined;
-        const text = tireTheme?.text ?? m.text;
+        // L'habillage suit la rareté de la pièce (comme les cartes du garage et
+        // du marché) ; à défaut, un pneu reprend la couleur de son type.
+        const rarityTheme = template?.rarity ? RARITY_THEME[template.rarity] : undefined;
+        const accent = rarityTheme
+          ? { frame: rarityTheme.frame, glow: rarityTheme.glow, label: rarityTheme.label }
+          : tireTheme
+            ? { frame: tireTheme.border, glow: tireTheme.glow, label: tireTheme.text }
+            : undefined;
+        const text = accent?.label ?? m.text;
         const Icon = slot === "boite" ? Settings2 : Cog;
         const usable = Boolean(card && !card.is_destroyed && !card.is_listed);
 
         return (
           <div
             key={slot}
-            className="relative flex min-w-0 flex-col gap-0.5 rounded-xl border border-line bg-panel px-2 py-2.5"
+            className={`relative isolate flex min-w-0 flex-col gap-0.5 rounded-xl border bg-panel px-2 py-2.5 ${accent?.frame ?? "border-line"}`}
           >
+            {accent && (
+              <span
+                aria-hidden
+                className={`pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-gradient-to-t to-transparent ${accent.glow}`}
+              />
+            )}
             <span
               aria-hidden
               className={`absolute right-2 top-2 h-1.5 w-1.5 rounded-full ${
