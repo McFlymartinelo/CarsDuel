@@ -8,6 +8,7 @@ import { parsePage } from "@/lib/pagination";
 import { cleanSearch, isReferenceSearch } from "@/lib/search";
 import { nextParisMidnight, nextUtcMidnight } from "@/lib/format";
 import type { DailyQuestState } from "@/lib/quests";
+import type { EquippedConfig } from "@/lib/compare";
 import type {
   CardTemplate,
   ClmChallenge,
@@ -68,6 +69,34 @@ async function qCards(c: PoolClient, uid: string) {
 
 async function qDecks(c: PoolClient, uid: string) {
   return (await c.query<UserDeck>("select * from user_decks where owner_id = $1 order by created_at", [uid])).rows;
+}
+
+/**
+ * Configuration équipée de référence (decks[0], celle utilisée par la page
+ * Jouer) pour le comparateur à l'achat. `null` si le deck est absent ou
+ * incomplet (carte supprimée).
+ */
+async function qEquipped(c: PoolClient, uid: string): Promise<EquippedConfig | null> {
+  const deck = (await c.query<UserDeck>(
+    "select * from user_decks where owner_id = $1 order by created_at limit 1", [uid],
+  )).rows[0];
+  if (!deck) return null;
+
+  const ids = [deck.engine_card_id, deck.gearbox_card_id, deck.tire_card_id];
+  const cards = (await c.query<UserCard>(
+    `${CARD_SELECT} where uc.id = any($1::uuid[])`, [ids],
+  )).rows;
+  const byId = new Map(cards.map((x) => [x.id, x]));
+  const engine = byId.get(deck.engine_card_id!);
+  const gearbox = byId.get(deck.gearbox_card_id!);
+  const tire = byId.get(deck.tire_card_id!);
+  if (!engine || !gearbox || !tire) return null;
+
+  return {
+    engine: { card: engine, template: engine.card_templates },
+    gearbox: { card: gearbox, template: gearbox.card_templates },
+    tire: { card: tire, template: tire.card_templates },
+  };
 }
 
 async function qModifiers(c: PoolClient) {
@@ -376,7 +405,7 @@ export const loadMarketplacePage = (uid: string, page = 1, filter?: CatalogQuery
         [filter.tab.category],
       )).rows) rarityCounts[row.rarity] = Number(row.n);
     }
-    return { listings, offers, modifiers, names, priceRef, history, incomingTrades, page: p, counts, rarityCounts };
+    return { listings, offers, modifiers, names, priceRef, history, incomingTrades, page: p, counts, rarityCounts, equipped: await qEquipped(c, uid) };
   });
 
 /** Cartes affichables dans les échanges (propriété, non détruites, hors benne, non privées). */
@@ -454,6 +483,7 @@ export const loadShopPage = (uid: string, filter: CatalogQuery) =>
     items: await qCatalog(c, filter),
     catalogCounts: await qCatalogCounts(c),
     modifiers: await qModifiers(c),
+    equipped: await qEquipped(c, uid),
   }));
 
 /**

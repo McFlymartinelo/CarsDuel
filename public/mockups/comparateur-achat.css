@@ -1,0 +1,314 @@
+@import "./mockup.css";
+
+/* ---------- Comparateur à l'achat (Boutique / Marché) ---------- */
+
+.content.shop { padding: 14px 16px 28px; display: grid; gap: 10px; }
+
+/* Barre de référence : la config à laquelle on compare */
+.refbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.refbar .ref-dot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--accent-light);
+}
+.refbar .ref-dot svg { width: 14px; height: 14px; }
+.refbar .ref-txt { min-width: 0; flex: 1; }
+.refbar .ref-kicker {
+  margin: 0;
+  color: var(--dim);
+  font-family: var(--display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.refbar .ref-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin: 1px 0 0;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+.refbar .ref-config .sep { color: var(--dim); font-weight: 500; }
+.refbar .ref-config .none { color: var(--dim); font-weight: 500; text-transform: none; }
+
+/* Interrupteur de comparaison */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  padding: 3px 8px 3px 4px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.08);
+  color: var(--success);
+  font-family: var(--display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.switch i {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+}
+
+/* Onglets catégories */
+.segbar { display: flex; flex-wrap: wrap; gap: 5px; }
+.seg {
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.seg.on { border-color: transparent; background: var(--accent); color: #000; }
+
+/* Carte boutique */
+.shopcard {
+  position: relative;
+  padding: 5px;
+  border: 2px solid rgba(96, 165, 250, 0.75);
+  border-radius: 18px;
+  background: var(--panel-deep);
+}
+.shopcard.epic { border-color: rgba(192, 132, 252, 0.8); }
+.shopcard.common { border-color: rgba(161, 161, 170, 0.55); }
+.shopcard .inner {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 13px 13px;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 13px;
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 100%, rgba(96, 165, 250, 0.12), transparent 70%),
+    linear-gradient(180deg, #12151c, #0a0c10);
+}
+.shopcard.epic .inner {
+  border-color: rgba(192, 132, 252, 0.28);
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 100%, rgba(192, 132, 252, 0.14), transparent 70%),
+    linear-gradient(180deg, #12151c, #0a0c10);
+}
+.shopcard.common .inner {
+  border-color: rgba(161, 161, 170, 0.22);
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 100%, rgba(161, 161, 170, 0.1), transparent 70%),
+    linear-gradient(180deg, #12151c, #0a0c10);
+}
+.sc-top { display: flex; align-items: center; gap: 6px; font-family: var(--display); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.sc-code, .sc-cat {
+  padding: 2px 7px;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 6px;
+  color: #bfdbfe;
+}
+.sc-code { color: #dbeafe; }
+.sc-cat { flex: 1; text-align: center; }
+.shopcard.epic .sc-code, .shopcard.epic .sc-cat { border-color: rgba(192, 132, 252, 0.32); color: #e9d5ff; }
+.shopcard.common .sc-code, .shopcard.common .sc-cat { border-color: rgba(161, 161, 170, 0.28); color: #e4e4e7; }
+.sc-name {
+  margin: 10px 0 0;
+  font-family: var(--display);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.sc-rarity {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  color: #93c5fd;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sc-rarity svg { width: 16px; height: 16px; }
+.shopcard.epic .sc-rarity { color: #d8b4fe; }
+.shopcard.common .sc-rarity { color: #d4d4d8; }
+
+.sc-stats { margin: 9px 0 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+.sc-stats li { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.sc-stats span { color: var(--muted); font-size: 10.5px; }
+.sc-stats b { color: #fff; font-family: var(--display); font-size: 15px; font-weight: 700; line-height: 1; }
+.sc-stats b .u { color: var(--muted); font-size: 10px; font-weight: 500; }
+
+/* Bloc de comparaison */
+.cmp {
+  margin-top: 11px;
+  padding: 9px 10px 10px;
+  border: 1px solid rgba(52, 211, 153, 0.26);
+  border-radius: 11px;
+  background:
+    radial-gradient(ellipse 120% 100% at 0% 0%, rgba(52, 211, 153, 0.09), transparent 70%),
+    rgba(0, 0, 0, 0.22);
+}
+.cmp.neg {
+  border-color: rgba(248, 113, 113, 0.28);
+  background:
+    radial-gradient(ellipse 120% 100% at 0% 0%, rgba(248, 113, 113, 0.09), transparent 70%),
+    rgba(0, 0, 0, 0.22);
+}
+.cmp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cmp-head .lbl {
+  color: var(--dim);
+  font-family: var(--display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.cmp-head .ref { color: var(--text); font-family: var(--display); font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.cmp-gain {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 3px;
+  color: var(--success);
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+}
+.cmp.neg .cmp-gain { color: var(--danger); }
+.cmp-gain small { color: var(--muted); font-family: "Segoe UI", system-ui, sans-serif; font-size: 9.5px; font-weight: 500; }
+.cmp-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.cmp-chips .delta { font-size: 8.5px; padding: 2px 6px; }
+
+/* Prix et achat */
+.sc-buy { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.sc-buy .price { flex: 1; min-width: 0; color: var(--accent-light); font-family: var(--display); font-size: 16px; font-weight: 700; }
+.sc-buy .price small { display: block; color: var(--dim); font-family: "Segoe UI", system-ui, sans-serif; font-size: 9px; font-weight: 500; }
+.sc-buy .buy {
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #000;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Vue liste */
+.lrows { display: grid; gap: 7px; }
+.lrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-left: 2px solid rgba(96, 165, 250, 0.7);
+  border-radius: 11px;
+  background: var(--panel);
+}
+.lrow.epic { border-left-color: rgba(192, 132, 252, 0.8); }
+.lrow.common { border-left-color: rgba(161, 161, 170, 0.6); }
+.lrow.loss { border-left-color: var(--danger); }
+.lrow .thumb {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #12151c, #0a0c10);
+}
+.lrow.epic .thumb { border-color: rgba(192, 132, 252, 0.28); }
+.lrow.common .thumb { border-color: rgba(161, 161, 170, 0.24); }
+.lrow .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 3px; opacity: 0.75; mix-blend-mode: lighten; }
+.lrow .info { min-width: 0; flex: 1; }
+.lrow .info strong {
+  display: block;
+  overflow: hidden;
+  color: #fff;
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lrow .info small { display: block; margin-top: 1px; color: var(--dim); font-size: 9px; }
+.lrow .info small .rar { color: #93c5fd; font-weight: 600; }
+.lrow.epic .info small .rar { color: #d8b4fe; }
+.lrow .info small .prix { color: var(--accent-light); font-weight: 600; }
+.lrow .score {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  flex: 0 0 auto;
+  text-align: right;
+}
+.lrow .score b { color: var(--success); font-family: var(--display); font-size: 15px; font-weight: 700; line-height: 1; }
+.lrow.loss .score b { color: var(--danger); }
+.lrow .score span { color: var(--dim); font-size: 7.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Annonce du marché */
+.listing { padding: 10px 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.listing-head { display: flex; align-items: flex-start; gap: 8px; }
+.listing-head .thumb {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 9px;
+  background: linear-gradient(180deg, #12151c, #0a0c10);
+}
+.listing-head .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 3px; opacity: 0.8; mix-blend-mode: lighten; }
+.listing-head .info { min-width: 0; flex: 1; }
+.listing-head .info strong { display: block; overflow: hidden; font-family: var(--display); font-size: 14px; font-weight: 700; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.listing-head .info small { display: block; margin-top: 2px; color: var(--dim); font-size: 9.5px; }
+.listing-head .price { flex: 0 0 auto; color: var(--accent-light); font-family: var(--display); font-size: 17px; font-weight: 700; }
+.listing-head .price small { display: block; color: var(--dim); font-family: "Segoe UI", system-ui, sans-serif; font-size: 8px; font-weight: 500; text-align: right; }
+.listing-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.listing-chips .delta { font-size: 8.5px; padding: 2px 6px; }
+.listing .cmp { margin-top: 8px; }
+.listing .cmp-gain { font-size: 17px; }
+
+/* Divers */
+.pad-note { margin: 0; color: var(--dim); font-size: 9px; text-align: center; }
+
+@media (max-width: 720px) {
+  body { padding: 18px 10px 40px; }
+}

@@ -14,6 +14,7 @@ export function CardRow({
   image,
   note,
   quantity = 1,
+  compare,
   children,
 }: {
   template: CardTemplate;
@@ -22,6 +23,8 @@ export function CardRow({
   note?: React.ReactNode;
   /** Nombre d'exemplaires identiques représentés par cette ligne (badge ×N). */
   quantity?: number;
+  /** Pastille de comparaison avec la configuration équipée (vue liste). */
+  compare?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   const rarity = template.rarity;
@@ -91,6 +94,7 @@ export function CardRow({
         {note}
       </div>
 
+      {compare && <div className="ml-auto flex shrink-0 items-center">{compare}</div>}
       {children && <div className="relative z-10 w-full min-w-0 sm:w-auto sm:min-w-44">{children}</div>}
     </div>
   );

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup — Comparateur à l’achat</title>
+  <link rel="stylesheet" href="./comparateur-achat.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9.6 9.4h4a2 2 0 0 1 0 4h-4"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5v8l9 5 9-5Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14 17 9"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/><circle cx="12" cy="14" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4h13l-2 4 2 4H4"/></symbol>
+  </svg>
+
+  <div class="layout">
+    <div class="notes">
+      <p class="kicker">Mockup 5 / proposition</p>
+      <h1>Comparateur à l’achat</h1>
+      <p class="intro">Dans la Boutique et le Marché, chaque pièce affiche son écart avec la pièce équipée. Le chiffre principal : le <b>gain de score mécanique</b> estimé, calculé avec les formules du jeu.</p>
+
+      <h2>Le chiffre principal</h2>
+      <ul>
+        <li><strong>Moteur / boîte</strong> : delta de <code>scoreMeca</code> avec la pièce équipée restante. Ex. « +6,2 pts ».</li>
+        <li><strong>Pneus</strong> : comparaison météo par météo (sèche chaude, sèche froide, humide chaude, humide froide).</li>
+        <li><strong>Détail</strong> : puissance, poids, temps de passage et risque, chaque écart coloré.</li>
+        <li><strong>Occasion</strong> : le risque affiché tient compte des runs déjà courus.</li>
+      </ul>
+
+      <h2>Selon l’écran</h2>
+      <ul>
+        <li><strong>Cartes</strong> : un bloc complet sous les stats.</li>
+        <li><strong>Liste</strong> : une pastille « +6,2 » à droite, scannable.</li>
+        <li><strong>Marché</strong> : ajoute le risque actuel et le prix moyen.</li>
+      </ul>
+
+      <h2>Garde-fous</h2>
+      <ul>
+        <li>Barre de référence avec interrupteur : la comparaison peut être masquée.</li>
+        <li>Emplacement vide : on affiche « Aucune pièce équipée ».</li>
+        <li>Comparaison calculée côté serveur avec le deck déjà chargé : aucun aller-retour en plus.</li>
+        <li>Aucun conseil d’achat, uniquement des écarts chiffrés.</li>
+      </ul>
+
+      <p class="foot">Maquette statique — rien n’est encore implémenté. Trois états : détail carte, vue liste, annonce d’occasion.</p>
+      <span class="legend">390 × 844 · mobile</span>
+    </div>
+
+    <!-- Écran 1 — détail d'une carte en boutique -->
+    <div class="screen">
+      <p class="screen-label">Boutique — détail carte</p>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="app">
+            <div class="statusbar"><span>18:42</span><span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span></div>
+
+            <header class="topbar">
+              <a class="brand" href="#"><img src="/logo.svg" alt=""><span>Cars<br><span class="dim">Duel</span></span></a>
+              <span class="spacer"></span>
+              <span class="wallet"><span class="coins"><svg><use href="#i-coin"/></svg><b>1 250</b></span><span class="wallet-sep"></span><span class="cubes"><svg><use href="#i-box"/></svg><b>18</b></span></span>
+              <a class="icon-btn" href="#" aria-label="Notifications"><svg><use href="#i-bell"/></svg></a>
+              <span class="avatar">AM</span>
+            </header>
+
+            <main class="content shop">
+              <div class="pagehead">
+                <div>
+                  <h1>Boutique</h1>
+                  <p class="sub">Pièces neuves garanties, disponibles tout de suite.</p>
+                </div>
+              </div>
+
+              <div class="refbar">
+                <span class="ref-dot"><svg><use href="#i-gauge"/></svg></span>
+                <div class="ref-txt">
+                  <p class="ref-kicker">Comparé à votre config</p>
+                  <p class="ref-config">V8 5.0 <span class="sep">·</span> DCT 7 <span class="sep">·</span> Sport</p>
+                </div>
+                <span class="switch"><i></i>Activé</span>
+              </div>
+
+              <div class="segbar">
+                <span class="seg on">Moteurs</span>
+                <span class="seg">Boîtes</span>
+                <span class="seg">Pneus</span>
+                <span class="seg">Bonus</span>
+              </div>
+
+              <article class="shopcard">
+                <div class="inner">
+                  <div class="sc-top"><span class="sc-code">M3B</span><span class="sc-cat">Moteur</span></div>
+                  <h2 class="sc-name">V6 3.0<br>Bi-Turbo</h2>
+                  <p class="sc-rarity"><svg><use href="#i-shield"/></svg>Rare</p>
+
+                  <ul class="sc-stats">
+                    <li><span>Puissance</span><b>420 <span class="u">ch</span></b></li>
+                    <li><span>Poids</span><b>210 <span class="u">kg</span></b></li>
+                    <li><span>Risque initial</span><b>2,1 <span class="u">%</span></b></li>
+                    <li><span>Augmentation par duel</span><b>+0,08 <span class="u">%</span></b></li>
+                  </ul>
+
+                  <div class="cmp">
+                    <div class="cmp-head"><span class="lbl">Vs votre config</span><span class="ref">V8 5.0</span></div>
+                    <p class="cmp-gain">+6,2 pts <small>de score mécanique estimé</small></p>
+                    <div class="cmp-chips">
+                      <span class="delta good">+14 ch</span>
+                      <span class="delta bad">+6 kg</span>
+                      <span class="delta bad">risque +0,7 pt</span>
+                    </div>
+                  </div>
+
+                  <div class="sc-buy">
+                    <span class="price">1 250 🪙<small>Stock 3 · garantie 12 runs</small></span>
+                    <a class="buy" href="#">Acheter</a>
+                  </div>
+                </div>
+              </article>
+
+              <p class="pad-note">La carte suivante reprend le même bloc, adapté à sa catégorie.</p>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Écran 2 — vue liste -->
+    <div class="screen">
+      <p class="screen-label">Boutique — vue liste</p>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="app">
+            <div class="statusbar"><span>18:45</span><span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span></div>
+
+            <header class="topbar">
+              <a class="brand" href="#"><img src="/logo.svg" alt=""><span>Cars<br><span class="dim">Duel</span></span></a>
+              <span class="spacer"></span>
+              <span class="wallet"><span class="coins"><svg><use href="#i-coin"/></svg><b>1 250</b></span><span class="wallet-sep"></span><span class="cubes"><svg><use href="#i-box"/></svg><b>18</b></span></span>
+              <a class="icon-btn" href="#" aria-label="Notifications"><svg><use href="#i-bell"/></svg></a>
+              <span class="avatar">AM</span>
+            </header>
+
+            <main class="content shop">
+              <div class="pagehead">
+                <div>
+                  <h1>Boutique</h1>
+                  <p class="sub">Pièces neuves garanties, disponibles tout de suite.</p>
+                </div>
+              </div>
+
+              <div class="refbar">
+                <span class="ref-dot"><svg><use href="#i-gauge"/></svg></span>
+                <div class="ref-txt">
+                  <p class="ref-kicker">Comparé à votre config</p>
+                  <p class="ref-config">V8 5.0 <span class="sep">·</span> DCT 7 <span class="sep">·</span> Sport</p>
+                </div>
+                <span class="switch"><i></i>Activé</span>
+              </div>
+
+              <div class="segbar">
+                <span class="seg on">Tout</span>
+                <span class="seg">Moteurs</span>
+                <span class="seg">Boîtes</span>
+                <span class="seg">Pneus</span>
+              </div>
+
+              <div class="lrows">
+                <div class="lrow">
+                  <span class="thumb"><img src="/cards/moteur/_v6.webp" alt=""></span>
+                  <span class="info">
+                    <strong>V6 3.0 Bi-Turbo</strong>
+                    <small><span class="rar">Rare</span> · <span class="prix">1 250 pièces</span></small>
+                  </span>
+                  <span class="score"><b>+6,2</b><span>score méca</span></span>
+                </div>
+
+                <div class="lrow common loss">
+                  <span class="thumb"><img src="/cards/moteur/_4-cylindres.webp" alt=""></span>
+                  <span class="info">
+                    <strong>L4 2.0 Turbo</strong>
+                    <small>Commune · <span class="prix">480 pièces</span></small>
+                  </span>
+                  <span class="score"><b>−3,8</b><span>score méca</span></span>
+                </div>
+
+                <div class="lrow epic">
+                  <span class="thumb"><img src="/cards/moteur/_v8.webp" alt=""></span>
+                  <span class="info">
+                    <strong>V8 4.4 Atmo</strong>
+                    <small><span class="rar">Épique</span> · <span class="prix">2 400 pièces</span></small>
+                  </span>
+                  <span class="score"><b>+11,4</b><span>score méca</span></span>
+                </div>
+
+                <div class="lrow common">
+                  <span class="thumb"><img src="/cards/pneus/_pluie.webp" alt=""></span>
+                  <span class="info">
+                    <strong>Pneus Pluie</strong>
+                    <small>Usure 9 %/run · <span class="prix">70 pièces</span></small>
+                  </span>
+                  <span class="score"><b>+12 %</b><span>humide</span></span>
+                </div>
+              </div>
+
+              <p class="pad-note">Pour les pneus, la pastille se lit par météo, pas en score mécanique.</p>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Écran 3 — annonce d'occasion -->
+    <div class="screen">
+      <p class="screen-label">Marché — annonce d’occasion</p>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="app">
+            <div class="statusbar"><span>18:51</span><span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span></div>
+
+            <header class="topbar">
+              <a class="brand" href="#"><img src="/logo.svg" alt=""><span>Cars<br><span class="dim">Duel</span></span></a>
+              <span class="spacer"></span>
+              <span class="wallet"><span class="coins"><svg><use href="#i-coin"/></svg><b>1 250</b></span><span class="wallet-sep"></span><span class="cubes"><svg><use href="#i-box"/></svg><b>18</b></span></span>
+              <a class="icon-btn" href="#" aria-label="Notifications"><svg><use href="#i-bell"/></svg></a>
+              <span class="avatar">AM</span>
+            </header>
+
+            <main class="content shop">
+              <div class="pagehead">
+                <div>
+                  <h1>Marché</h1>
+                  <p class="sub">Les pièces proposées par les autres pilotes.</p>
+                </div>
+              </div>
+
+              <div class="refbar">
+                <span class="ref-dot"><svg><use href="#i-gauge"/></svg></span>
+                <div class="ref-txt">
+                  <p class="ref-kicker">Comparé à votre config</p>
+                  <p class="ref-config">V8 5.0 <span class="sep">·</span> DCT 7 <span class="sep">·</span> Sport</p>
+                </div>
+                <span class="switch"><i></i>Activé</span>
+              </div>
+
+              <div class="segbar">
+                <span class="seg on">Annonces</span>
+                <span class="seg">Échanges</span>
+              </div>
+
+              <article class="listing">
+                <div class="listing-head">
+                  <span class="thumb"><img src="/cards/moteur/_v6.webp" alt=""></span>
+                  <span class="info">
+                    <strong>V6 3.0 Bi-Turbo</strong>
+                    <small><span style="color:#93c5fd;font-weight:600">Rare</span> · vendu par NightRider</small>
+                  </span>
+                  <span class="price">890 🪙<small>moy. 1 050</small></span>
+                </div>
+
+                <div class="listing-chips">
+                  <span class="delta neutral"><svg style="width:9px;height:9px"><use href="#i-flag"/></svg>7 runs</span>
+                  <span class="delta bad">risque actuel 3,8 %</span>
+                  <span class="delta neutral">garantie expirée</span>
+                </div>
+
+                <div class="cmp">
+                  <div class="cmp-head"><span class="lbl">Vs votre config</span><span class="ref">V8 5.0</span></div>
+                  <p class="cmp-gain">+6,2 pts <small>de score mécanique estimé</small></p>
+                  <div class="cmp-chips">
+                    <span class="delta good">+14 ch</span>
+                    <span class="delta bad">+6 kg</span>
+                    <span class="delta bad">risque +2,4 pts</span>
+                  </div>
+                </div>
+              </article>
+
+              <p class="pad-note">Le risque de l’occasion est calculé avec ses 7 runs, pas avec le risque initial.</p>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

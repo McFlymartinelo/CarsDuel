@@ -145,6 +145,7 @@ export function CardView({
   image = null,
   tirePerfs = [],
   quantity = 1,
+  compare,
   children,
 }: {
   template: CardTemplate;
@@ -154,6 +155,8 @@ export function CardView({
   tirePerfs?: TirePerf[];
   /** Nombre d'exemplaires identiques représentés par cette carte (badge ×N). */
   quantity?: number;
+  /** Bloc de comparaison avec la configuration équipée (calculé côté serveur). */
+  compare?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   const rarity = template.rarity;
@@ -291,6 +294,7 @@ export function CardView({
             Gomme restante <span className="text-lg text-white">{num(card.tire_wear)} %</span>
           </p>
         )}
+        {compare && <div className="relative z-10 mt-3">{compare}</div>}
         {children && <div className="relative z-20 mt-auto pt-4">{children}</div>}
       </div>
       {card?.is_destroyed && (

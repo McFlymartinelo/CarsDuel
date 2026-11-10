@@ -14,6 +14,10 @@ import { CatalogFilters } from "@/components/CatalogFilters";
 import { MarketplaceTabs } from "@/components/marketplace/MarketplaceTabs";
 import { TradeCenter } from "@/components/marketplace/TradeCenter";
 import { readCatalogQuery } from "@/lib/catalog-filters";
+import { compareCandidate } from "@/lib/compare";
+import { CompareBar } from "@/components/compare/CompareBar";
+import { CardCompare } from "@/components/compare/CardCompare";
+import { CompareProvider } from "@/components/compare/CompareProvider";
 import type { Rarity } from "@/lib/types";
 import { CATEGORY_LABEL, formatDateTime } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
@@ -88,7 +92,7 @@ export default async function MarketplacePage({
     );
   }
 
-  const { listings, offers, modifiers: tirePerfs, names: nameOf, priceRef, history, incomingTrades, counts, rarityCounts } = await loadMarketplacePage(user.id, page, query);
+  const { listings, offers, modifiers: tirePerfs, names: nameOf, priceRef, history, incomingTrades, counts, rarityCounts, equipped } = await loadMarketplacePage(user.id, page, query);
 
   const mine = listings.filter((x) => x.seller_id === user.id);
   const others = listings.filter((x) => x.seller_id !== user.id);
@@ -112,17 +116,37 @@ export default async function MarketplacePage({
   };
   const pageHref = (n: number) => href({ page: n });
 
-  const card = (x: Listing, mode: CardViewMode, children: React.ReactNode, note?: React.ReactNode) =>
-    mode === "liste" ? (
-      <CardRow key={x.id} template={x.user_cards.card_templates} card={x.user_cards} image={cardImageUrl(x.user_cards.card_templates)} note={note}>
+  const card = (x: Listing, mode: CardViewMode, children: React.ReactNode, note?: React.ReactNode, withCompare = false) => {
+    const comparison =
+      withCompare && equipped ? compareCandidate(x.user_cards.card_templates, x.user_cards, equipped, tirePerfs) : null;
+    const compare = comparison ? (
+      <CardCompare comparison={comparison} variant={mode === "liste" ? "badge" : "block"} />
+    ) : undefined;
+    return mode === "liste" ? (
+      <CardRow
+        key={x.id}
+        template={x.user_cards.card_templates}
+        card={x.user_cards}
+        image={cardImageUrl(x.user_cards.card_templates)}
+        note={note}
+        compare={compare}
+      >
         {children}
       </CardRow>
     ) : (
-      <CardView key={x.id} template={x.user_cards.card_templates} card={x.user_cards} image={cardImageUrl(x.user_cards.card_templates)} tirePerfs={tirePerfs}>
+      <CardView
+        key={x.id}
+        template={x.user_cards.card_templates}
+        card={x.user_cards}
+        image={cardImageUrl(x.user_cards.card_templates)}
+        tirePerfs={tirePerfs}
+        compare={compare}
+      >
         {note}
         {children}
       </CardView>
     );
+  };
 
   const mineGrid = (mode: CardViewMode) => (
     <div className={mode === "liste" ? "grid gap-2 xl:grid-cols-2" : "grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"}>
@@ -208,6 +232,7 @@ export default async function MarketplacePage({
             <p className="mb-1 text-xs text-zinc-500">Vendeur : {nameOf.get(x.seller_id) ?? "?"}</p>
             <PriceHint price={x.price} reference={priceRef.get(x.user_cards.template_id)} />
           </>,
+          true,
         );
       })}
     </div>
@@ -215,6 +240,7 @@ export default async function MarketplacePage({
 
   return (
     <CatalogViewProvider initialView={view}>
+    <CompareProvider>
     <>
       <QuestPing quest="marketplace" />
       <section className="space-y-3">
@@ -224,6 +250,13 @@ export default async function MarketplacePage({
           actions={<CatalogViewToggle />}
         />
         <MarketplaceTabs current="marche" marketHref={marketHref} exchangeHref={exchangeHref} incomingCount={incomingTrades} />
+        <CompareBar
+          equipped={
+            equipped
+              ? { engine: equipped.engine.template.name, gearbox: equipped.gearbox.template.name, tire: equipped.tire.template.name }
+              : null
+          }
+        />
         <CatalogFilters path="/marketplace" query={query} counts={counts} rarityCounts={rarityCounts as Partial<Record<Rarity, number>>} preserveCatalogView />
       </section>
 
@@ -317,6 +350,7 @@ export default async function MarketplacePage({
         </details>
       )}
     </>
+    </CompareProvider>
     </CatalogViewProvider>
   );
 }

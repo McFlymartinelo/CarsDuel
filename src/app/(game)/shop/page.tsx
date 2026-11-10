@@ -13,7 +13,11 @@ import { viewMode } from "@/components/ViewToggle";
 import { CatalogViewPanels, CatalogViewProvider, CatalogViewToggle } from "@/components/CatalogView";
 import { compareTemplates } from "@/lib/catalog-sort";
 import { readCatalogQuery } from "@/lib/catalog-filters";
-import type { Category, Rarity } from "@/lib/types";
+import { compareCandidate } from "@/lib/compare";
+import { CompareBar } from "@/components/compare/CompareBar";
+import { CardCompare } from "@/components/compare/CardCompare";
+import { CompareProvider } from "@/components/compare/CompareProvider";
+import type { CardTemplate, Category, Rarity } from "@/lib/types";
 import { cardImageUrl } from "@/lib/card-images";
 import { loadShopPage } from "@/lib/queries";
 import { buyShopItem } from "./actions";
@@ -29,7 +33,7 @@ export default async function ShopPage({
   const query = readCatalogQuery({ ...sp, risk: undefined });
   const view = viewMode(sp.vue);
   const { user } = await requireUser();
-  const { items, catalogCounts, modifiers: tirePerfs } = await loadShopPage(user.id, query);
+  const { items, catalogCounts, modifiers: tirePerfs, equipped } = await loadShopPage(user.id, query);
 
   const counts: Record<string, number> = {};
   const rarityCounts: Partial<Record<Rarity, number>> = {};
@@ -63,14 +67,29 @@ export default async function ShopPage({
     />
   );
 
+  // Les articles de boutique sont neufs : aucun run, gomme pleine.
+  const compare = (t: CardTemplate, card: null, variant: "block" | "badge") => {
+    if (!equipped) return undefined;
+    const comparison = compareCandidate(t, card, equipped, tirePerfs);
+    return comparison ? <CardCompare comparison={comparison} variant={variant} /> : undefined;
+  };
+
   return (
     <CatalogViewProvider initialView={view}>
+      <CompareProvider>
       <section className="min-w-0 space-y-4">
         <QuestPing quest="boutique" />
         <PageHeader
           title="Magasin de pièces neuves"
           description="Des pièces garanties, disponibles immédiatement pour compléter votre configuration."
           actions={<CatalogViewToggle />}
+        />
+        <CompareBar
+          equipped={
+            equipped
+              ? { engine: equipped.engine.template.name, gearbox: equipped.gearbox.template.name, tire: equipped.tire.template.name }
+              : null
+          }
         />
         <CatalogFilters
           path="/shop"
@@ -106,7 +125,13 @@ export default async function ShopPage({
             cards={(
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
               {shown.map((it) => (
-                <CardView key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)} tirePerfs={tirePerfs}>
+                <CardView
+                  key={it.id}
+                  template={it.card_templates}
+                  image={cardImageUrl(it.card_templates)}
+                  tirePerfs={tirePerfs}
+                  compare={compare(it.card_templates, null, "block")}
+                >
                   {buy(it)}
                 </CardView>
               ))}
@@ -115,7 +140,12 @@ export default async function ShopPage({
             list={(
             <div className="grid min-w-0 gap-2">
               {shown.map((it) => (
-                <CardRow key={it.id} template={it.card_templates} image={cardImageUrl(it.card_templates)}>
+                <CardRow
+                  key={it.id}
+                  template={it.card_templates}
+                  image={cardImageUrl(it.card_templates)}
+                  compare={compare(it.card_templates, null, "badge")}
+                >
                   {buy(it)}
                 </CardRow>
               ))}
@@ -124,6 +154,7 @@ export default async function ShopPage({
           />
         )}
       </section>
+      </CompareProvider>
     </CatalogViewProvider>
   );
 }
