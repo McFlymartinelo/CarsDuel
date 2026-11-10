@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup — Diagnostic de fin de duel</title>
+  <link rel="stylesheet" href="./duel-diagnostic.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-rain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.9A4 4 0 0 1 6.5 7a5 5 0 0 1 9.7 1.4A3.5 3.5 0 0 1 18 15"/><path d="M8 18v2M12 19v2M16 18v2"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M8.5 14a6 6 0 1 1 7 0c-.9.8-1.5 1.7-1.5 3H10c0-1.3-.6-2.2-1.5-3Z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-3-3z"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M9.6 9.4h4a2 2 0 0 1 0 4h-4"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5v8l9 5 9-5Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+  </svg>
+
+  <div class="layout">
+    <div class="notes">
+      <p class="kicker">Mockup 4 / proposition</p>
+      <h1>Diagnostic de fin de duel</h1>
+      <p class="intro">Sous le verdict, une phrase explique <b>ce qui a décidé la course</b> et donne une piste concrète. Calculé à partir des données déjà présentes dans <code>DuelReport</code> : aucune requête ni migration.</p>
+
+      <h2>Les cas couverts</h2>
+      <ul>
+        <li><strong>Pneus / météo</strong> : écart de modificateur entre les deux monte.</li>
+        <li><strong>Mécanique</strong> : puissance, poids et temps de passage.</li>
+        <li><strong>Casse</strong> : moteur ou boîte, avec le risque au départ.</li>
+        <li><strong>Gomme</strong> : usure restante qui pénalise le score.</li>
+        <li><strong>Course serrée</strong> : quand aucun facteur ne domine, on le dit.</li>
+      </ul>
+
+      <h2>Règles d’écriture</h2>
+      <ul>
+        <li>Une seule phrase + 2 ou 3 écarts chiffrés.</li>
+        <li>Ton factuel, jamais culpabilisant.</li>
+        <li>L’action proposée reste optionnelle (lien discret).</li>
+        <li>Affiché uniquement quand l’écart est significatif.</li>
+      </ul>
+
+      <p class="foot">Maquette statique — rien n’est encore implémenté. Trois états : défaite pneus, victoire mécanique, casse moteur.</p>
+      <span class="legend">390 × 844 · mobile</span>
+    </div>
+
+    <!-- Écran 1 — défaite par les pneus -->
+    <div class="screen">
+      <p class="screen-label">Défaite — pneus inadaptés</p>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="app">
+            <div class="statusbar"><span>21:04</span><span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span></div>
+
+            <header class="topbar">
+              <a class="brand" href="#"><img src="/logo.svg" alt=""><span>Cars<br><span class="dim">Duel</span></span></a>
+              <span class="spacer"></span>
+              <span class="wallet"><span class="coins"><svg><use href="#i-coin"/></svg><b>1 250</b></span><span class="wallet-sep"></span><span class="cubes"><svg><use href="#i-box"/></svg><b>18</b></span></span>
+              <a class="icon-btn" href="#" aria-label="Notifications"><svg><use href="#i-bell"/></svg></a>
+              <span class="avatar">AM</span>
+            </header>
+
+            <main class="content result">
+              <div class="res-head"><h1>Résultat du duel</h1><a class="res-close" href="#" aria-label="Fermer"><svg><use href="#i-x"/></svg></a></div>
+
+              <section class="track" aria-label="Conditions de piste">
+                <div class="track-sky"></div>
+                <div class="track-road"></div>
+                <div class="track-body">
+                  <div class="row">
+                    <span class="track-icon"><svg><use href="#i-rain"/></svg></span>
+                    <div><p class="kicker">Conditions de piste</p><p class="weather">Pluie fraîche</p></div>
+                    <span class="weather-chip">Humide</span>
+                  </div>
+                  <ul class="track-lines">
+                    <li>Piste humide et froide.</li>
+                    <li>Adhérence précaire, les pneus route décrochent.</li>
+                  </ul>
+                </div>
+              </section>
+
+              <div class="res-grid">
+                <div class="res-score me">
+                  <span class="who">Vous</span>
+                  <p class="val">84,1</p>
+                  <div class="res-line"><span>Score mécanique</span><b>92,4</b></div>
+                  <div class="res-line"><span>Pneus Route</span><b class="bad">×0,91</b></div>
+                </div>
+                <div class="res-score">
+                  <span class="who">NightRider</span>
+                  <p class="val">98,0</p>
+                  <div class="res-line"><span>Score mécanique</span><b>90,7</b></div>
+                  <div class="res-line"><span>Pneus Pluie</span><b class="good">×1,08</b></div>
+                </div>
+              </div>
+
+              <div class="res-verdict">
+                <strong>Défaite</strong>
+                <p><span class="coins">+6 pièces</span> · <span class="xp">+12 XP</span></p>
+              </div>
+
+              <section class="diag" aria-label="Analyse de la course">
+                <div class="diag-top">
+                  <span class="diag-icon"><svg><use href="#i-bulb"/></svg></span>
+                  <div>
+                    <p class="eyebrow">Le point de bascule</p>
+                    <h3>Pneus inadaptés à la pluie</h3>
+                  </div>
+                </div>
+                <p class="why">Votre mécanique est <b>légèrement devant</b> (+1,7 pt), mais vos Route rendent ×0,91 contre ×1,08 pour ses Pluie. L’écart vient des pneus.</p>
+                <div class="deltas">
+                  <span class="delta bad">Pneus ×0,91 vs ×1,08</span>
+                  <span class="delta good">Mécanique +1,7 pt</span>
+                </div>
+                <a class="cta" href="#"><svg><use href="#i-repeat"/></svg>Changer de pneus</a>
+              </section>
+
+              <div class="res-actions">
+                <a class="res-btn primary" href="#">Recommencer</a>
+                <a class="res-btn ghost" href="#">Fermer</a>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Écran 2 — victoire par la mécanique -->
+    <div class="screen">
+      <p class="screen-label">Victoire — mécanique dominante</p>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="app">
+            <div class="statusbar"><span>21:07</span><span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span></div>
+
+            <header class="topbar">
+              <a class="brand" href="#"><img src="/logo.svg" alt=""><span>Cars<br><span class="dim">Duel</span></span></a>
+              <span class="spacer"></span>
+              <span class="wallet"><span class="coins"><svg><use href="#i-coin"/></svg><b>1 274</b></span><span class="wallet-sep"></span><span class="cubes"><svg><use href="#i-box"/></svg><b>18</b></span></span>
+              <a class="icon-btn" href="#" aria-label="Notifications"><svg><use href="#i-bell"/></svg></a>
+              <span class="avatar">AM</span>
+            </header>
+
+            <main class="content result">
+              <div class="res-head"><h1>Résultat du duel</h1><a class="res-close" href="#" aria-label="Fermer"><svg><use href="#i-x"/></svg></a></div>
+
+              <section class="track dry" aria-label="Conditions de piste">
+                <div class="track-sky"></div>
+                <div class="track-road"></div>
+                <div class="track-body">
+                  <div class="row">
+                    <span class="track-icon"><svg><use href="#i-sun"/></svg></span>
+                    <div><p class="kicker">Conditions de piste</p><p class="weather">Soleil chaud</p></div>
+                    <span class="weather-chip">Sèche</span>
+                  </div>
+                  <ul class="track-lines">
+                    <li>Piste sèche et chaude.</li>
+                    <li>Gomme à bonne température, pas de surchauffe.</li>
+                  </ul>
+                </div>
+              </section>
+
+              <div class="res-grid">
+                <div class="res-score me">
+                  <span class="who">Vous</span>
+                  <p class="val">104,8</p>
+                  <div class="res-line"><span>Score mécanique</span><b>102,7</b></div>
+                  <div class="res-line"><span>Pneus Sport</span><b class="good">×1,02</b></div>
+                </div>
+                <div class="res-score">
+                  <span class="who">Pilote42</span>
+                  <p class="val">99,3</p>
+                  <div class="res-line"><span>Score mécanique</span><b>94,6</b></div>
+                  <div class="res-line"><span>Pneus Sport</span><b class="good">×1,05</b></div>
+                </div>
+              </div>
+
+              <div class="res-verdict win">
+                <strong>Victoire</strong>
+                <p><span class="coins">+24 pièces</span> · <span class="xp">+40 XP</span></p>
+              </div>
+
+              <section class="diag good" aria-label="Analyse de la course">
+                <div class="diag-top">
+                  <span class="diag-icon"><svg><use href="#i-bulb"/></svg></span>
+                  <div>
+                    <p class="eyebrow">Ce qui a fait la différence</p>
+                    <h3>La mécanique a dominé</h3>
+                  </div>
+                </div>
+                <p class="why">Vous aviez <b>+21 ch</b> et <b>−38 ms</b> au passage. Vos pneus étaient un peu moins affûtés (×1,02 contre ×1,05), mais la mécanique a largement compensé.</p>
+                <div class="deltas">
+                  <span class="delta good">+21 ch</span>
+                  <span class="delta good">−38 ms</span>
+                  <span class="delta bad">Pneus ×1,02 vs ×1,05</span>
+                </div>
+              </section>
+
+              <div class="res-actions">
+                <a class="res-btn primary" href="#">Recommencer</a>
+                <a class="res-btn ghost" href="#">Fermer</a>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Écran 3 — casse moteur -->
+    <div class="screen">
+      <p class="screen-label">Défaite — casse moteur</p>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="app">
+            <div class="statusbar"><span>21:12</span><span class="dots"><i></i><i></i><i></i><i></i><span class="battery"></span></span></div>
+
+            <header class="topbar">
+              <a class="brand" href="#"><img src="/logo.svg" alt=""><span>Cars<br><span class="dim">Duel</span></span></a>
+              <span class="spacer"></span>
+              <span class="wallet"><span class="coins"><svg><use href="#i-coin"/></svg><b>1 278</b></span><span class="wallet-sep"></span><span class="cubes"><svg><use href="#i-box"/></svg><b>18</b></span></span>
+              <a class="icon-btn" href="#" aria-label="Notifications"><svg><use href="#i-bell"/></svg></a>
+              <span class="avatar">AM</span>
+            </header>
+
+            <main class="content result">
+              <div class="res-head"><h1>Résultat du duel</h1><a class="res-close" href="#" aria-label="Fermer"><svg><use href="#i-x"/></svg></a></div>
+
+              <section class="track dry" aria-label="Conditions de piste">
+                <div class="track-sky"></div>
+                <div class="track-road"></div>
+                <div class="track-body">
+                  <div class="row">
+                    <span class="track-icon"><svg><use href="#i-sun"/></svg></span>
+                    <div><p class="kicker">Conditions de piste</p><p class="weather">Soleil frais</p></div>
+                    <span class="weather-chip">Sèche</span>
+                  </div>
+                  <ul class="track-lines"><li>Piste sèche et froide.</li></ul>
+                </div>
+              </section>
+
+              <div class="res-grid">
+                <div class="res-score me">
+                  <span class="who">Vous</span>
+                  <p class="val broke">Casse</p>
+                  <div class="res-line"><span>Score mécanique</span><b>96,1</b></div>
+                  <div class="res-line"><span>Casse moteur</span><b class="bad">Oui</b></div>
+                </div>
+                <div class="res-score">
+                  <span class="who">RidgeLine</span>
+                  <p class="val">97,2</p>
+                  <div class="res-line"><span>Score mécanique</span><b>92,6</b></div>
+                  <div class="res-line"><span>Pneus Sport</span><b class="good">×1,05</b></div>
+                </div>
+              </div>
+
+              <div class="res-verdict">
+                <strong>Défaite</strong>
+                <p><span class="coins">+4 pièces</span> · <span class="xp">+8 XP</span></p>
+              </div>
+
+              <section class="diag warn" aria-label="Analyse de la course">
+                <div class="diag-top">
+                  <span class="diag-icon"><svg><use href="#i-wrench"/></svg></span>
+                  <div>
+                    <p class="eyebrow">Le point de bascule</p>
+                    <h3>Casse moteur</h3>
+                  </div>
+                </div>
+                <p class="why">Le risque était de <b>4,8 %</b> au départ : la casse a mis fin à la course avant le calcul final. Un passage à l’atelier ferait redescendre ce risque.</p>
+                <div class="deltas">
+                  <span class="delta bad">Risque 4,8 %</span>
+                  <span class="delta neutral">7 runs</span>
+                </div>
+                <a class="cta warn" href="#"><svg><use href="#i-wrench"/></svg>Aller à l’atelier</a>
+              </section>
+
+              <div class="res-actions">
+                <a class="res-btn primary" href="#">Remplacer le moteur</a>
+                <a class="res-btn ghost" href="#">Fermer</a>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import { DuelDiagnosis } from "@/components/DuelDiagnosis";
 import { TrackCard } from "@/components/TrackCard";
 import { BONUS_LABEL, TIRE_LABEL, TIRE_THEME } from "@/lib/format";
 import type { DuelReport } from "@/lib/types";
@@ -74,6 +75,8 @@ export function DuelResult({ r, busy = false, onReplay, onReplaceBrokenPart, onC
           <span className="text-amber-400">+{r.coins} pièces</span> · <span className="text-sky-400">+{r.xp} XP</span>
         </p>
       </div>
+
+      <DuelDiagnosis r={r} />
 
       <div className={onReplay || onReplaceBrokenPart ? "grid grid-cols-2 gap-3" : ""}>
         {onReplay && (
