@@ -13,11 +13,11 @@ import type { DrawnCard } from "@/lib/types";
 
 type Kind = WorkshopKind;
 type Step = { id: StageId; name: string; rule: string };
-type Tile = { kind: Kind; title: string; modalTitle: string; verb: string; image: string };
+type Tile = { kind: Kind; title: string; modalTitle: string; image: string };
 const TILES: Tile[] = [
-  { kind: "moteur", title: "Moteur commun", modalTitle: "Reconditionner un moteur", verb: "Reconditionner", image: "/workshop/engine-workshop-v2.png" },
-  { kind: "boite", title: "Boîte commune", modalTitle: "Reconditionner une boîte", verb: "Reconditionner", image: "/workshop/gearbox.png" },
-  { kind: "pneus", title: "Pneu Route", modalTitle: "Rechaper des pneus", verb: "Rechaper", image: "/workshop/tires.png" },
+  { kind: "moteur", title: "Moteur commun", modalTitle: "Reconditionner un moteur", image: "/workshop/engine-workshop-v2.png" },
+  { kind: "boite", title: "Boîte commune", modalTitle: "Reconditionner une boîte", image: "/workshop/gearbox.png" },
+  { kind: "pneus", title: "Pneu Route", modalTitle: "Rechaper des pneus", image: "/workshop/tires.png" },
 ];
 
 /** Ordre des étapes de chaque parcours : ajouter ou déplacer un jeu se fait ici. */
@@ -150,7 +150,7 @@ export function ReconditioningWorkshop({ available }: { available: Record<Kind, 
             >
               <TileBody
                 title={item.title}
-                text={`${item.verb} · ${COURSE_LENGTH[item.kind]} étapes · ${WORK[item.kind].length} jeux`}
+                text={`${COURSE_LENGTH[item.kind]} étapes parmi ${WORK[item.kind].length} jeux`}
                 image={item.image}
                 imageFit="contain"
                 badge={
