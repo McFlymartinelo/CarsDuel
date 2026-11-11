@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Cog, Settings2 } from "lucide-react";
 import { TireIcon } from "./icons";
-import { TIRE_THEME } from "@/lib/format";
+import { cardAccentTheme, TIRE_THEME } from "@/lib/format";
 import type { UserCard } from "@/lib/types";
 import { cardImageUrl } from "@/lib/card-images";
 
@@ -32,8 +32,11 @@ export function SlotTabs({
         const t = cards[slot]?.card_templates;
         const img = t ? cardImageUrl(t) : null;
         const tire = slot === "pneus" ? TIRE_THEME[t?.tire_type ?? ""] : undefined;
-        const text = tire?.text ?? m.text;
-        const active = tire?.border ?? m.active;
+        // Le bandeau suit la rareté de la carte (type de gomme pour un pneu) :
+        // le code couleur reste le même que dans le résumé replié et la carte.
+        const accent = cardAccentTheme(t);
+        const text = accent?.label ?? m.text;
+        const active = accent?.frame ?? m.active;
         return (
           <Link
             key={slot}
@@ -49,7 +52,7 @@ export function SlotTabs({
             ) : slot === "pneus" ? (
               <TireIcon className="h-7 w-7" ring={tire?.stroke} />
             ) : (
-              <Icon size={26} strokeWidth={1.5} className={m.text} />
+              <Icon size={26} strokeWidth={1.5} className={text} />
             )}
             <span className={`font-display text-xs uppercase ${text}`}>{m.label}</span>
             <span className="w-full truncate font-display text-[11px] font-bold uppercase text-zinc-200">{name}</span>

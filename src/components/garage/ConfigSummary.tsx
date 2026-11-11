@@ -1,6 +1,6 @@
 import { Cog, Settings2 } from "lucide-react";
 import { TireIcon } from "./icons";
-import { RARITY_THEME, TIRE_THEME } from "@/lib/format";
+import { cardAccentTheme, TIRE_THEME } from "@/lib/format";
 import { cardImageUrl } from "@/lib/card-images";
 import type { SlotKey } from "./SlotTabs";
 import type { UserCard } from "@/lib/types";
@@ -34,14 +34,10 @@ export function ConfigSummary({
         const template = card?.card_templates;
         const img = template ? cardImageUrl(template) : null;
         const tireTheme = slot === "pneus" ? TIRE_THEME[template?.tire_type ?? ""] : undefined;
-        // L'habillage suit la rareté de la pièce (comme les cartes du garage et
-        // du marché) ; à défaut, un pneu reprend la couleur de son type.
-        const rarityTheme = template?.rarity ? RARITY_THEME[template.rarity] : undefined;
-        const accent = rarityTheme
-          ? { frame: rarityTheme.frame, glow: rarityTheme.glow, label: rarityTheme.label }
-          : tireTheme
-            ? { frame: tireTheme.border, glow: tireTheme.glow, label: tireTheme.text }
-            : undefined;
+        // Même habillage que la carte détaillée : rareté pour les pièces, type de
+        // gomme pour un pneu. Ainsi la couleur ne change pas quand on ouvre le
+        // détail de la config.
+        const accent = cardAccentTheme(template);
         const text = accent?.label ?? m.text;
         const Icon = slot === "boite" ? Settings2 : Cog;
         const usable = Boolean(card && !card.is_destroyed && !card.is_listed);
@@ -69,7 +65,7 @@ export function ConfigSummary({
             ) : slot === "pneus" ? (
               <TireIcon className="h-7 w-7" ring={tireTheme?.stroke} />
             ) : (
-              <Icon size={24} strokeWidth={1.5} className={m.text} />
+              <Icon size={24} strokeWidth={1.5} className={text} />
             )}
             <span className={`font-display text-[10px] font-semibold uppercase tracking-wide ${text}`}>{m.label}</span>
             <span className="w-full truncate font-display text-xs font-bold uppercase text-zinc-200">

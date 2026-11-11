@@ -165,6 +165,30 @@ export const TIRE_THEME: Record<string, { frame: string; inner: string; accent: 
   },
 };
 
+export interface CardAccentTheme {
+  frame: string;
+  glow: string;
+  label: string;
+}
+
+/**
+ * Habillage d'une carte compacte, aligné sur la carte détaillée (`CardView`) :
+ * la rareté prime pour les moteurs et boîtes, le type de gomme habille les pneus
+ * (ils n'ont pas de rareté). `undefined` quand aucune carte n'est équipée.
+ */
+export function cardAccentTheme(t?: Pick<CardTemplate, "category" | "rarity" | "tire_type"> | null): CardAccentTheme | undefined {
+  if (!t) return undefined;
+  if (t.rarity) {
+    const palette = RARITY_PALETTE[t.rarity];
+    return { frame: palette.frame, glow: palette.glow, label: palette.accent };
+  }
+  if (t.category === "pneus") {
+    const tire = TIRE_THEME[t.tire_type ?? ""];
+    return tire ? { frame: tire.frame, glow: tire.glow, label: tire.accent } : undefined;
+  }
+  return undefined;
+}
+
 export const BONUS_LABEL: Record<string, string> = {
   revision_express: "Révision express",
   vidange_boite: "Vidange de boîte",
