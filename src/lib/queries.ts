@@ -488,14 +488,13 @@ export const loadShopPage = (uid: string, filter: CatalogQuery) =>
 
 /**
  * Collection : toutes les cartes, avec l'historique d'obtention du joueur.
- * `obtained` reste vrai même après benne, recyclage ou vente (badge « Déjà obtenue ») ;
- * `owned` reflète la possession actuelle (progression des défis du collectionneur).
+ * `obtained` reste vrai après benne, recyclage, destruction ou vente : il sert
+ * au badge « Déjà obtenue » et à la progression des défis du collectionneur.
  */
 export const loadCollectorCollection = (uid: string) =>
-  withUser(uid, async (c) => (await c.query<{ card_templates: CardTemplate; obtained: boolean; owned: boolean }>(
+  withUser(uid, async (c) => (await c.query<{ card_templates: CardTemplate; obtained: boolean }>(
     `select to_jsonb(t) as card_templates,
-            exists (select 1 from collector_obtained co where co.owner_id = $1 and co.template_id = t.id) as obtained,
-            exists (select 1 from user_cards uc where uc.owner_id = $1 and uc.template_id = t.id) as owned
+            exists (select 1 from collector_obtained co where co.owner_id = $1 and co.template_id = t.id) as obtained
        from card_templates t
       order by t.category, t.code nulls last, t.name`, [uid])).rows);
 

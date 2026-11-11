@@ -12,7 +12,7 @@ type Props = {
   condition: string;
   item: string;
   reward: string;
-  owned: number;
+  obtained: number;
   total: number;
   complete: boolean;
   claimed: boolean;
@@ -29,10 +29,10 @@ const CTA_COMPACT = "max-sm:ml-auto max-sm:h-9 max-sm:w-auto max-sm:gap-1.5 max-
 const PILL = "inline-flex h-5 shrink-0 items-center gap-1 rounded-md border px-1.5 font-display text-[9px] font-bold uppercase tracking-[0.06em] sm:gap-1.5 sm:px-2 sm:text-[10px]";
 
 /** Jauge en segments (6 max) : chaque segment se remplit proportionnellement. */
-function SegmentBar({ owned, total, complete }: { owned: number; total: number; complete: boolean }) {
+function SegmentBar({ obtained, total, complete }: { obtained: number; total: number; complete: boolean }) {
   const count = Math.max(1, Math.min(total || 1, 6));
-  const ratio = total ? owned / total : 0;
-  return <div className="flex min-w-0 flex-1 gap-[3px]" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={owned}>
+  const ratio = total ? obtained / total : 0;
+  return <div className="flex min-w-0 flex-1 gap-[3px]" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={obtained}>
     {Array.from({ length: count }, (_, i) => {
       const fill = Math.max(0, Math.min(1, ratio * count - i));
       return <span key={i} className="h-[7px] flex-1 overflow-hidden rounded-full bg-zinc-700/60">
@@ -42,11 +42,11 @@ function SegmentBar({ owned, total, complete }: { owned: number; total: number; 
   </div>;
 }
 
-export function ChallengeTile({ challengeKey, name, condition, item, reward, owned, total, complete, claimed, icon }: Props) {
+export function ChallengeTile({ challengeKey, name, condition, item, reward, obtained, total, complete, claimed, icon }: Props) {
   const { compact } = useChallengeDensity();
   const ready = complete && !claimed;
   const cardState = claimed ? CARD_CLAIMED : ready ? CARD_READY : CARD_IDLE;
-  const missing = Math.max(0, total - owned);
+  const missing = Math.max(0, total - obtained);
 
   return <article className={`relative flex min-w-0 shrink-0 overflow-hidden rounded-xl border bg-gradient-to-b from-[#12161f] to-[#0c0f16] ${cardState}`}>
     {ready && <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-amber-300 to-amber-600" />}
@@ -56,7 +56,7 @@ export function ChallengeTile({ challengeKey, name, condition, item, reward, own
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-start gap-2">
             <h4 className="min-w-0 flex-1 font-display text-[15px] font-bold uppercase leading-tight tracking-wide text-zinc-50 lg:text-[14px]">{name}</h4>
-            <span className={`font-display text-xs font-bold text-zinc-100 ${compact ? "hidden max-sm:inline" : "hidden"}`}>{owned} <span className="font-semibold text-zinc-500">/ {total}</span></span>
+            <span className={`font-display text-xs font-bold text-zinc-100 ${compact ? "hidden max-sm:inline" : "hidden"}`}>{obtained} <span className="font-semibold text-zinc-500">/ {total}</span></span>
           </div>
           <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-400 lg:text-[10.5px]" title={condition}>{condition}</p>
           {item !== "Aucune" && <p className="mt-0.5 line-clamp-2 text-[10.5px] leading-snug text-amber-300/75 lg:text-[10px]" title={item}>+ {item}</p>}
@@ -70,8 +70,8 @@ export function ChallengeTile({ challengeKey, name, condition, item, reward, own
       </div>
 
       <div className="mt-2.5 flex min-w-0 items-center gap-2.5 lg:mt-2">
-        <span className={`shrink-0 font-display text-[13px] font-bold text-zinc-100 lg:text-xs ${compact ? "max-sm:hidden" : ""}`}>{owned} <span className="font-semibold text-zinc-500">/ {total}</span></span>
-        <SegmentBar owned={owned} total={total} complete={complete} />
+        <span className={`shrink-0 font-display text-[13px] font-bold text-zinc-100 lg:text-xs ${compact ? "max-sm:hidden" : ""}`}>{obtained} <span className="font-semibold text-zinc-500">/ {total}</span></span>
+        <SegmentBar obtained={obtained} total={total} complete={complete} />
         {!ready && compact && <span aria-label={`Récompense : ${reward} pièces`} className="ml-auto flex shrink-0 items-center gap-1 sm:hidden">
           <Coins size={12} strokeWidth={1.7} aria-hidden="true" className="text-amber-400" />
           <strong className="font-display text-xs font-bold text-amber-300">{reward}</strong>

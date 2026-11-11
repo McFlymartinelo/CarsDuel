@@ -4,7 +4,7 @@ import { ChallengeDensityProvider, ChallengeDensityToggle } from "@/components/C
 import { ChallengeTile } from "@/components/CollectorChallengeTile";
 import type { CardTemplate } from "@/lib/types";
 
-type Entry = { card_templates: CardTemplate; obtained: boolean; owned: boolean };
+type Entry = { card_templates: CardTemplate; obtained: boolean };
 type Challenge = {
   key: string;
   name: string;
@@ -18,33 +18,40 @@ type Challenge = {
 
 const FINAL_REWARD = "5 000";
 const PARTS = (card: CardTemplate) => card.category === "moteur" || card.category === "boite";
+// Même règle que la RPC SQL : « 4 cylindres », « 6 cylindres à plat », « V8 »,
+// « W16 »… et pas « 4 rotors », qui n'est pas un cylindre.
 const engineCylinderCount = (architecture: string | null) =>
   architecture?.match(/(?:^|\b)(\d+)\s*cylindres?\b/i)?.[1]
-  ?? architecture?.match(/\b[ V W H](\d+)\b/i)?.[1]
+  ?? architecture?.match(/\b[VWH](\d+)\b/i)?.[1]
   ?? null;
 const ENGINE_ICONS: Record<number, LucideIcon> = { 2: Cylinder, 3: Cog, 4: Boxes, 5: CircleDot, 6: Cpu, 8: Package, 10: Gauge, 12: Trophy, 16: Car };
 const CHALLENGES: Challenge[] = [
-  { key: "toolbox", name: "Boîte à outils", condition: "Posséder les 6 cartes bonus du jeu.", coins: "50", item: "Aucune", group: "rarity", icon: Wrench, matches: (c) => c.category === "bonus" },
-  { key: "foundations", name: "Les Fondations", condition: "Posséder toutes les pièces de rareté Commune (moteurs et boîtes).", coins: "150", item: "1 pièce Rare aléatoire (moteur ou boîte)", group: "rarity", icon: Cog, matches: (c) => PARTS(c) && c.rarity === "commune" },
-  { key: "track_prep", name: "Préparation Piste", condition: "Posséder toutes les pièces de rareté Rare (moteurs et boîtes).", coins: "400", item: "1 pièce Très Rare aléatoire (moteur ou boîte)", group: "rarity", icon: Cylinder, matches: (c) => PARTS(c) && c.rarity === "rare" },
-  { key: "watchmaking", name: "Haute Horlogerie", condition: "Posséder toutes les pièces de rareté Très Rare (moteurs et boîtes).", coins: "1 000", item: "1 pièce Épique aléatoire (moteur ou boîte)", group: "rarity", icon: Gauge, matches: (c) => PARTS(c) && c.rarity === "tres_rare" },
-  { key: "factory_team", name: "Écurie d'Usine", condition: "Posséder toutes les pièces de rareté Épique (moteurs et boîtes).", coins: "2 500", item: "1 pièce Légendaire aléatoire (moteur ou boîte)", group: "rarity", icon: Car, matches: (c) => PARTS(c) && c.rarity === "epique" },
-  { key: "pantheon", name: "Le Panthéon", condition: "Posséder toutes les pièces de rareté Légendaire (moteurs et boîtes).", coins: "6 000", item: "Aucune", group: "rarity", icon: Trophy, matches: (c) => PARTS(c) && c.rarity === "legendaire" },
+  { key: "toolbox", name: "Boîte à outils", condition: "Avoir obtenu les 6 cartes bonus du jeu.", coins: "50", item: "Aucune", group: "rarity", icon: Wrench, matches: (c) => c.category === "bonus" },
+  { key: "foundations", name: "Les Fondations", condition: "Avoir obtenu toutes les pièces de rareté Commune (moteurs et boîtes).", coins: "150", item: "1 pièce Rare aléatoire (moteur ou boîte)", group: "rarity", icon: Cog, matches: (c) => PARTS(c) && c.rarity === "commune" },
+  { key: "track_prep", name: "Préparation Piste", condition: "Avoir obtenu toutes les pièces de rareté Rare (moteurs et boîtes).", coins: "400", item: "1 pièce Très Rare aléatoire (moteur ou boîte)", group: "rarity", icon: Cylinder, matches: (c) => PARTS(c) && c.rarity === "rare" },
+  { key: "watchmaking", name: "Haute Horlogerie", condition: "Avoir obtenu toutes les pièces de rareté Très Rare (moteurs et boîtes).", coins: "1 000", item: "1 pièce Épique aléatoire (moteur ou boîte)", group: "rarity", icon: Gauge, matches: (c) => PARTS(c) && c.rarity === "tres_rare" },
+  { key: "factory_team", name: "Écurie d'Usine", condition: "Avoir obtenu toutes les pièces de rareté Épique (moteurs et boîtes).", coins: "2 500", item: "1 pièce Légendaire aléatoire (moteur ou boîte)", group: "rarity", icon: Car, matches: (c) => PARTS(c) && c.rarity === "epique" },
+  { key: "pantheon", name: "Le Panthéon", condition: "Avoir obtenu toutes les pièces de rareté Légendaire (moteurs et boîtes).", coins: "6 000", item: "Aucune", group: "rarity", icon: Trophy, matches: (c) => PARTS(c) && c.rarity === "legendaire" },
   ...[
     [2, "Le Clan du Bicylindre", "100"], [3, "Le Club du 3-Pattes", "200"], [4, "La Légion du 4-Cylindres", "400"],
     [5, "La Gamme Atypique", "500"], [6, "La Symphonie des 6", "750"], [8, "Le Mur du V8", "1 200"],
     [10, "La Rupture à 9000", "1 800"], [12, "L'Orfèvrerie Pure", "2 800"], [16, "Le Titan Cyberpunk", "4 500"],
   ].map(([cylinders, name, coins]) => ({
-    key: `engine_${cylinders}`, name: String(name), condition: `Posséder tous les moteurs ${cylinders} cylindres.`, coins: String(coins), item: "Aucune", group: "engine" as const,
+    key: `engine_${cylinders}`, name: String(name), condition: `Avoir obtenu tous les moteurs ${cylinders} cylindres.`, coins: String(coins), item: "Aucune", group: "engine" as const,
     icon: ENGINE_ICONS[Number(cylinders)] ?? Cog,
     matches: (c: CardTemplate) => c.category === "moteur" && engineCylinderCount(c.architecture) === String(cylinders),
   })),
 ];
 
+/**
+ * Progression d'un défi : on compte les modèles déjà obtenus (historique
+ * `collector_obtained`), pas seulement ceux encore dans l'inventaire. Une carte
+ * vendue, recyclée ou détruite reste donc acquise pour la collection.
+ */
 const progressOf = (challenge: Challenge, entries: Entry[]) => {
   const cards = entries.filter(({ card_templates }) => challenge.matches(card_templates));
-  const owned = cards.filter((entry) => entry.owned).length;
-  return { total: cards.length, owned, complete: cards.length > 0 && owned === cards.length };
+  const obtained = cards.filter((entry) => entry.obtained).length;
+  return { total: cards.length, obtained, complete: cards.length > 0 && obtained === cards.length };
 };
 
 function Screw({ className }: { className: string }) {
@@ -59,7 +66,7 @@ function ChallengeGroup({ title, subtitle, challenges, entries, claimedChallenge
     <Screw className="right-2 top-2" />
     <CollectorAccordion icon={<Icon aria-hidden="true" size={34} strokeWidth={1.2} className="shrink-0 text-amber-400" />} title={title} subtitle={subtitle} summary={`${done} / ${challenges.length}`}>
       {challenges.map((challenge) => {
-        const { total, owned, complete } = progressOf(challenge, entries);
+        const { total, obtained, complete } = progressOf(challenge, entries);
         const ChallengeIcon = challenge.icon;
         return <ChallengeTile
           key={challenge.key}
@@ -68,7 +75,7 @@ function ChallengeGroup({ title, subtitle, challenges, entries, claimedChallenge
           condition={challenge.condition}
           item={challenge.item}
           reward={challenge.coins}
-          owned={owned}
+          obtained={obtained}
           total={total}
           complete={complete}
           claimed={claimedChallenges.includes(challenge.key)}

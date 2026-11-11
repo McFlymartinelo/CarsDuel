@@ -7,8 +7,8 @@ async function claim(user, challenge) {
     c.query("select public.claim_collector_challenge($1::uuid, $2::text) as r", [user, challenge]))).rows[0].r;
 }
 
-test("collection publique d'un pilote : cartes possédées, pseudo insensible à la casse", async () => {
-  const { owner, visitor, ownerName } = await withAdmin(async (c) => {
+test("collection publique d'un pilote : cartes obtenues, pseudo insensible à la casse", async () => {
+  const { visitor, ownerName } = await withAdmin(async (c) => {
     await ensureTemplates(c);
     const owner = await createPlayer(c);
     const visitor = await createPlayer(c);
@@ -41,6 +41,28 @@ test("collection publique d'un pilote : pseudo inconnu et appelant usurpé", asy
     (c) => c.query("select public.collector_collection($1::uuid, 'pseudo-inexistant-42')", [other]),
     "forbidden",
   );
+});
+
+test("collection publique : un modèle obtenu puis recyclé reste dans la collection", async () => {
+  const fx = await withAdmin(async (c) => {
+    await ensureTemplates(c);
+    const owner = await createPlayer(c);
+    const visitor = await createPlayer(c);
+    const card = await giveCard(c, owner, "t_eng_break");
+    const { rows } = await c.query("select username from profiles where id = $1", [owner]);
+    return { owner, visitor, card, ownerName: rows[0].username };
+  });
+
+  await asUser(fx.owner, (c) => c.query("select public.recycle_bin_add($1::uuid, $2::uuid)", [fx.owner, fx.card]));
+  await asUser(fx.owner, (c) => c.query("select public.recycle_bin_process($1::uuid)", [fx.owner]));
+  await withAdmin(async (c) => {
+    assert.equal((await c.query("select id from user_cards where id = $1", [fx.card])).rows.length, 0);
+  });
+
+  const result = (await asUser(fx.visitor, (c) =>
+    c.query("select public.collector_collection($1::uuid, $2::text) as r", [fx.visitor, fx.ownerName]))).rows[0].r;
+
+  assert.deepEqual(result.cards.map((card) => card.card_templates.code).sort(), ["t_eng_break"]);
 });
 
 test("badge déjà obtenue : l'historique survit au recyclage définitif", async () => {
@@ -91,6 +113,31 @@ test("badge déjà obtenue : vendeur et acheteur conservent le modèle", async (
       assert.equal(rows.length, 1);
     }
   });
+});
+
+test("défi du collectionneur : les modèles obtenus comptent après avoir quitté l'inventaire", async () => {
+  const user = await withAdmin(async (c) => {
+    const id = await createPlayer(c);
+    await c.query(
+      `insert into user_cards (owner_id, template_id, source)
+       select $1, id, 'test' from card_templates where category = 'bonus'`,
+      [id],
+    );
+    // Simule vente/recyclage/destruction : les cartes quittent l'inventaire mais
+    // l'historique collector_obtained doit continuer à alimenter le défi.
+    await c.query("delete from user_cards where owner_id = $1", [id]);
+    return id;
+  });
+
+  await withAdmin(async (c) => {
+    assert.equal(
+      Number((await c.query("select count(*)::int as n from user_cards where owner_id = $1", [user])).rows[0].n),
+      0,
+    );
+  });
+
+  const result = await claim(user, "toolbox");
+  assert.equal(Number(result.coins), 50);
 });
 
 test("défi du collectionneur inconnu", async () => {
