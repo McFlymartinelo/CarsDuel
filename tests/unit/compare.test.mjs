@@ -102,7 +102,7 @@ test("boîte plus rapide : score positif et temps de passage négatif en good", 
   assert.deepEqual(comparison.chips[1], { label: "0 kg", tone: "neutral" });
 });
 
-test("pneus : une chip par météo, moyenne sur les quatre météos", () => {
+test("pneus : une chip par météo, sans moyenne affichée", () => {
   const candidate = template({ id: "t-rain", category: "pneus", tireType: "pluie" });
   const bonuses = { sunny_hot: 10, sunny_cool: 20, rain_hot: 30, rain_cool: 40 };
   const tirePerfs = [
@@ -113,8 +113,9 @@ test("pneus : une chip par météo, moyenne sur les quatre météos", () => {
   const comparison = compareCandidate(candidate, { runs_count: 0, tire_wear: 100 }, equipped, tirePerfs);
   assert.ok(comparison);
 
-  assert.equal(comparison.caption, "de modificateur pneus (moyenne)");
-  assert.equal(comparison.headline, "+25,0 %");
+  assert.equal(comparison.kind, "tires");
+  assert.equal(comparison.headline, undefined);
+  assert.equal(comparison.caption, undefined);
   assert.equal(comparison.tone, "good");
   assert.equal(comparison.reference, "Sport");
   assert.equal(comparison.chips.length, 4);

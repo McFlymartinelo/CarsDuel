@@ -254,9 +254,6 @@ export function diagnoseDuel(r: DuelReport): DuelDiagnosis {
   }
 
   if (factor === "meca") {
-    const shiftContribution = Math.abs((r.yourShift - r.ghostShift) * 0.05);
-    const powerContribution = Math.abs((r.yourPower - r.ghostPower) * 0.55);
-    const slot = shiftContribution > powerContribution ? "boite" : "moteur";
     return {
       tone: r.win ? "good" : "bad",
       icon: "gauge",
@@ -264,7 +261,6 @@ export function diagnoseDuel(r: DuelReport): DuelDiagnosis {
       title: r.win ? "La mécanique a dominé" : "La mécanique a creusé l'écart",
       reason: mechanicalReason(r),
       deltas: mechanicalDeltas(r),
-      hint: { label: "Voir la configuration", href: `/duel?slot=${slot}`, icon: "gauge" },
     };
   }
 

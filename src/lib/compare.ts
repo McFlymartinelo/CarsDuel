@@ -16,8 +16,10 @@ export interface CompareChip {
 }
 
 export interface CardComparison {
-  headline: string; // "+6,2 pts" | "−3,8 pts" | "+12 %"
-  caption: string; // "de score mécanique estimé" | "de modificateur pneus (moyenne)"
+  /** "meca" affiche un écart chiffré ; "tires" ne garde que les chips météo. */
+  kind: "meca" | "tires";
+  headline?: string; // "+6,2 pts" | "−3,8 pts"
+  caption?: string; // "de score mécanique estimé"
   tone: "good" | "bad";
   reference: string; // nom de la pièce équipée correspondante
   chips: CompareChip[];
@@ -117,6 +119,7 @@ export function compareCandidate(
     const after = scoreMeca(template, equipped.gearbox.template);
     const delta = after - before;
     return {
+      kind: "meca",
       headline: `${signed(delta, 1)} ${ptLabel(delta)}`,
       caption: "de score mécanique estimé",
       tone: delta >= 0 ? "good" : "bad",
@@ -131,6 +134,7 @@ export function compareCandidate(
     const after = scoreMeca(equipped.engine.template, template);
     const delta = after - before;
     return {
+      kind: "meca",
       headline: `${signed(delta, 1)} ${ptLabel(delta)}`,
       caption: "de score mécanique estimé",
       tone: delta >= 0 ? "good" : "bad",
@@ -159,8 +163,8 @@ export function compareCandidate(
   const average = values.reduce((sum, v) => sum + v, 0) / values.length;
 
   return {
-    headline: `${signed(average, 1)} %`,
-    caption: "de modificateur pneus (moyenne)",
+    kind: "tires",
+    // Pas de moyenne affichée : seule compte la perte/gain météo par météo.
     tone: average >= 0 ? "good" : "bad",
     reference: equipped.tire.template.name,
     chips: WEATHERS.map((w, i) => {

@@ -303,8 +303,7 @@ export function ClmForm({
                           <p className="font-display text-xl font-bold tabular-nums">{formatLapTime(challenge.circuit.medals_seconds[m.key])}</p>
                           <p className="font-display text-sm font-bold text-amber-300">+{m.coins} 🪙</p>
                         </div>
-                        <div className="relative mt-1 flex items-center justify-between gap-2">
-                          <p className="text-[11px] text-zinc-400">SP final ≥ {m.threshold}</p>
+                        <div className="relative mt-1 flex items-center justify-end gap-2">
                           <span className="rounded-md bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">+{m.coins} XP</span>
                         </div>
                       </div>

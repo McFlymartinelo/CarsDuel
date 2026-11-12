@@ -27,13 +27,14 @@ export function CardCompare({
   const toneText = good ? "text-emerald-400" : "text-red-400";
 
   if (variant === "badge") {
-    // Pastille compacte : on retire l'unité (pts / %), la légende dit de quoi il s'agit.
+    // Pastille compacte : seuls les écarts de score méca ont un chiffre principal.
+    if (comparison.kind !== "meca" || !comparison.headline) return null;
+    // On retire l'unité (pts), la légende dit de quoi il s'agit.
     const value = comparison.headline.replace(/\s+(pts?|%)$/, "");
-    const legend = comparison.caption.includes("pneus") ? "pneus" : "score méca";
     return (
       <span className="flex flex-col items-end text-right">
         <b className={`font-display text-base font-bold leading-none ${toneText}`}>{value}</b>
-        <span className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-zinc-500">{legend}</span>
+        <span className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-zinc-500">score méca</span>
       </span>
     );
   }
@@ -44,11 +45,13 @@ export function CardCompare({
         <span className="font-display text-[8px] font-bold uppercase tracking-[0.14em] text-zinc-500">Vs votre config</span>
         <span className="truncate font-display text-[10px] font-bold uppercase text-zinc-200">{comparison.reference}</span>
       </div>
-      <p className={`mt-1 flex items-baseline gap-1.5 font-display text-xl font-bold leading-none ${toneText}`}>
-        {comparison.headline}
-        <small className="text-[10px] font-medium text-zinc-400">{comparison.caption}</small>
-      </p>
-      <div className="mt-2 flex flex-wrap gap-1">
+      {comparison.headline && (
+        <p className={`mt-1 flex items-baseline gap-1.5 font-display text-xl font-bold leading-none ${toneText}`}>
+          {comparison.headline}
+          <small className="text-[10px] font-medium text-zinc-400">{comparison.caption}</small>
+        </p>
+      )}
+      <div className={`flex flex-wrap gap-1 ${comparison.headline ? "mt-2" : "mt-1.5"}`}>
         {comparison.chips.map((chip) => (
           <span
             key={chip.label}

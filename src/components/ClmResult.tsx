@@ -191,7 +191,6 @@ export function ClmResult({
                   <p className="mt-1 font-display text-sm font-bold tabular-nums">{formatLapTime(medalTargets[m.key])}</p>
                   <p className="text-[11px] font-semibold text-amber-300">+{n(rankedCoins(m.coins), 0)} 🪙</p>
                   <p className="text-[11px] font-semibold text-sky-300">+{m.coins} XP</p>
-                  <p className="text-[10px] text-zinc-500">SP ≥ {m.threshold}</p>
                 </div>
               );
             })}
