@@ -73,6 +73,7 @@ const SUMMARY = [
   ["banc", "Banc d'essai"],
   ["quotidiens", "Défis quotidiens"],
   ["configs", "Configs Constructeur"],
+  ["atelier", "Atelier de reconditionnement"],
 ];
 
 export default function RulesPage() {
@@ -496,6 +497,71 @@ export default function RulesPage() {
             <>{b("Aucun risque :")} l&apos;analyse ne consomme ni usure, ni garantie, ni risque de casse.</>,
             <>{b("Rotation :")} le défi change chaque lundi à 00:00 UTC, le compteur repart de zéro et toutes les paires redeviennent valables. Un constructeur peut revenir plusieurs fois.</>,
             <>{b("Teaser :")} la popup affiche l&apos;énigme de la semaine suivante pour anticiper ses pièces.</>,
+          ]}
+        />
+      </Section>
+
+      <Section id="atelier" title="12. Atelier de reconditionnement">
+        <P>
+          Depuis la page {b("Jouer")}, l&apos;atelier de reconditionnement propose des parcours de mini-jeux pour
+          dépanner un garage à court de pièces. Aucune pièce, aucun cube ni aucune garantie n&apos;est consommé : les
+          parcours sont {b("gratuits et illimités")}.
+        </P>
+        <Table
+          head={["Parcours", "Étapes tirées au sort", "Récompense de secours"]}
+          rows={[
+            ["Moteur commun", "6 mini-jeux parmi 16", "1 moteur commun aléatoire"],
+            ["Boîte commune", "5 mini-jeux parmi 15", "1 boîte commune aléatoire"],
+            ["Pneu Route", "4 mini-jeux parmi 14", "1 pneu Route neuf (100 % de gomme)"],
+          ]}
+        />
+        <P>
+          <i>
+            Les moteurs et boîtes reconditionnés arrivent neufs (0 run) mais sans garantie constructeur : une fois
+            cassés, ils ne peuvent pas être réparés gratuitement.
+          </i>
+        </P>
+
+        <H3>Déroulement d&apos;un parcours</H3>
+        <List
+          items={[
+            <>Les étapes et leur ordre sont {b("tirés au sort à chaque parcours")} : deux tentatives ne se ressemblent pas.</>,
+            <>Chaque étape affiche sa consigne ; le mini-jeu se valide dès que l&apos;objectif est atteint.</>,
+            <>
+              Une erreur ne bloque pas la progression : elle coûte {b("6 % de qualité")}. La qualité part de 100 % et
+              ne descend pas sous 0 %.
+            </>,
+            <>
+              La qualité finale donne {b("1 à 3 étoiles")} : 3 à partir de 90 %, 2 à partir de 70 %, 1 en dessous.
+              Elle n&apos;influence ni la récompense ni la rareté de la pièce : c&apos;est un score personnel.
+            </>,
+            <>Fermer la fenêtre ou abandonner en cours de route annule le parcours et ne verse rien.</>,
+          ]}
+        />
+
+        <H3>Attribution de la récompense</H3>
+        <List
+          items={[
+            <>
+              La récompense se demande avec le bouton {b("« Valider le parcours »")}, une fois la dernière étape
+              terminée. C&apos;est à cet instant que le serveur contrôle l&apos;éligibilité.
+            </>,
+            <>
+              Elle n&apos;est versée que si votre inventaire ne contient {b("aucune carte de cette catégorie")} (hors
+              cartes détruites) ; pour les pneus, un train compte tant qu&apos;il lui reste au moins 1 % de gomme.
+            </>,
+            <>
+              Sinon le parcours se termine sans récompense : la vignette passe en {b("« Jeu libre »")} et reste jouable
+              pour le plaisir.
+            </>,
+            <>
+              Le moteur ou la boîte reçu est de {b("rareté commune")}, tiré au hasard dans le catalogue ; le pneu est
+              toujours un {b("pneu Route neuf")}.
+            </>,
+            <>
+              Une pièce reconditionnée s&apos;équipe, s&apos;use et casse comme les autres, puis peut être vendue sur la
+              Marketplace ou déposée au centre de recyclage.
+            </>,
           ]}
         />
       </Section>
