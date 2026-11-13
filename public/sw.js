@@ -15,7 +15,7 @@ const KEEP_CACHES = new Set([STATIC_CACHE, ASSET_CACHE]);
 
 const PRECACHE = [
   "/offline.html",
-  "/logo.svg",
+  "/logo.webp",
   "/manifest.webmanifest",
   "/icons/favicon-32.png",
   "/icons/icon-192.png",
@@ -74,7 +74,7 @@ function isCacheableAsset(request, url) {
   if (isPrivateRequest(url)) return false;
   if (url.pathname.startsWith("/_next/static/")) return true;
   if (["style", "script", "font", "image"].includes(request.destination)) return true;
-  return ["/logo.svg", "/manifest.webmanifest", "/offline.html"].includes(url.pathname);
+  return ["/logo.webp", "/manifest.webmanifest", "/offline.html"].includes(url.pathname);
 }
 
 async function staleWhileRevalidate(event, request) {

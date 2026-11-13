@@ -6,7 +6,7 @@ import sharp from "sharp";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "public", "icons");
 
-const logo = await readFile(join(root, "public", "logo.svg"));
+const logo = await readFile(join(root, "public", "logo.webp"));
 
 await mkdir(outDir, { recursive: true });
 
@@ -24,7 +24,8 @@ for (const [name, size, scale] of sizes) {
   const content = await sharp(logo).resize(contentSize, contentSize, { fit: "contain" }).png().toBuffer();
   await sharp({ create: { width: size, height: size, channels: 4, background: "#0a0c10" } })
     .composite([{ input: content, gravity: "centre" }])
-    .png()
+    // Palette 256 couleurs : le rendu reste fidèle et l'icône passe de ~290 Ko à ~95 Ko.
+    .png({ palette: true, effort: 10, dither: 1 })
     .toFile(join(outDir, name));
 }
 
