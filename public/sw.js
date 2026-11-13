@@ -9,27 +9,30 @@
  */
 
 const CACHE_PREFIX = "carsduel-";
-const STATIC_CACHE = `${CACHE_PREFIX}static-v1`;
-const ASSET_CACHE = `${CACHE_PREFIX}assets-v1`;
+const STATIC_CACHE = `${CACHE_PREFIX}static-v2`;
+const ASSET_CACHE = `${CACHE_PREFIX}assets-v2`;
 const KEEP_CACHES = new Set([STATIC_CACHE, ASSET_CACHE]);
+
+/** Doit rester aligné sur ICON_VERSION dans src/lib/pwa-icons.ts. */
+const ICON_VERSION = "?v=2";
 
 const PRECACHE = [
   "/offline.html",
   "/logo.webp",
   "/manifest.webmanifest",
-  "/icons/favicon-32.png",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/icon-192-maskable.png",
-  "/icons/icon-512-maskable.png",
-  "/icons/apple-touch-icon.png",
+  `/icons/favicon-32.png${ICON_VERSION}`,
+  `/icons/icon-192.png${ICON_VERSION}`,
+  `/icons/icon-512.png${ICON_VERSION}`,
+  `/icons/icon-192-maskable.png${ICON_VERSION}`,
+  `/icons/icon-512-maskable.png${ICON_VERSION}`,
+  `/icons/apple-touch-icon.png${ICON_VERSION}`,
 ];
 
 const DEFAULT_TITLE = "CarsDuel";
 const DEFAULT_BODY = "Nouvelle notification";
 const DEFAULT_URL = "/";
-const ICON = "/icons/icon-192.png";
-const BADGE = "/icons/favicon-32.png";
+const ICON = `/icons/icon-192.png${ICON_VERSION}`;
+const BADGE = `/icons/favicon-32.png${ICON_VERSION}`;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

@@ -3,6 +3,7 @@ import { Rajdhani } from "next/font/google";
 import { LaunchGate } from "@/components/LaunchGate";
 import { PwaManager } from "@/components/PwaManager";
 import { ToastProvider } from "@/components/ui/Toast";
+import { pwaIcon } from "@/lib/pwa-icons";
 import "./globals.css";
 
 const rajdhani = Rajdhani({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-rajdhani" });
@@ -35,11 +36,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: pwaIcon("favicon-32.png"), sizes: "32x32", type: "image/png" },
+      { url: pwaIcon("icon-192.png"), sizes: "192x192", type: "image/png" },
+      { url: pwaIcon("icon-512.png"), sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: pwaIcon("apple-touch-icon.png"), sizes: "180x180", type: "image/png" }],
   },
 };
 

@@ -1,6 +1,7 @@
 import "server-only";
 import webpush from "web-push";
 import { withAdmin } from "@/lib/db";
+import { pwaIcon } from "@/lib/pwa-icons";
 
 export interface PushPayload {
   title: string;
@@ -90,8 +91,8 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
   }
 
   const body = JSON.stringify({
-    icon: "/icons/icon-192.png",
-    badge: "/icons/favicon-32.png",
+    icon: pwaIcon("icon-192.png"),
+    badge: pwaIcon("favicon-32.png"),
     ...payload,
     url: payload.url ?? "/",
   });

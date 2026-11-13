@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { pwaIcon } from "@/lib/pwa-icons";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -15,10 +16,10 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "fr",
     categories: ["games", "entertainment"],
     icons: [
-      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icons/icon-192-maskable.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
-      { src: "/icons/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: pwaIcon("icon-192.png"), sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: pwaIcon("icon-512.png"), sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: pwaIcon("icon-192-maskable.png"), sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: pwaIcon("icon-512-maskable.png"), sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }
