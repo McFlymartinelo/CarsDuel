@@ -57,11 +57,10 @@ export function Nav({
       {/* ---------- PC / tablette : en-tête complet + onglets ---------- */}
       <header className="hidden border-b border-line bg-header md:block">
         <div className={`${APP_WIDTH} flex flex-wrap items-center gap-x-8 gap-y-3 px-6 py-3 2xl:px-10`}>
-          <Link href="/garage" className="flex items-center gap-3 font-display text-2xl font-bold uppercase leading-[0.85] tracking-wide">
+          <Link href="/garage" className="flex items-center gap-3 font-display text-3xl font-bold uppercase leading-none tracking-wide">
             <Logo size={48} />
-            <span>
-              Cars<br />
-              <span className="text-zinc-500">Duel</span>
+            <span className="whitespace-nowrap">
+              Cars<span className="text-zinc-500">Duel</span>
             </span>
           </Link>
 
@@ -117,11 +116,10 @@ export function Nav({
       {/* ---------- Mobile : logo, pièces, tirages ---------- */}
       <header className="sticky top-0 z-40 border-b border-line bg-header/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
         <div className="flex items-center gap-1 px-1.5 py-1.5 min-[380px]:gap-1.5 min-[380px]:px-3">
-          <Link href="/garage" className="flex shrink-0 items-center gap-1 font-display text-base font-bold uppercase leading-[0.85] min-[380px]:gap-2 min-[380px]:text-xl">
+          <Link href="/garage" className="flex shrink-0 items-center gap-1 font-display text-lg font-bold uppercase leading-none min-[380px]:gap-2 min-[380px]:text-2xl">
             <Logo size={32} />
-            <span>
-              Cars<br />
-              <span className="text-zinc-500">Duel</span>
+            <span className="whitespace-nowrap">
+              Cars<span className="text-zinc-500">Duel</span>
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 min-[380px]:gap-1.5">
