@@ -135,7 +135,7 @@ export function ReconditioningWorkshop({ available }: { available: Record<Kind, 
     <details className="group overflow-hidden rounded-2xl border border-line bg-panel-deep">
       <summary className="flex cursor-pointer list-none items-center gap-3 p-4 transition hover:bg-panel [&::-webkit-details-marker]:hidden">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-300"><Cog size={18}/></span>
-        <span className="min-w-0 flex-1"><span className="block font-display text-base font-bold uppercase tracking-wide">Atelier de reconditionnement</span><span className="mt-1 block text-xs text-zinc-400">Un parcours de secours pour remettre votre garage en état de rouler.</span></span>
+        <span className="min-w-0 flex-1"><span className="block font-display text-base font-bold uppercase tracking-wide">Atelier de reconditionnement</span><span className="mt-1 block text-xs text-zinc-400">Mini-jeux de secours pour récupérer un moteur, une boite, des pneus... Ou pour le plaisir.</span></span>
         <span className="flex shrink-0 items-center gap-2"><span className="rounded-full border border-line bg-black/30 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-zinc-400">3</span><ChevronDown size={16} className="text-zinc-500 transition group-open:rotate-180" /></span>
       </summary>
       <div className="grid gap-3 border-t border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
